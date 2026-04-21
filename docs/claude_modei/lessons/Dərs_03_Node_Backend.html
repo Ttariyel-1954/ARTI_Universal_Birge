@@ -1,0 +1,3031 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dərs 3 — Node.js Backend: Express, PostgreSQL və REST API</title>
+<style>
+  :root {
+    --primary: #059669;
+    --primary-dark: #047857;
+    --primary-light: #d1fae5;
+    --accent: #0891b2;
+    --accent-light: #cffafe;
+    --warning: #d97706;
+    --warning-light: #fef3c7;
+    --success: #059669;
+    --success-light: #d1fae5;
+    --danger: #dc2626;
+    --danger-light: #fee2e2;
+    --node: #68a063;
+    --node-dark: #3c873a;
+    --node-light: #dcfce7;
+    --express: #474747;
+    --jwt: #d63aff;
+    --text: #0f172a;
+    --text-muted: #475569;
+    --text-subtle: #64748b;
+    --bg: #fafbfc;
+    --surface: #ffffff;
+    --surface-alt: #f8fafc;
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --code-bg: #0f172a;
+    --code-text: #e2e8f0;
+    --code-comment: #64748b;
+    --code-keyword: #c4b5fd;
+    --code-string: #86efac;
+    --code-number: #fcd34d;
+    --code-function: #93c5fd;
+    --output-bg: #1e293b;
+    --output-text: #cbd5e1;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+  /* ========== HERO ========== */
+  .hero {
+    background: linear-gradient(135deg, #3c873a 0%, #059669 60%, #0891b2 100%);
+    color: white;
+    padding: 3.5rem 2.5rem;
+    border-radius: 20px;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 20px 50px -15px rgba(60, 135, 58, 0.4);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '⬢';
+    position: absolute;
+    top: -50px;
+    right: -30px;
+    font-size: 340px;
+    opacity: 0.09;
+    pointer-events: none;
+    font-family: Arial, sans-serif;
+  }
+  .hero-label {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(10px);
+    padding: 0.5rem 1.25rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 1.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    position: relative;
+    z-index: 1;
+  }
+  .hero h1 {
+    font-size: 2.4rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-subtitle {
+    font-size: 1.15rem;
+    opacity: 0.94;
+    max-width: 750px;
+    line-height: 1.65;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1.75rem;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    opacity: 0.9;
+  }
+  .hero-meta-item svg { width: 18px; height: 18px; }
+
+  /* ========== OBJECTIVES ========== */
+  .objectives {
+    background: var(--primary-light);
+    border-left: 5px solid var(--primary);
+    padding: 1.75rem 2rem;
+    border-radius: 12px;
+    margin-bottom: 2.5rem;
+  }
+  .objectives h3 {
+    color: var(--primary-dark);
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+  .objectives ul {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 0.75rem 1.5rem;
+  }
+  .objectives li {
+    padding-left: 1.75rem;
+    position: relative;
+    font-size: 0.95rem;
+  }
+  .objectives li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--primary);
+    font-weight: 800;
+    font-size: 1.1rem;
+  }
+
+  /* ========== TOC ========== */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .toc h3 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-subtle);
+    margin-bottom: 1rem;
+  }
+  .toc ol {
+    list-style: none;
+    counter-reset: toc-counter;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 0.45rem 1rem;
+  }
+  .toc li { counter-increment: toc-counter; }
+  .toc a {
+    color: var(--text);
+    text-decoration: none;
+    padding: 0.5rem 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 0.92rem;
+    transition: color 0.15s;
+  }
+  .toc a::before {
+    content: counter(toc-counter, decimal-leading-zero);
+    color: var(--primary);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+  .toc a:hover { color: var(--primary); }
+
+  /* ========== SECTIONS ========== */
+  section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.25rem 2.5rem;
+    margin-bottom: 1.75rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+  section h2 {
+    font-size: 1.65rem;
+    font-weight: 750;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    letter-spacing: -0.015em;
+  }
+  section h2 .num {
+    background: var(--node-dark);
+    color: white;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  section h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 1.75rem 0 0.85rem;
+    letter-spacing: -0.01em;
+  }
+  section h4 {
+    font-size: 1rem;
+    font-weight: 650;
+    margin: 1.25rem 0 0.5rem;
+  }
+  section p { margin-bottom: 1rem; }
+  section p.lead {
+    font-size: 1.08rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+  }
+  section ul, section ol { margin: 0.75rem 0 1.25rem 1.5rem; }
+  section li { margin-bottom: 0.5rem; }
+  section strong { color: var(--primary-dark); font-weight: 650; }
+  section em { color: var(--accent); font-style: normal; font-weight: 600; }
+
+  /* ========== CODE BLOCKS ========== */
+  .code-block {
+    background: var(--code-bg);
+    border-radius: 12px;
+    margin: 1.25rem 0 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .code-header {
+    background: #1e293b;
+    padding: 0.6rem 1.15rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .code-title {
+    color: #94a3b8;
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .code-title::before {
+    content: '';
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #22c55e;
+    display: inline-block;
+  }
+  .code-title.js::before { background: #f7df1e; }
+  .code-title.json::before { background: #fb923c; }
+  .code-title.env::before { background: #a78bfa; }
+  .code-copy {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #cbd5e1;
+    padding: 0.35rem 0.85rem;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .code-copy:hover { background: rgba(255,255,255,0.15); color: white; }
+  .code-copy.copied { background: var(--success); color: white; border-color: var(--success); }
+
+  pre.code-content {
+    padding: 1.25rem 1.35rem;
+    overflow-x: auto;
+    color: var(--code-text);
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 0.87rem;
+    line-height: 1.65;
+  }
+  .cmt { color: var(--code-comment); font-style: italic; }
+  .kw { color: var(--code-keyword); font-weight: 600; }
+  .str { color: var(--code-string); }
+  .num { color: var(--code-number); }
+  .fn { color: var(--code-function); }
+  .obj { color: #f9a8d4; }
+  .prop { color: #fde047; }
+
+  /* ========== EXPECTED OUTPUT BOX ========== */
+  .output-block {
+    background: var(--output-bg);
+    border-radius: 0 0 12px 12px;
+    margin: 0 0 1.5rem 0;
+    border-top: 2px dashed rgba(255,255,255,0.1);
+  }
+  .output-header {
+    background: #0f172a;
+    padding: 0.55rem 1.15rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #86efac;
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    text-transform: uppercase;
+  }
+  .output-header::before {
+    content: '▶';
+    color: #22c55e;
+  }
+  pre.output-content {
+    padding: 1rem 1.35rem;
+    overflow-x: auto;
+    color: var(--output-text);
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 0.83rem;
+    line-height: 1.55;
+    background: var(--output-bg);
+  }
+  .out-success { color: #86efac; }
+  .out-warning { color: #fcd34d; }
+  .out-info { color: #93c5fd; }
+  .out-error { color: #fca5a5; }
+  .out-header-line { color: #f9a8d4; font-weight: 600; }
+  .out-separator { color: #475569; }
+  .out-dim { color: #64748b; }
+
+  /* Inline code */
+  code.inline {
+    background: var(--surface-alt);
+    color: var(--primary-dark);
+    padding: 0.15rem 0.45rem;
+    border-radius: 5px;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 0.88em;
+    border: 1px solid var(--border);
+  }
+
+  /* ========== CALLOUTS ========== */
+  .callout {
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+    border-left: 4px solid;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  .callout-icon {
+    flex-shrink: 0;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+  .callout-content { flex: 1; }
+  .callout-title { font-weight: 700; margin-bottom: 0.35rem; font-size: 0.95rem; }
+  .callout-body { font-size: 0.93rem; }
+  .callout-body p:last-child { margin-bottom: 0; }
+
+  .callout.info { background: #e0e7ff; border-color: #4338ca; }
+  .callout.info .callout-icon { background: #4338ca; }
+  .callout.info .callout-title { color: #3730a3; }
+
+  .callout.warning { background: var(--warning-light); border-color: var(--warning); }
+  .callout.warning .callout-icon { background: var(--warning); }
+  .callout.warning .callout-title { color: #92400e; }
+
+  .callout.success { background: var(--success-light); border-color: var(--success); }
+  .callout.success .callout-icon { background: var(--success); }
+  .callout.success .callout-title { color: #065f46; }
+
+  .callout.tip { background: var(--accent-light); border-color: var(--accent); }
+  .callout.tip .callout-icon { background: var(--accent); }
+  .callout.tip .callout-title { color: #0e7490; }
+
+  .callout.danger { background: var(--danger-light); border-color: var(--danger); }
+  .callout.danger .callout-icon { background: var(--danger); }
+  .callout.danger .callout-title { color: #991b1b; }
+
+  /* ========== TABLES ========== */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 1.25rem 0;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  table thead { background: var(--surface-alt); }
+  table th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 650;
+    border-bottom: 2px solid var(--border-strong);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  table tbody tr:last-child td { border-bottom: none; }
+  table tbody tr:hover { background: var(--surface-alt); }
+
+  /* ========== DIAGRAM ========== */
+  .erd-wrap {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    overflow-x: auto;
+  }
+  .erd-wrap svg {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    height: auto;
+  }
+  .diagram-caption {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--text-subtle);
+    font-style: italic;
+    text-align: center;
+  }
+
+  /* ========== STEP INDICATOR ========== */
+  .step-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 2rem 0 1rem;
+  }
+  .step-num {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--node-dark);
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+  }
+  .step-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  /* ========== FILE TREE ========== */
+  .file-tree {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin: 1.25rem 0;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 0.88rem;
+    line-height: 1.8;
+    color: var(--text);
+  }
+  .file-tree .folder { color: var(--primary-dark); font-weight: 600; }
+  .file-tree .file { color: var(--text-muted); }
+  .file-tree .comment { color: var(--text-subtle); font-style: italic; }
+
+  /* ========== SUMMARY BOX ========== */
+  .summary-box {
+    background: linear-gradient(135deg, #ecfdf5 0%, #cffafe 100%);
+    border: 1px solid var(--primary-light);
+    border-radius: 14px;
+    padding: 1.75rem 2rem;
+    margin: 1.5rem 0;
+  }
+  .summary-box h3 {
+    color: var(--primary-dark) !important;
+    margin-top: 0 !important;
+    font-size: 1.15rem !important;
+  }
+
+  /* ========== API ENDPOINT BOX ========== */
+  .endpoint {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--surface-alt);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin: 0.5rem 0;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 0.88rem;
+    border: 1px solid var(--border);
+  }
+  .http-method {
+    padding: 0.25rem 0.6rem;
+    border-radius: 5px;
+    font-weight: 700;
+    font-size: 0.78rem;
+    color: white;
+    min-width: 54px;
+    text-align: center;
+  }
+  .http-method.get { background: #16a34a; }
+  .http-method.post { background: #2563eb; }
+  .http-method.put { background: #d97706; }
+  .http-method.patch { background: #9333ea; }
+  .http-method.delete { background: #dc2626; }
+
+  /* ========== NAVIGATION ========== */
+  .lesson-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid var(--border);
+  }
+  .lesson-nav-btn {
+    background: var(--primary);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background 0.15s;
+  }
+  .lesson-nav-btn:hover { background: var(--primary-dark); }
+  .lesson-nav-btn.secondary {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  /* ========== RESPONSIVE ========== */
+  @media (max-width: 720px) {
+    .container { padding: 1rem; }
+    .hero { padding: 2rem 1.5rem; }
+    .hero h1 { font-size: 1.75rem; }
+    section { padding: 1.5rem 1.25rem; }
+    section h2 { font-size: 1.35rem; }
+    pre.code-content, pre.output-content { font-size: 0.78rem; padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ======================= HERO ======================= -->
+  <div class="hero">
+    <span class="hero-label">⬢ DƏRS 03 / 06 — UNİVERSAL AI AGENT KURSU</span>
+    <h1>Node.js Backend — Express, PostgreSQL Bağlantısı və REST API</h1>
+    <p class="hero-subtitle">
+      Bu dərsdə TTİS-in backend serverini sıfırdan quracağıq: Express, pg, JWT,
+      middleware-lər, REST endpoint-lər və Claude AI SDK inteqrasiyası. Core+Domain
+      memarlığını koda çeviririk. Hər əmrin yanında terminal çıxışı var — öz ekranınızdakı
+      ilə müqayisə edin.
+    </p>
+    <div class="hero-meta">
+      <span class="hero-meta-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Təxminən 120–180 dəqiqə
+      </span>
+      <span class="hero-meta-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+        24+ fayl, 15 endpoint
+      </span>
+      <span class="hero-meta-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        Claude AI inteqrasiyalı
+      </span>
+    </div>
+  </div>
+
+  <!-- ======================= OBJECTIVES ======================= -->
+  <div class="objectives">
+    <h3>🎯 Bu Dərsin Sonunda Siz Nəyi Bacaracaqsınız?</h3>
+    <ul>
+      <li>Node.js və Express-in iş prinsipini başa düşmək</li>
+      <li>npm ilə paket idarəsi etmək</li>
+      <li>.env faylı ilə konfiqurasiyanı təhlükəsiz saxlamaq</li>
+      <li>Core+Domain+Shared strukturunu koda tətbiq etmək</li>
+      <li>PostgreSQL Pool ilə səmərəli bağlantı qurmaq</li>
+      <li>Middleware zəncirini yazmaq (log, auth, CORS, error)</li>
+      <li>bcrypt ilə parol şifrələmə</li>
+      <li>JWT ilə autentifikasiya</li>
+      <li>REST CRUD endpoint-ləri hazırlamaq</li>
+      <li>Joi ilə input validasiyası</li>
+      <li>Dynamic domain router yazmaq (sahələr arası keçid)</li>
+      <li>Claude SDK ilə AI funksiyaları əlavə etmək</li>
+      <li>curl və Postman ilə API testi</li>
+    </ul>
+  </div>
+
+  <!-- ======================= TOC ======================= -->
+  <nav class="toc">
+    <h3>Dərsin Bölmələri</h3>
+    <ol>
+      <li><a href="#b1">Node.js və Express — anlayışlar</a></li>
+      <li><a href="#b2">Node.js quraşdırılmasının yoxlanması</a></li>
+      <li><a href="#b3">Layihə inicializasiyası (npm init)</a></li>
+      <li><a href="#b4">package.json və paketlər</a></li>
+      <li><a href="#b5">İlk Express serveri</a></li>
+      <li><a href="#b6">dotenv və konfiqurasiya</a></li>
+      <li><a href="#b7">Kod strukturu (Core/Domain/Shared)</a></li>
+      <li><a href="#b8">PostgreSQL bağlantısı (pg Pool)</a></li>
+      <li><a href="#b9">Logger sistemi</a></li>
+      <li><a href="#b10">Middleware zənciri</a></li>
+      <li><a href="#b11">Parol şifrələmə (bcrypt)</a></li>
+      <li><a href="#b12">JWT autentifikasiya</a></li>
+      <li><a href="#b13">Auth endpoint-ləri</a></li>
+      <li><a href="#b14">Joi ilə validasiya</a></li>
+      <li><a href="#b15">Projects CRUD API</a></li>
+      <li><a href="#b16">Dynamic domain router</a></li>
+      <li><a href="#b17">Claude AI SDK inteqrasiyası</a></li>
+      <li><a href="#b18">curl ilə test</a></li>
+      <li><a href="#b19">Xülasə və növbəti dərs</a></li>
+    </ol>
+  </nav>
+
+  <!-- ======================= SECTION 1 ======================= -->
+  <section id="b1">
+    <h2><span class="num">1</span> Node.js və Express — anlayışlar</h2>
+    <p class="lead">
+      Backend — frontend-in görə bilmədiyi, lakin həmişə işləyən "görünməz mühərrik"dir.
+      O, verilənlər bazası ilə danışır, autentifikasiya edir, biznes qaydalarını
+      tətbiq edir və Claude AI kimi xarici servislərlə əlaqə saxlayır.
+    </p>
+
+    <h3>1.1. Node.js nədir?</h3>
+    <p>
+      <strong>Node.js</strong> — brauzerdən kənar JavaScript icra mühitidir. Google-un
+      V8 engine-i üzərində qurulub. 2009-cu ildən bəri Netflix, LinkedIn, Uber, PayPal
+      kimi nəhənglər öz backend-lərində istifadə edir.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Xüsusiyyət</th><th>Node.js</th><th>Python (Django/Flask)</th><th>R Shiny</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Async I/O</strong></td>
+            <td>✅ Native event loop</td>
+            <td>⚠️ asyncio, GIL məhdudiyyəti</td>
+            <td>❌ Sinxron</td>
+          </tr>
+          <tr>
+            <td><strong>Real-time (WebSocket)</strong></td>
+            <td>✅ socket.io</td>
+            <td>⚠️ Django Channels</td>
+            <td>⚠️ Reactive, məhdud</td>
+          </tr>
+          <tr>
+            <td><strong>JSON ilə iş</strong></td>
+            <td>✅ Native</td>
+            <td>✅ Yaxşı</td>
+            <td>⚠️ jsonlite</td>
+          </tr>
+          <tr>
+            <td><strong>Data science</strong></td>
+            <td>⚠️ Məhdud</td>
+            <td>✅ Mükəmməl</td>
+            <td>✅ Mükəmməl</td>
+          </tr>
+          <tr>
+            <td><strong>Deployment sadəliyi</strong></td>
+            <td>✅ Çox sadə</td>
+            <td>✅ Yaxşı</td>
+            <td>⚠️ Xüsusi server</td>
+          </tr>
+          <tr>
+            <td><strong>Frontend ilə eyni dil</strong></td>
+            <td>✅ JavaScript</td>
+            <td>❌ Fərqli dil</td>
+            <td>❌ Fərqli</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">i</span>
+      <div class="callout-content">
+        <div class="callout-title">Niyə Node.js? — üç əsas səbəb</div>
+        <div class="callout-body">
+          <ol>
+            <li><strong>I/O-intensive</strong> işlərdə (API, verilənlər bazası ilə ünsiyyət, fayl yazılması) PHP/Python-dan 2–3 dəfə sürətli</li>
+            <li>Frontend və backend eyni dildə — konseptual yükü azaldır</li>
+            <li>NPM ekosistemi — dünyanın ən böyük açıq-qaynaqlı kitabxana registri (2 milyondan çox paket)</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <h3>1.2. Express nədir?</h3>
+    <p>
+      <strong>Express.js</strong> — Node.js üçün ən populyar minimalist web çərçivəsidir.
+      Django və Ruby on Rails kimi "batareyaları daxil olan" çərçivələrlə fərqi —
+      Express özü az şey edir, amma hər şeyi asan əlavə etməyə imkan verir. Bu bizim
+      Core+Domain memarlığımıza mükəmməl uyğundur.
+    </p>
+
+    <div class="erd-wrap">
+      <svg viewBox="0 0 800 380" xmlns="http://www.w3.org/2000/svg">
+        <!-- Client -->
+        <rect x="20" y="150" width="120" height="70" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+        <text x="80" y="180" text-anchor="middle" font-size="13" font-weight="700" fill="#1e40af">💻 Client</text>
+        <text x="80" y="200" text-anchor="middle" font-size="10" fill="#1e40af">React / Postman</text>
+
+        <!-- Request arrow -->
+        <path d="M 145 175 L 210 175" stroke="#2563eb" stroke-width="2" marker-end="url(#arr)"/>
+        <text x="170" y="165" font-size="11" fill="#2563eb">HTTP</text>
+
+        <!-- Express -->
+        <rect x="215" y="80" width="350" height="220" rx="12" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+        <text x="390" y="108" text-anchor="middle" font-size="14" font-weight="700" fill="#047857">⬢ Express Server</text>
+
+        <!-- Middleware chain -->
+        <rect x="235" y="130" width="310" height="30" rx="6" fill="white" stroke="#94a3b8"/>
+        <text x="390" y="150" text-anchor="middle" font-size="11" fill="#334155">1. CORS, Helmet (təhlükəsizlik)</text>
+
+        <rect x="235" y="165" width="310" height="30" rx="6" fill="white" stroke="#94a3b8"/>
+        <text x="390" y="185" text-anchor="middle" font-size="11" fill="#334155">2. Morgan (log)</text>
+
+        <rect x="235" y="200" width="310" height="30" rx="6" fill="white" stroke="#94a3b8"/>
+        <text x="390" y="220" text-anchor="middle" font-size="11" fill="#334155">3. JWT Auth middleware</text>
+
+        <rect x="235" y="235" width="310" height="30" rx="6" fill="#fef3c7" stroke="#d97706"/>
+        <text x="390" y="255" text-anchor="middle" font-size="11" fill="#92400e">4. Route handler → Controller</text>
+
+        <!-- Response arrow -->
+        <path d="M 565 245 L 635 195" stroke="#059669" stroke-width="2" marker-end="url(#arrG)"/>
+        <text x="595" y="230" font-size="11" fill="#059669">SQL</text>
+
+        <!-- PostgreSQL -->
+        <rect x="640" y="150" width="140" height="70" rx="10" fill="#dbeafe" stroke="#336791" stroke-width="2"/>
+        <text x="710" y="180" text-anchor="middle" font-size="13" font-weight="700" fill="#1e3a8a">🐘 PostgreSQL</text>
+        <text x="710" y="200" text-anchor="middle" font-size="10" fill="#1e3a8a">ttis_db</text>
+
+        <!-- Response back -->
+        <path d="M 215 270 Q 130 330 80 225" stroke="#059669" stroke-width="2" fill="none" marker-end="url(#arrG)" stroke-dasharray="6"/>
+        <text x="100" y="320" font-size="11" fill="#059669">JSON response</text>
+
+        <defs>
+          <marker id="arr" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+            <polygon points="0 0, 10 5, 0 10" fill="#2563eb"/>
+          </marker>
+          <marker id="arrG" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+            <polygon points="0 0, 10 5, 0 10" fill="#059669"/>
+          </marker>
+        </defs>
+      </svg>
+      <p class="diagram-caption">Şəkil 1. HTTP sorğusunun Express-də keçdiyi yol (middleware zənciri)</p>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 2 ======================= -->
+  <section id="b2">
+    <h2><span class="num">2</span> Node.js quraşdırılmasının yoxlanması</h2>
+    <p class="lead">
+      Node.js-i əvvəlcədən quraşdırmısınızsa, versiyasını yoxlayaq. LTS (Long Term
+      Support) versiyasını istifadə etməlisiniz — sabitlik üçün.
+    </p>
+
+    <div class="step-head">
+      <span class="step-num">1</span>
+      <span class="step-title">Versiyanı yoxlayaq</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — Node.js və npm versiyası</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># Node.js versiyası</span>
+node --version
+
+<span class="cmt"># npm (Node Package Manager) versiyası</span>
+npm --version
+
+<span class="cmt"># Quraşdırma yolu</span>
+which node</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış (LTS versiyası)</div>
+<pre class="output-content"><span class="out-success">v22.14.0</span>   <span class="out-dim">← Node.js 22 LTS və ya daha yeni olmalıdır</span>
+<span class="out-success">10.9.2</span>
+/usr/local/bin/node</pre>
+    </div>
+
+    <div class="callout warning">
+      <span class="callout-icon">!</span>
+      <div class="callout-content">
+        <div class="callout-title">Əgər "command not found" görünürsə və ya versiya çox köhnədirsə</div>
+        <div class="callout-body">
+          <p>Aşağıdakı komandanı icra edin (Intel Mac-də Homebrew ilə):</p>
+          <p><code class="inline">brew install node@22</code></p>
+          <p>Sonra PATH-a əlavə edin:</p>
+          <p><code class="inline">echo 'export PATH="/usr/local/opt/node@22/bin:$PATH"' &gt;&gt; ~/.bash_profile &amp;&amp; source ~/.bash_profile</code></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-head">
+      <span class="step-num">2</span>
+      <span class="step-title">Global npm paketləri</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — global paketlər</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># Mövcud global paketlərə baxaq</span>
+npm list -g --depth=<span class="num">0</span>
+
+<span class="cmt"># Əgər nodemon və pm2 yoxdursa — quraşdıraq</span>
+<span class="cmt"># (nodemon inkişaf üçün, pm2 production üçün)</span>
+npm install -g nodemon pm2</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış (qraşdırma sonrası)</div>
+<pre class="output-content">/usr/local/lib
+├── corepack@0.31.0
+├── <span class="out-success">nodemon@3.1.9</span>
+├── npm@10.9.2
+└── <span class="out-success">pm2@5.4.3</span></pre>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 3 ======================= -->
+  <section id="b3">
+    <h2><span class="num">3</span> Layihə inicializasiyası</h2>
+    <p class="lead">
+      Dərs 1-də yaratdığımız <code class="inline">backend/</code> qovluğuna keçib
+      npm layihəsini inicializə edirik.
+    </p>
+
+    <div class="step-head">
+      <span class="step-num">1</span>
+      <span class="step-title">backend qovluğuna keçid</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — layihə kökünə getmək</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># Dərs 1-də yaratdığımız layihə qovluğuna keçirik</span>
+<span class="kw">cd</span> ~/Desktop/Claude_Modei_Təmir_tikinti/backend
+
+<span class="cmt"># Hazırkı qovluğu yoxlayaq</span>
+<span class="kw">pwd</span>
+
+<span class="cmt"># Qovluğun strukturunu görək</span>
+<span class="kw">ls</span> -la</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">/Users/royatalibova/Desktop/Claude_Modei_Təmir_tikinti/backend
+
+total 0
+drwxr-xr-x  4 royatalibova  staff  128 Apr 17 14:00 .
+drwxr-xr-x  ...
+drwxr-xr-x  5 royatalibova  staff  160 Apr 17 14:00 src
+drwxr-xr-x  2 royatalibova  staff   64 Apr 17 14:00 tests</pre>
+    </div>
+
+    <div class="step-head">
+      <span class="step-num">2</span>
+      <span class="step-title">npm init ilə package.json yaratmaq</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — npm inicializasiyası</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># -y = defaultlarla razı ol, suallar soruşmadan</span>
+npm init -y</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">Wrote to /Users/royatalibova/Desktop/Claude_Modei_Təmir_tikinti/backend/package.json:
+
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}</pre>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div class="callout-content">
+        <div class="callout-title">package.json nədir?</div>
+        <div class="callout-body">
+          <p>
+            Bu fayl — Node.js layihəsinin "şəxsiyyət vəsiqəsi"dir. O, layihənin adı,
+            versiyası, asılılıqları və skriptlərini saxlayır. Başqa bir developer
+            bu faylı görüb <code class="inline">npm install</code> yazdıqda bütün
+            lazımi paketlər avtomatik quraşdırılır.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 4 ======================= -->
+  <section id="b4">
+    <h2><span class="num">4</span> package.json və paketlər</h2>
+    <p class="lead">
+      package.json-u əllə redaktə edib layihəmizin düzgün konfiqurasiyasını yazaq.
+      Sonra bütün lazımi paketləri bir anda quraşdıracağıq.
+    </p>
+
+    <div class="step-head">
+      <span class="step-num">1</span>
+      <span class="step-title">package.json-u yeniləmək</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — package.json-u yenidən yaradırıq</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; package.json &lt;&lt; <span class="str">'EOF'</span>
+{
+  "name": "ttis-backend",
+  "version": "0.1.0",
+  "description": "TTİS Universal AI Agent — Backend API",
+  "main": "server.js",
+  "author": "Talıbov Tariyel İsmayıl oğlu",
+  "license": "MIT",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "db:test": "node src/core/utils/dbTest.js"
+  },
+  "engines": {
+    "node": "&gt;=20.0.0"
+  }
+}
+<span class="str">EOF</span>
+
+<span class="cmt"># Yoxlayaq</span>
+cat package.json</code></pre>
+    </div>
+
+    <h3>4.1. Paketlərin quraşdırılması</h3>
+    <p>
+      Biz 10 əsas paket istifadə edəcəyik. Onları <strong>iki qrupa</strong> bölürük:
+      production (əsas) və development (yalnız inkişaf zamanı).
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Paket</th><th>Təyinat</th><th>Növ</th></tr></thead>
+        <tbody>
+          <tr><td><code class="inline">express</code></td><td>Web server çərçivəsi</td><td>prod</td></tr>
+          <tr><td><code class="inline">pg</code></td><td>PostgreSQL driver</td><td>prod</td></tr>
+          <tr><td><code class="inline">dotenv</code></td><td>.env faylı oxuyucu</td><td>prod</td></tr>
+          <tr><td><code class="inline">cors</code></td><td>CORS policy</td><td>prod</td></tr>
+          <tr><td><code class="inline">helmet</code></td><td>Təhlükəsizlik header-ları</td><td>prod</td></tr>
+          <tr><td><code class="inline">morgan</code></td><td>HTTP sorğu log-u</td><td>prod</td></tr>
+          <tr><td><code class="inline">bcrypt</code></td><td>Parol hash-ləmə</td><td>prod</td></tr>
+          <tr><td><code class="inline">jsonwebtoken</code></td><td>JWT tokenlər</td><td>prod</td></tr>
+          <tr><td><code class="inline">joi</code></td><td>İnput validasiyası</td><td>prod</td></tr>
+          <tr><td><code class="inline">@anthropic-ai/sdk</code></td><td>Claude API müştərisi</td><td>prod</td></tr>
+          <tr><td><code class="inline">winston</code></td><td>Struktur loglama</td><td>prod</td></tr>
+          <tr><td><code class="inline">nodemon</code></td><td>Avtomatik yenidən başlatma</td><td>dev</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — bütün paketlərin quraşdırılması</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># Production paketləri</span>
+npm install express pg dotenv cors helmet morgan bcrypt jsonwebtoken joi winston @anthropic-ai/sdk
+
+<span class="cmt"># Development paketləri (--save-dev = dev dependencies)</span>
+npm install --save-dev nodemon</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış (qısaldılmış)</div>
+<pre class="output-content">added 247 packages, and audited 248 packages in 28s
+
+<span class="out-success">32 packages are looking for funding</span>
+<span class="out-success">found 0 vulnerabilities</span>
+
+added 33 packages, and audited 281 packages in 3s</pre>
+    </div>
+
+    <h3>4.2. Yaradılan fayllara baxaq</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — yoxlama</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="kw">ls</span> -la
+<span class="kw">cat</span> package.json</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">drwxr-xr-x   247 royatalibova  staff   7904  node_modules/
+-rw-r--r--     1 royatalibova  staff    480  package.json
+-rw-r--r--     1 royatalibova  staff 185243  package-lock.json
+drwxr-xr-x     5 royatalibova  staff    160  src/
+drwxr-xr-x     2 royatalibova  staff     64  tests/
+
+{
+  "name": "ttis-backend",
+  "version": "0.1.0",
+  ...
+  <span class="out-info">"dependencies"</span>: {
+    <span class="out-info">"@anthropic-ai/sdk"</span>: "^0.32.1",
+    <span class="out-info">"bcrypt"</span>: "^5.1.1",
+    <span class="out-info">"cors"</span>: "^2.8.5",
+    <span class="out-info">"dotenv"</span>: "^16.4.5",
+    <span class="out-info">"express"</span>: "^4.21.1",
+    ...
+  },
+  <span class="out-info">"devDependencies"</span>: {
+    <span class="out-info">"nodemon"</span>: "^3.1.9"
+  }
+}</pre>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">i</span>
+      <div class="callout-content">
+        <div class="callout-title">node_modules və package-lock.json nədir?</div>
+        <div class="callout-body">
+          <ul>
+            <li><strong>node_modules/</strong> — quraşdırılmış paketlərin faktiki faylları (minlərlə fayl)</li>
+            <li><strong>package-lock.json</strong> — dəqiq versiyaların qeydi, komandalı işdə sinxron quraşdırma üçün</li>
+          </ul>
+          <p>Hər ikisi <code class="inline">.gitignore</code>-da (node_modules) və ya git-də (package-lock.json) saxlanılmalıdır.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 5 ======================= -->
+  <section id="b5">
+    <h2><span class="num">5</span> İlk Express serveri</h2>
+    <p class="lead">
+      Ən sadə "Hello World" server yazıb işlətsək görərik ki, Node.js nə qədər sürətli
+      başladılır. Bu "canlı sübut"dur — sonrakı mürəkkəb qurluşlara əmin addımlayacağıq.
+    </p>
+
+    <div class="step-head">
+      <span class="step-num">1</span>
+      <span class="step-title">server.js faylını yaradırıq</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title js">JavaScript — server.js (minimal versiya)</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; server.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt">// server.js — Ən sadə Express serveri (test üçün)</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+
+<span class="kw">const</span> express = <span class="fn">require</span>(<span class="str">'express'</span>);
+<span class="kw">const</span> app = <span class="fn">express</span>();
+<span class="kw">const</span> PORT = <span class="num">3001</span>;
+
+<span class="cmt">// JSON body-ləri parse etmək üçün</span>
+app.<span class="fn">use</span>(express.<span class="fn">json</span>());
+
+<span class="cmt">// İlk endpoint: GET /</span>
+app.<span class="fn">get</span>(<span class="str">'/'</span>, (req, res) =&gt; {
+  res.<span class="fn">json</span>({
+    <span class="prop">message</span>: <span class="str">'TTİS Universal Agent API işləyir! 🏗️'</span>,
+    <span class="prop">version</span>: <span class="str">'0.1.0'</span>,
+    <span class="prop">timestamp</span>: <span class="kw">new</span> <span class="fn">Date</span>().<span class="fn">toISOString</span>()
+  });
+});
+
+<span class="cmt">// Health-check endpoint</span>
+app.<span class="fn">get</span>(<span class="str">'/health'</span>, (req, res) =&gt; {
+  res.<span class="fn">json</span>({ <span class="prop">status</span>: <span class="str">'ok'</span>, <span class="prop">uptime</span>: process.<span class="fn">uptime</span>() });
+});
+
+<span class="cmt">// Serveri qulaq asdırırıq</span>
+app.<span class="fn">listen</span>(PORT, () =&gt; {
+  console.<span class="fn">log</span>(<span class="str">`✅ Server işləyir: http://localhost:${PORT}`</span>);
+  console.<span class="fn">log</span>(<span class="str">`📋 Health: http://localhost:${PORT}/health`</span>);
+});
+<span class="str">EOF</span></code></pre>
+    </div>
+
+    <div class="step-head">
+      <span class="step-num">2</span>
+      <span class="step-title">Serveri işə salırıq</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — ilk işə salınma</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># Node.js ilə birbaşa işə sal</span>
+node server.js</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content"><span class="out-success">✅ Server işləyir: http://localhost:3001</span>
+📋 Health: http://localhost:3001/health</pre>
+    </div>
+
+    <div class="step-head">
+      <span class="step-num">3</span>
+      <span class="step-title">Serveri test edək (başqa Terminal pəncərəsində)</span>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div class="callout-content">
+        <div class="callout-title">Yeni Terminal açın — server işləyir</div>
+        <div class="callout-body">
+          <p>
+            <strong>Cmd + T</strong> ilə yeni Terminal tabı açın. Eski Terminal-da
+            server işləməyə davam edir, yeni tabda curl ilə test edək.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — curl ilə API test</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># Kök endpoint-i test edək</span>
+curl http://localhost:<span class="num">3001</span>/
+
+echo <span class="str">""</span>  <span class="cmt"># yeni sətir</span>
+
+<span class="cmt"># Health endpoint-i</span>
+curl http://localhost:<span class="num">3001</span>/health</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">{"message":"TTİS Universal Agent API işləyir! 🏗️","version":"0.1.0","timestamp":"2026-04-17T11:23:45.000Z"}
+
+{"status":"ok","uptime":42.31}</pre>
+    </div>
+
+    <div class="callout success">
+      <span class="callout-icon">✓</span>
+      <div class="callout-content">
+        <div class="callout-title">Təbriklər — ilk backend serveriniz işləyir!</div>
+        <div class="callout-body">
+          <p>
+            İndi Express-in hər sorğuya necə cavab verdiyini gördük. Növbəti addım:
+            kodu professional struktura təşkil etmək və real baza ilə bağlamaq.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-head">
+      <span class="step-num">4</span>
+      <span class="step-title">Serveri dayandırmaq</span>
+    </div>
+
+    <p>
+      Server işlədiyi Terminal-da <strong>Ctrl + C</strong> basın. İndi başqa bir
+      test — <code class="inline">nodemon</code> ilə:
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — nodemon ilə işə sal (avtomatik yenidən başlatma)</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># package.json-da "dev" script-i var — onu işə sal</span>
+npm run dev</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">&gt; ttis-backend@0.1.0 dev
+&gt; nodemon server.js
+
+[nodemon] 3.1.9
+[nodemon] watching path(s): *.*
+[nodemon] watching extensions: js,mjs,cjs,json
+<span class="out-success">[nodemon] starting `node server.js`</span>
+<span class="out-success">✅ Server işləyir: http://localhost:3001</span></pre>
+    </div>
+
+    <p>
+      İndi <code class="inline">server.js</code>-də hər hansı dəyişiklik edib saxlayın
+      (məsələn, <em>message</em>-i dəyişin) — nodemon avtomatik olaraq serveri yenidən
+      başladır. Artıq inkişaf sürəti 10 dəfə artdı!
+    </p>
+  </section>
+
+  <!-- ======================= SECTION 6 ======================= -->
+  <section id="b6">
+    <h2><span class="num">6</span> dotenv və konfiqurasiya</h2>
+    <p class="lead">
+      Porta <code class="inline">3001</code> yazıb koda "burger etmək" pis təcrübədir.
+      Parollar, API açarları, portlar — bunlar <strong>.env</strong> faylında saxlanır
+      və git-ə heç vaxt göndərilmir.
+    </p>
+
+    <div class="callout danger">
+      <span class="callout-icon">!</span>
+      <div class="callout-content">
+        <div class="callout-title">Sizin əvvəlki təcrübə — API açarı sızması</div>
+        <div class="callout-body">
+          <p>
+            Memory-nizdə qeyd olunub ki, daha əvvəl API açarı GitHub-a sızmışdı və
+            5-6 layihəni düzəltmək lazım gəlmişdi. Bu dərsdə <strong>.env</strong>-i
+            düzgün istifadə edərək həmin səhvi təkrarlamayacağıq.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-head">
+      <span class="step-num">1</span>
+      <span class="step-title">.env faylını yaradırıq</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title env">backend/.env</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; .env &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt"># ═══ APPLICATION ═══</span>
+NODE_ENV=development
+APP_NAME="TTİS API"
+APP_VERSION=0.1.0
+
+<span class="cmt"># ═══ SERVER ═══</span>
+PORT=3001
+HOST=localhost
+API_PREFIX=/api/v1
+
+<span class="cmt"># ═══ DOMAIN ═══</span>
+DOMAIN=construction
+
+<span class="cmt"># ═══ DATABASE ═══</span>
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=ttis_db
+DB_USER=royatalibova
+DB_PASSWORD=
+DB_POOL_MIN=2
+DB_POOL_MAX=10
+
+<span class="cmt"># ═══ AUTH ═══</span>
+JWT_SECRET=super-secret-random-string-change-in-production-12345
+JWT_EXPIRES_IN=7d
+BCRYPT_ROUNDS=10
+
+<span class="cmt"># ═══ CLAUDE AI ═══</span>
+ANTHROPIC_API_KEY=sk-ant-api03-...
+ANTHROPIC_MODEL=claude-sonnet-4-6
+ANTHROPIC_MAX_TOKENS=4096
+
+<span class="cmt"># ═══ CORS ═══</span>
+CORS_ORIGIN=http://localhost:5173,http://localhost:3838
+
+<span class="cmt"># ═══ LOGGING ═══</span>
+LOG_LEVEL=debug
+<span class="str">EOF</span>
+
+<span class="cmt"># Yoxlayaq</span>
+<span class="kw">ls</span> -la .env
+echo <span class="str">"✅ .env yaradıldı"</span></code></pre>
+    </div>
+
+    <div class="callout warning">
+      <span class="callout-icon">!</span>
+      <div class="callout-content">
+        <div class="callout-title">.gitignore-u yoxlayın!</div>
+        <div class="callout-body">
+          <p>
+            Dərs 1-də yaratdığımız <code class="inline">.gitignore</code>-da
+            <code class="inline">.env</code> olmalıdır. Yoxlayın:
+          </p>
+          <p><code class="inline">grep .env ../.gitignore</code></p>
+          <p>Əgər görünmürsə, əlavə edin: <code class="inline">echo ".env" &gt;&gt; ../.gitignore</code></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-head">
+      <span class="step-num">2</span>
+      <span class="step-title">Konfiqurasiyanı yükləyən modul</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title js">src/core/config/index.js</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; src/core/config/index.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt">// src/core/config/index.js — .env-i yükləyir və valid edir</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+
+<span class="kw">require</span>(<span class="str">'dotenv'</span>).<span class="fn">config</span>();
+
+<span class="kw">const</span> required = [<span class="str">'JWT_SECRET'</span>, <span class="str">'DB_NAME'</span>, <span class="str">'DB_USER'</span>];
+<span class="kw">const</span> missing = required.<span class="fn">filter</span>(<span class="kw">key</span> =&gt; !process.env[key]);
+
+<span class="kw">if</span> (missing.length &gt; <span class="num">0</span>) {
+  console.<span class="fn">error</span>(<span class="str">`❌ Bu env dəyişənləri çatışmır: ${missing.<span class="fn">join</span>(<span class="str">', '</span>)}`</span>);
+  process.<span class="fn">exit</span>(<span class="num">1</span>);
+}
+
+<span class="kw">const</span> config = {
+  <span class="prop">env</span>: process.env.NODE_ENV || <span class="str">'development'</span>,
+  <span class="prop">isProduction</span>: process.env.NODE_ENV === <span class="str">'production'</span>,
+
+  <span class="prop">app</span>: {
+    <span class="prop">name</span>: process.env.APP_NAME || <span class="str">'TTİS API'</span>,
+    <span class="prop">version</span>: process.env.APP_VERSION || <span class="str">'0.1.0'</span>
+  },
+
+  <span class="prop">server</span>: {
+    <span class="prop">port</span>: <span class="fn">parseInt</span>(process.env.PORT, <span class="num">10</span>) || <span class="num">3001</span>,
+    <span class="prop">host</span>: process.env.HOST || <span class="str">'localhost'</span>,
+    <span class="prop">apiPrefix</span>: process.env.API_PREFIX || <span class="str">'/api/v1'</span>
+  },
+
+  <span class="prop">domain</span>: process.env.DOMAIN || <span class="str">'construction'</span>,
+
+  <span class="prop">db</span>: {
+    <span class="prop">host</span>: process.env.DB_HOST || <span class="str">'localhost'</span>,
+    <span class="prop">port</span>: <span class="fn">parseInt</span>(process.env.DB_PORT, <span class="num">10</span>) || <span class="num">5432</span>,
+    <span class="prop">name</span>: process.env.DB_NAME,
+    <span class="prop">user</span>: process.env.DB_USER,
+    <span class="prop">password</span>: process.env.DB_PASSWORD || <span class="str">''</span>,
+    <span class="prop">poolMin</span>: <span class="fn">parseInt</span>(process.env.DB_POOL_MIN, <span class="num">10</span>) || <span class="num">2</span>,
+    <span class="prop">poolMax</span>: <span class="fn">parseInt</span>(process.env.DB_POOL_MAX, <span class="num">10</span>) || <span class="num">10</span>
+  },
+
+  <span class="prop">jwt</span>: {
+    <span class="prop">secret</span>: process.env.JWT_SECRET,
+    <span class="prop">expiresIn</span>: process.env.JWT_EXPIRES_IN || <span class="str">'7d'</span>
+  },
+
+  <span class="prop">bcrypt</span>: {
+    <span class="prop">rounds</span>: <span class="fn">parseInt</span>(process.env.BCRYPT_ROUNDS, <span class="num">10</span>) || <span class="num">10</span>
+  },
+
+  <span class="prop">anthropic</span>: {
+    <span class="prop">apiKey</span>: process.env.ANTHROPIC_API_KEY,
+    <span class="prop">model</span>: process.env.ANTHROPIC_MODEL || <span class="str">'claude-sonnet-4-6'</span>,
+    <span class="prop">maxTokens</span>: <span class="fn">parseInt</span>(process.env.ANTHROPIC_MAX_TOKENS, <span class="num">10</span>) || <span class="num">4096</span>
+  },
+
+  <span class="prop">cors</span>: {
+    <span class="prop">origin</span>: (process.env.CORS_ORIGIN || <span class="str">'*'</span>).<span class="fn">split</span>(<span class="str">','</span>)
+  },
+
+  <span class="prop">log</span>: {
+    <span class="prop">level</span>: process.env.LOG_LEVEL || <span class="str">'info'</span>
+  }
+};
+
+module.exports = config;
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ config/index.js yaradıldı"</span></code></pre>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div class="callout-content">
+        <div class="callout-title">Niyə konfiqurasiyanı obyekt kimi saxlayırıq?</div>
+        <div class="callout-body">
+          <p>
+            process.env-dan birbaşa istifadə etmək təhlükəlidir:
+          </p>
+          <ul>
+            <li>Mətn dəyərləri kimi qaytarır (PORT "3001" yox 3001)</li>
+            <li>Default dəyərlər təmin etmir</li>
+            <li>Required sahələri yoxlamır</li>
+            <li>IDE avtomatik tamamlama təklif etmir</li>
+          </ul>
+          <p>Konfiqurasiya obyekti bütün bu problemləri həll edir.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 7 ======================= -->
+  <section id="b7">
+    <h2><span class="num">7</span> Kod strukturu (Core/Domain/Shared)</h2>
+    <p class="lead">
+      Dərs 1-də konseptual olaraq müzakirə etdiyimiz memarlığı indi koda çeviririk.
+      Burada hər qovluğun nə üçün olduğunu qısa-qısa izah edirəm.
+    </p>
+
+    <div class="file-tree">
+<span class="folder">backend/</span>
+├── <span class="file">server.js</span>              <span class="comment"># entry point</span>
+├── <span class="file">package.json</span>
+├── <span class="file">.env</span>
+└── <span class="folder">src/</span>
+    ├── <span class="file">app.js</span>               <span class="comment"># Express app konfiqurasiyası</span>
+    ├── <span class="folder">core/</span>              <span class="comment"># DƏYIŞMƏZ ÖZƏK</span>
+    │   ├── <span class="folder">config/</span>
+    │   │   ├── <span class="file">index.js</span>      <span class="comment"># .env yükləyici</span>
+    │   │   └── <span class="file">database.js</span>   <span class="comment"># pg Pool</span>
+    │   ├── <span class="folder">middleware/</span>
+    │   │   ├── <span class="file">auth.js</span>       <span class="comment"># JWT verifier</span>
+    │   │   ├── <span class="file">errorHandler.js</span>
+    │   │   └── <span class="file">validate.js</span>
+    │   ├── <span class="folder">routes/</span>
+    │   │   └── <span class="file">auth.routes.js</span>
+    │   └── <span class="folder">utils/</span>
+    │       ├── <span class="file">logger.js</span>
+    │       ├── <span class="file">jwt.js</span>
+    │       ├── <span class="file">password.js</span>
+    │       └── <span class="file">dbTest.js</span>
+    ├── <span class="folder">domain/</span>            <span class="comment"># DƏYIŞƏN DOMEN</span>
+    │   └── <span class="folder">construction/</span>
+    │       ├── <span class="file">index.js</span>       <span class="comment"># domain loader</span>
+    │       ├── <span class="folder">routes/</span>
+    │       ├── <span class="folder">controllers/</span>
+    │       └── <span class="folder">services/</span>
+    └── <span class="folder">shared/</span>            <span class="comment"># ORTAQ XIDMƏTLƏR</span>
+        └── <span class="folder">ai/</span>
+            └── <span class="file">claude.js</span>     <span class="comment"># Claude SDK wrapper</span>
+    </div>
+
+    <h3>7.1. Hər qovluğun vəzifəsi</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Qovluq</th><th>Məzmunu</th><th>Dəyişir?</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>core/config/</strong></td>
+            <td>Environment, baza bağlantısı</td>
+            <td>❌ Heç vaxt</td>
+          </tr>
+          <tr>
+            <td><strong>core/middleware/</strong></td>
+            <td>Auth, log, error, validate</td>
+            <td>❌ Heç vaxt</td>
+          </tr>
+          <tr>
+            <td><strong>core/routes/</strong></td>
+            <td>Auth endpoint-ləri (login, register)</td>
+            <td>❌ Nadir</td>
+          </tr>
+          <tr>
+            <td><strong>core/utils/</strong></td>
+            <td>Logger, JWT, password helper-ləri</td>
+            <td>❌ Nadir</td>
+          </tr>
+          <tr>
+            <td><strong>domain/construction/</strong></td>
+            <td>TTİS-ə xas biznes məntiqi</td>
+            <td>✅ Bəli (digər sahələr üçün)</td>
+          </tr>
+          <tr>
+            <td><strong>shared/ai/</strong></td>
+            <td>Claude, OpenAI SDK-ları</td>
+            <td>⚠️ Az-az</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 8 ======================= -->
+  <section id="b8">
+    <h2><span class="num">8</span> PostgreSQL bağlantısı (pg Pool)</h2>
+    <p class="lead">
+      Dərs 2-də yaratdığımız <code class="inline">ttis_db</code> bazasına qoşulaq.
+      Hər dəfə yeni bağlantı açmaq əvəzinə, <strong>bağlantı hovuzu</strong>
+      (connection pool) yaradırıq — 10x sürətli.
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title js">src/core/config/database.js</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; src/core/config/database.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt">// src/core/config/database.js — PostgreSQL Pool</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+
+<span class="kw">const</span> { Pool } = <span class="fn">require</span>(<span class="str">'pg'</span>);
+<span class="kw">const</span> config = <span class="fn">require</span>(<span class="str">'./index'</span>);
+
+<span class="kw">const</span> pool = <span class="kw">new</span> <span class="fn">Pool</span>({
+  <span class="prop">host</span>: config.db.host,
+  <span class="prop">port</span>: config.db.port,
+  <span class="prop">database</span>: config.db.name,
+  <span class="prop">user</span>: config.db.user,
+  <span class="prop">password</span>: config.db.password,
+  <span class="prop">min</span>: config.db.poolMin,
+  <span class="prop">max</span>: config.db.poolMax,
+  <span class="prop">idleTimeoutMillis</span>: <span class="num">30000</span>,
+  <span class="prop">connectionTimeoutMillis</span>: <span class="num">2000</span>
+});
+
+<span class="cmt">// Pool-dan sorğu icra edən köməkçi funksiya</span>
+<span class="kw">const</span> <span class="fn">query</span> = <span class="kw">async</span> (text, params = []) =&gt; {
+  <span class="kw">const</span> start = Date.<span class="fn">now</span>();
+  <span class="kw">try</span> {
+    <span class="kw">const</span> result = <span class="kw">await</span> pool.<span class="fn">query</span>(text, params);
+    <span class="kw">const</span> duration = Date.<span class="fn">now</span>() - start;
+    <span class="kw">if</span> (config.env === <span class="str">'development'</span>) {
+      console.<span class="fn">log</span>(<span class="str">`📊 Query (${duration}ms): ${text.<span class="fn">substring</span>(0, 80)}...`</span>);
+    }
+    <span class="kw">return</span> result;
+  } <span class="kw">catch</span> (err) {
+    console.<span class="fn">error</span>(<span class="str">`❌ DB Error: ${err.message}`</span>);
+    <span class="kw">throw</span> err;
+  }
+};
+
+<span class="cmt">// Tranzaksiya üçün köməkçi</span>
+<span class="kw">const</span> <span class="fn">transaction</span> = <span class="kw">async</span> (callback) =&gt; {
+  <span class="kw">const</span> client = <span class="kw">await</span> pool.<span class="fn">connect</span>();
+  <span class="kw">try</span> {
+    <span class="kw">await</span> client.<span class="fn">query</span>(<span class="str">'BEGIN'</span>);
+    <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">callback</span>(client);
+    <span class="kw">await</span> client.<span class="fn">query</span>(<span class="str">'COMMIT'</span>);
+    <span class="kw">return</span> result;
+  } <span class="kw">catch</span> (err) {
+    <span class="kw">await</span> client.<span class="fn">query</span>(<span class="str">'ROLLBACK'</span>);
+    <span class="kw">throw</span> err;
+  } <span class="kw">finally</span> {
+    client.<span class="fn">release</span>();
+  }
+};
+
+module.exports = { pool, query, transaction };
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ database.js yaradıldı"</span></code></pre>
+    </div>
+
+    <h3>8.1. Baza bağlantısını test edən skript</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title js">src/core/utils/dbTest.js</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; src/core/utils/dbTest.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt">// src/core/utils/dbTest.js — bağlantını və cədvəlləri test edir</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+
+<span class="kw">const</span> { query, pool } = <span class="fn">require</span>(<span class="str">'../config/database'</span>);
+
+<span class="kw">async function</span> <span class="fn">runTest</span>() {
+  console.<span class="fn">log</span>(<span class="str">'🔍 PostgreSQL bağlantısını test edirik...\n'</span>);
+
+  <span class="kw">try</span> {
+    <span class="cmt">// 1. Versiyanı yoxla</span>
+    <span class="kw">const</span> versionResult = <span class="kw">await</span> <span class="fn">query</span>(<span class="str">'SELECT version()'</span>);
+    console.<span class="fn">log</span>(<span class="str">`✅ PostgreSQL: ${versionResult.rows[0].version.<span class="fn">substring</span>(0, 40)}...`</span>);
+
+    <span class="cmt">// 2. Schema sayını yoxla</span>
+    <span class="kw">const</span> schemaResult = <span class="kw">await</span> <span class="fn">query</span>(<span class="str">`
+      SELECT schema_name FROM information_schema.schemata
+      WHERE schema_name IN ('core', 'construction', 'reporting')
+      ORDER BY schema_name
+    `</span>);
+    console.<span class="fn">log</span>(<span class="str">`✅ Schema-lar: ${schemaResult.rows.<span class="fn">map</span>(r =&gt; r.schema_name).<span class="fn">join</span>(', ')}`</span>);
+
+    <span class="cmt">// 3. Cədvəl sayını yoxla</span>
+    <span class="kw">const</span> tableResult = <span class="kw">await</span> <span class="fn">query</span>(<span class="str">`
+      SELECT table_schema, COUNT(*) AS total
+      FROM information_schema.tables
+      WHERE table_schema IN ('core', 'construction', 'reporting')
+      GROUP BY table_schema
+    `</span>);
+    tableResult.rows.<span class="fn">forEach</span>(r =&gt; {
+      console.<span class="fn">log</span>(<span class="str">`   ${r.table_schema}: ${r.total} cədvəl`</span>);
+    });
+
+    <span class="cmt">// 4. Nümunə layihə sorğusu</span>
+    <span class="kw">const</span> projectResult = <span class="kw">await</span> <span class="fn">query</span>(<span class="str">`
+      SELECT COUNT(*) AS total FROM construction.projects
+    `</span>);
+    console.<span class="fn">log</span>(<span class="str">`✅ Layihə sayı: ${projectResult.rows[0].total}`</span>);
+
+    console.<span class="fn">log</span>(<span class="str">'\n🎉 Bağlantı uğurludur!'</span>);
+  } <span class="kw">catch</span> (err) {
+    console.<span class="fn">error</span>(<span class="str">`\n❌ Xəta: ${err.message}`</span>);
+    process.<span class="fn">exit</span>(<span class="num">1</span>);
+  } <span class="kw">finally</span> {
+    <span class="kw">await</span> pool.<span class="fn">end</span>();
+  }
+}
+
+<span class="fn">runTest</span>();
+<span class="str">EOF</span>
+
+<span class="cmt"># Test edək</span>
+node src/core/utils/dbTest.js</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">🔍 PostgreSQL bağlantısını test edirik...
+
+📊 Query (5ms): SELECT version()...
+<span class="out-success">✅ PostgreSQL: PostgreSQL 17.2 on x86_64-apple-darwin2...</span>
+📊 Query (3ms): SELECT schema_name FROM information_schema.sche...
+<span class="out-success">✅ Schema-lar: construction, core, reporting</span>
+📊 Query (2ms): SELECT table_schema, COUNT(*) AS total...
+   construction: 17 cədvəl
+   core: 5 cədvəl
+📊 Query (2ms): SELECT COUNT(*) AS total FROM construction.proj...
+<span class="out-success">✅ Layihə sayı: 1</span>
+
+<span class="out-success">🎉 Bağlantı uğurludur!</span></pre>
+    </div>
+
+    <div class="callout success">
+      <span class="callout-icon">✓</span>
+      <div class="callout-content">
+        <div class="callout-title">Node.js və PostgreSQL "danışır"!</div>
+        <div class="callout-body">
+          <p>
+            Bu — backend inkişafında ən vacib addımdır. Dərs 2-də yaratdığımız
+            cədvəllər indi Node.js-dən görünür. Artıq real API qura bilərik.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 9 ======================= -->
+  <section id="b9">
+    <h2><span class="num">9</span> Logger sistemi</h2>
+    <p class="lead">
+      <code class="inline">console.log</code> debug üçün yaxşıdır, amma production-da
+      işləməz. Strukturlaşdırılmış log — xətaların tapılmasını asanlaşdırır.
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title js">src/core/utils/logger.js</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; src/core/utils/logger.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt">// src/core/utils/logger.js — Winston əsaslı logger</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+
+<span class="kw">const</span> winston = <span class="fn">require</span>(<span class="str">'winston'</span>);
+<span class="kw">const</span> config = <span class="fn">require</span>(<span class="str">'../config'</span>);
+
+<span class="kw">const</span> { combine, timestamp, printf, colorize, errors } = winston.format;
+
+<span class="cmt">// Konsola yazılacaq format</span>
+<span class="kw">const</span> consoleFormat = <span class="fn">combine</span>(
+  <span class="fn">colorize</span>({ <span class="prop">all</span>: <span class="kw">true</span> }),
+  <span class="fn">timestamp</span>({ <span class="prop">format</span>: <span class="str">'HH:mm:ss'</span> }),
+  <span class="fn">errors</span>({ <span class="prop">stack</span>: <span class="kw">true</span> }),
+  <span class="fn">printf</span>(({ timestamp, level, message, ...meta }) =&gt; {
+    <span class="kw">const</span> metaStr = Object.<span class="fn">keys</span>(meta).length ? <span class="str">` ${JSON.<span class="fn">stringify</span>(meta)}`</span> : <span class="str">''</span>;
+    <span class="kw">return</span> <span class="str">`${timestamp} ${level}: ${message}${metaStr}`</span>;
+  })
+);
+
+<span class="kw">const</span> logger = winston.<span class="fn">createLogger</span>({
+  <span class="prop">level</span>: config.log.level,
+  <span class="prop">transports</span>: [
+    <span class="kw">new</span> winston.transports.<span class="fn">Console</span>({ <span class="prop">format</span>: consoleFormat })
+  ]
+});
+
+<span class="cmt">// Production-da fayla yazırıq</span>
+<span class="kw">if</span> (config.isProduction) {
+  logger.<span class="fn">add</span>(<span class="kw">new</span> winston.transports.<span class="fn">File</span>({
+    <span class="prop">filename</span>: <span class="str">'logs/error.log'</span>,
+    <span class="prop">level</span>: <span class="str">'error'</span>
+  }));
+  logger.<span class="fn">add</span>(<span class="kw">new</span> winston.transports.<span class="fn">File</span>({
+    <span class="prop">filename</span>: <span class="str">'logs/combined.log'</span>
+  }));
+}
+
+module.exports = logger;
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ logger.js yaradıldı"</span></code></pre>
+    </div>
+
+    <h3>9.1. Log səviyyələri</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Səviyyə</th><th>Nə vaxt istifadə olunur?</th><th>Nümunə</th></tr></thead>
+        <tbody>
+          <tr><td><code class="inline">error</code></td><td>Sistem xətaları, crash</td><td>DB bağlantı itkisi</td></tr>
+          <tr><td><code class="inline">warn</code></td><td>Diqqət yetirilməli hallar</td><td>Tez-tez uğursuz login cəhdi</td></tr>
+          <tr><td><code class="inline">info</code></td><td>Normal iş axını</td><td>"User X login oldu"</td></tr>
+          <tr><td><code class="inline">debug</code></td><td>Debug məlumatları</td><td>SQL sorğu detalları</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 10 ======================= -->
+  <section id="b10">
+    <h2><span class="num">10</span> Middleware zənciri</h2>
+    <p class="lead">
+      Middleware — sorğu endpoint-ə çatmadan əvvəl keçdiyi "süzgəclərdir". Hər biri
+      sorğuya nəyisə əlavə edir, yoxlayır, ya da imtina edir.
+    </p>
+
+    <h3>10.1. Xəta tutan middleware</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title js">src/core/middleware/errorHandler.js</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; src/core/middleware/errorHandler.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt">// Global error handler middleware</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+
+<span class="kw">const</span> logger = <span class="fn">require</span>(<span class="str">'../utils/logger'</span>);
+<span class="kw">const</span> config = <span class="fn">require</span>(<span class="str">'../config'</span>);
+
+<span class="cmt">// 404 Not Found</span>
+<span class="kw">const</span> <span class="fn">notFound</span> = (req, res, next) =&gt; {
+  res.<span class="fn">status</span>(<span class="num">404</span>).<span class="fn">json</span>({
+    <span class="prop">error</span>: <span class="str">'Not Found'</span>,
+    <span class="prop">message</span>: <span class="str">`${req.method} ${req.originalUrl} tapılmadı`</span>
+  });
+};
+
+<span class="cmt">// Global xəta tutucu</span>
+<span class="kw">const</span> <span class="fn">errorHandler</span> = (err, req, res, next) =&gt; {
+  <span class="kw">const</span> statusCode = err.statusCode || <span class="num">500</span>;
+  logger.<span class="fn">error</span>(<span class="str">`${req.method} ${req.path} — ${err.message}`</span>, {
+    <span class="prop">stack</span>: err.stack,
+    <span class="prop">body</span>: req.body,
+    <span class="prop">userId</span>: req.user?.id
+  });
+
+  res.<span class="fn">status</span>(statusCode).<span class="fn">json</span>({
+    <span class="prop">error</span>: err.name || <span class="str">'Error'</span>,
+    <span class="prop">message</span>: err.message,
+    <span class="prop">...</span>(config.isProduction ? {} : { <span class="prop">stack</span>: err.stack })
+  });
+};
+
+<span class="cmt">// Custom xəta sinfi</span>
+<span class="kw">class</span> <span class="fn">ApiError</span> <span class="kw">extends</span> Error {
+  <span class="fn">constructor</span>(statusCode, message) {
+    <span class="fn">super</span>(message);
+    <span class="kw">this</span>.statusCode = statusCode;
+    <span class="kw">this</span>.name = <span class="str">'ApiError'</span>;
+  }
+}
+
+module.exports = { notFound, errorHandler, ApiError };
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ errorHandler.js yaradıldı"</span></code></pre>
+    </div>
+
+    <h3>10.2. Validate middleware</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title js">src/core/middleware/validate.js</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; src/core/middleware/validate.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt">// Joi schema-sını istifadə edərək body/query/params-i yoxlayır</span>
+
+<span class="kw">const</span> <span class="fn">validate</span> = (schema, source = <span class="str">'body'</span>) =&gt; (req, res, next) =&gt; {
+  <span class="kw">const</span> { error, value } = schema.<span class="fn">validate</span>(req[source], {
+    <span class="prop">abortEarly</span>: <span class="kw">false</span>,
+    <span class="prop">stripUnknown</span>: <span class="kw">true</span>
+  });
+
+  <span class="kw">if</span> (error) {
+    <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">400</span>).<span class="fn">json</span>({
+      <span class="prop">error</span>: <span class="str">'Validation Error'</span>,
+      <span class="prop">details</span>: error.details.<span class="fn">map</span>(d =&gt; ({
+        <span class="prop">field</span>: d.path.<span class="fn">join</span>(<span class="str">'.'</span>),
+        <span class="prop">message</span>: d.message
+      }))
+    });
+  }
+
+  req[source] = value;
+  <span class="fn">next</span>();
+};
+
+module.exports = validate;
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ validate.js yaradıldı"</span></code></pre>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 11 ======================= -->
+  <section id="b11">
+    <h2><span class="num">11</span> Parol şifrələmə (bcrypt)</h2>
+    <p class="lead">
+      Parolu düz mətn kimi saxlamaq ən böyük təhlükəsizlik cinayətdir. bcrypt —
+      parolu geriyə dönməz şəkildə şifrələyən standart alqoritmdir.
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title js">src/core/utils/password.js</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; src/core/utils/password.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt">// Password hash və verify funksiyaları</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+
+<span class="kw">const</span> bcrypt = <span class="fn">require</span>(<span class="str">'bcrypt'</span>);
+<span class="kw">const</span> config = <span class="fn">require</span>(<span class="str">'../config'</span>);
+
+<span class="kw">const</span> <span class="fn">hash</span> = <span class="kw">async</span> (plainPassword) =&gt; {
+  <span class="kw">return</span> <span class="kw">await</span> bcrypt.<span class="fn">hash</span>(plainPassword, config.bcrypt.rounds);
+};
+
+<span class="kw">const</span> <span class="fn">verify</span> = <span class="kw">async</span> (plainPassword, hashedPassword) =&gt; {
+  <span class="kw">return</span> <span class="kw">await</span> bcrypt.<span class="fn">compare</span>(plainPassword, hashedPassword);
+};
+
+module.exports = { hash, verify };
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ password.js yaradıldı"</span></code></pre>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">i</span>
+      <div class="callout-content">
+        <div class="callout-title">Nə üçün "rounds"?</div>
+        <div class="callout-body">
+          <p>
+            Rounds = hash generasiyasının təkrar sayıdır. Artdıqca hash daha təhlükəsiz,
+            amma daha yavaş olur. <strong>10</strong> — balansı olan standart dəyər
+            (təxminən 100ms). 12 — daha yüksək təhlükəsizlik (400ms). 15+ — superyüksək
+            təhlükəsizlik, amma kütləvi brute-force-a qarşı.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 12 ======================= -->
+  <section id="b12">
+    <h2><span class="num">12</span> JWT autentifikasiya</h2>
+    <p class="lead">
+      JWT (JSON Web Token) — stateless autentifikasiya mexanizmidir. Server session
+      saxlamır; sadəcə hər sorğu ilə gələn tokenin imzasını yoxlayır.
+    </p>
+
+    <h3>12.1. JWT yaradıcı və yoxlayıcı</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title js">src/core/utils/jwt.js</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; src/core/utils/jwt.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt">// JWT token generasiyası və yoxlaması</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+
+<span class="kw">const</span> jwt = <span class="fn">require</span>(<span class="str">'jsonwebtoken'</span>);
+<span class="kw">const</span> config = <span class="fn">require</span>(<span class="str">'../config'</span>);
+
+<span class="kw">const</span> <span class="fn">sign</span> = (payload) =&gt; {
+  <span class="kw">return</span> jwt.<span class="fn">sign</span>(payload, config.jwt.secret, {
+    <span class="prop">expiresIn</span>: config.jwt.expiresIn
+  });
+};
+
+<span class="kw">const</span> <span class="fn">verify</span> = (token) =&gt; {
+  <span class="kw">return</span> jwt.<span class="fn">verify</span>(token, config.jwt.secret);
+};
+
+module.exports = { sign, verify };
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ jwt.js yaradıldı"</span></code></pre>
+    </div>
+
+    <h3>12.2. Auth middleware</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title js">src/core/middleware/auth.js</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; src/core/middleware/auth.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt">// Authentication middleware — JWT tokeni yoxlayır</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+
+<span class="kw">const</span> { verify } = <span class="fn">require</span>(<span class="str">'../utils/jwt'</span>);
+<span class="kw">const</span> { query } = <span class="fn">require</span>(<span class="str">'../config/database'</span>);
+<span class="kw">const</span> { ApiError } = <span class="fn">require</span>(<span class="str">'./errorHandler'</span>);
+
+<span class="kw">const</span> <span class="fn">authenticate</span> = <span class="kw">async</span> (req, res, next) =&gt; {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> authHeader = req.headers.authorization;
+
+    <span class="kw">if</span> (!authHeader || !authHeader.<span class="fn">startsWith</span>(<span class="str">'Bearer '</span>)) {
+      <span class="kw">throw</span> <span class="kw">new</span> <span class="fn">ApiError</span>(<span class="num">401</span>, <span class="str">'Token təqdim edilməyib'</span>);
+    }
+
+    <span class="kw">const</span> token = authHeader.<span class="fn">split</span>(<span class="str">' '</span>)[<span class="num">1</span>];
+    <span class="kw">const</span> decoded = <span class="fn">verify</span>(token);
+
+    <span class="cmt">// İstifadəçini DB-dən oxu</span>
+    <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">query</span>(<span class="str">`
+      SELECT u.id, u.full_name, u.email, u.role_id, r.code AS role_code
+      FROM core.users u
+      LEFT JOIN core.roles r ON u.role_id = r.id
+      WHERE u.id = $1 AND u.is_active = true
+    `</span>, [decoded.userId]);
+
+    <span class="kw">if</span> (result.rows.length === <span class="num">0</span>) {
+      <span class="kw">throw</span> <span class="kw">new</span> <span class="fn">ApiError</span>(<span class="num">401</span>, <span class="str">'İstifadəçi tapılmadı və ya aktiv deyil'</span>);
+    }
+
+    req.user = result.rows[<span class="num">0</span>];
+    <span class="fn">next</span>();
+  } <span class="kw">catch</span> (err) {
+    <span class="kw">if</span> (err.name === <span class="str">'TokenExpiredError'</span>) {
+      <span class="kw">return</span> <span class="fn">next</span>(<span class="kw">new</span> <span class="fn">ApiError</span>(<span class="num">401</span>, <span class="str">'Tokenin vaxtı bitib'</span>));
+    }
+    <span class="kw">if</span> (err.name === <span class="str">'JsonWebTokenError'</span>) {
+      <span class="kw">return</span> <span class="fn">next</span>(<span class="kw">new</span> <span class="fn">ApiError</span>(<span class="num">401</span>, <span class="str">'Yanlış token'</span>));
+    }
+    <span class="fn">next</span>(err);
+  }
+};
+
+<span class="cmt">// Rolə görə icazə yoxlayır</span>
+<span class="kw">const</span> <span class="fn">authorize</span> = (...allowedRoles) =&gt; (req, res, next) =&gt; {
+  <span class="kw">if</span> (!req.user) <span class="kw">return</span> <span class="fn">next</span>(<span class="kw">new</span> <span class="fn">ApiError</span>(<span class="num">401</span>, <span class="str">'Login olmayıb'</span>));
+  <span class="kw">if</span> (!allowedRoles.<span class="fn">includes</span>(req.user.role_code)) {
+    <span class="kw">return</span> <span class="fn">next</span>(<span class="kw">new</span> <span class="fn">ApiError</span>(<span class="num">403</span>, <span class="str">'İcazə yoxdur'</span>));
+  }
+  <span class="fn">next</span>();
+};
+
+module.exports = { authenticate, authorize };
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ auth middleware yaradıldı"</span></code></pre>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 13 ======================= -->
+  <section id="b13">
+    <h2><span class="num">13</span> Auth endpoint-ləri</h2>
+    <p class="lead">
+      İndi istifadəçinin qeydiyyatdan keçməsini və login olmasını təmin edən
+      endpoint-ləri yazırıq. Bu — bütün TTİS sisteminin "giriş qapısıdır".
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title js">src/core/routes/auth.routes.js</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; src/core/routes/auth.routes.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt">// Authentication endpoints — register, login, me</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+
+<span class="kw">const</span> express = <span class="fn">require</span>(<span class="str">'express'</span>);
+<span class="kw">const</span> Joi = <span class="fn">require</span>(<span class="str">'joi'</span>);
+<span class="kw">const</span> router = express.<span class="fn">Router</span>();
+
+<span class="kw">const</span> { query } = <span class="fn">require</span>(<span class="str">'../config/database'</span>);
+<span class="kw">const</span> { hash, verify } = <span class="fn">require</span>(<span class="str">'../utils/password'</span>);
+<span class="kw">const</span> { sign } = <span class="fn">require</span>(<span class="str">'../utils/jwt'</span>);
+<span class="kw">const</span> { authenticate } = <span class="fn">require</span>(<span class="str">'../middleware/auth'</span>);
+<span class="kw">const</span> validate = <span class="fn">require</span>(<span class="str">'../middleware/validate'</span>);
+<span class="kw">const</span> { ApiError } = <span class="fn">require</span>(<span class="str">'../middleware/errorHandler'</span>);
+
+<span class="cmt">// ═══ Validation sxemləri ═══</span>
+<span class="kw">const</span> registerSchema = Joi.<span class="fn">object</span>({
+  <span class="prop">full_name</span>: Joi.<span class="fn">string</span>().<span class="fn">min</span>(<span class="num">3</span>).<span class="fn">max</span>(<span class="num">200</span>).<span class="fn">required</span>(),
+  <span class="prop">email</span>: Joi.<span class="fn">string</span>().<span class="fn">email</span>().<span class="fn">required</span>(),
+  <span class="prop">phone</span>: Joi.<span class="fn">string</span>().<span class="fn">pattern</span>(/<span class="str">^\+?[0-9]{8,15}$</span>/).<span class="fn">optional</span>(),
+  <span class="prop">password</span>: Joi.<span class="fn">string</span>().<span class="fn">min</span>(<span class="num">8</span>).<span class="fn">required</span>(),
+  <span class="prop">role_code</span>: Joi.<span class="fn">string</span>().<span class="fn">valid</span>(<span class="str">'manager'</span>, <span class="str">'inspector'</span>, <span class="str">'viewer'</span>).<span class="fn">default</span>(<span class="str">'viewer'</span>)
+});
+
+<span class="kw">const</span> loginSchema = Joi.<span class="fn">object</span>({
+  <span class="prop">email</span>: Joi.<span class="fn">string</span>().<span class="fn">email</span>().<span class="fn">required</span>(),
+  <span class="prop">password</span>: Joi.<span class="fn">string</span>().<span class="fn">required</span>()
+});
+
+<span class="cmt">// ═══ POST /auth/register ═══</span>
+router.<span class="fn">post</span>(<span class="str">'/register'</span>, <span class="fn">validate</span>(registerSchema), <span class="kw">async</span> (req, res, next) =&gt; {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> { full_name, email, phone, password, role_code } = req.body;
+
+    <span class="cmt">// Email unikallığını yoxla</span>
+    <span class="kw">const</span> existing = <span class="kw">await</span> <span class="fn">query</span>(<span class="str">'SELECT id FROM core.users WHERE email = $1'</span>, [email]);
+    <span class="kw">if</span> (existing.rows.length &gt; <span class="num">0</span>) {
+      <span class="kw">throw</span> <span class="kw">new</span> <span class="fn">ApiError</span>(<span class="num">409</span>, <span class="str">'Bu email artıq qeydiyyatdan keçib'</span>);
+    }
+
+    <span class="cmt">// Rolun id-sini tap</span>
+    <span class="kw">const</span> roleResult = <span class="kw">await</span> <span class="fn">query</span>(<span class="str">'SELECT id FROM core.roles WHERE code = $1'</span>, [role_code]);
+    <span class="kw">if</span> (roleResult.rows.length === <span class="num">0</span>) {
+      <span class="kw">throw</span> <span class="kw">new</span> <span class="fn">ApiError</span>(<span class="num">400</span>, <span class="str">'Rol tapılmadı'</span>);
+    }
+
+    <span class="cmt">// Parolu hash et</span>
+    <span class="kw">const</span> passwordHash = <span class="kw">await</span> <span class="fn">hash</span>(password);
+
+    <span class="cmt">// Yeni istifadəçi yarat</span>
+    <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">query</span>(<span class="str">`
+      INSERT INTO core.users (full_name, email, phone, password_hash, role_id)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id, full_name, email, role_id, created_at
+    `</span>, [full_name, email, phone, passwordHash, roleResult.rows[<span class="num">0</span>].id]);
+
+    <span class="kw">const</span> user = result.rows[<span class="num">0</span>];
+    <span class="kw">const</span> token = <span class="fn">sign</span>({ <span class="prop">userId</span>: user.id });
+
+    res.<span class="fn">status</span>(<span class="num">201</span>).<span class="fn">json</span>({ <span class="prop">user</span>, <span class="prop">token</span> });
+  } <span class="kw">catch</span> (err) { <span class="fn">next</span>(err); }
+});
+
+<span class="cmt">// ═══ POST /auth/login ═══</span>
+router.<span class="fn">post</span>(<span class="str">'/login'</span>, <span class="fn">validate</span>(loginSchema), <span class="kw">async</span> (req, res, next) =&gt; {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> { email, password } = req.body;
+
+    <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">query</span>(<span class="str">`
+      SELECT u.id, u.full_name, u.email, u.password_hash, u.is_active, r.code AS role_code
+      FROM core.users u
+      LEFT JOIN core.roles r ON u.role_id = r.id
+      WHERE u.email = $1
+    `</span>, [email]);
+
+    <span class="kw">if</span> (result.rows.length === <span class="num">0</span>) {
+      <span class="kw">throw</span> <span class="kw">new</span> <span class="fn">ApiError</span>(<span class="num">401</span>, <span class="str">'Email və ya şifrə yanlışdır'</span>);
+    }
+
+    <span class="kw">const</span> user = result.rows[<span class="num">0</span>];
+    <span class="kw">if</span> (!user.is_active) {
+      <span class="kw">throw</span> <span class="kw">new</span> <span class="fn">ApiError</span>(<span class="num">403</span>, <span class="str">'Hesab bloklanıb'</span>);
+    }
+
+    <span class="kw">const</span> isValid = <span class="kw">await</span> <span class="fn">verify</span>(password, user.password_hash);
+    <span class="kw">if</span> (!isValid) {
+      <span class="kw">throw</span> <span class="kw">new</span> <span class="fn">ApiError</span>(<span class="num">401</span>, <span class="str">'Email və ya şifrə yanlışdır'</span>);
+    }
+
+    <span class="cmt">// last_login_at yenilə</span>
+    <span class="kw">await</span> <span class="fn">query</span>(<span class="str">'UPDATE core.users SET last_login_at = NOW() WHERE id = $1'</span>, [user.id]);
+
+    <span class="kw">const</span> token = <span class="fn">sign</span>({ <span class="prop">userId</span>: user.id });
+
+    res.<span class="fn">json</span>({
+      <span class="prop">user</span>: {
+        <span class="prop">id</span>: user.id,
+        <span class="prop">full_name</span>: user.full_name,
+        <span class="prop">email</span>: user.email,
+        <span class="prop">role_code</span>: user.role_code
+      },
+      <span class="prop">token</span>
+    });
+  } <span class="kw">catch</span> (err) { <span class="fn">next</span>(err); }
+});
+
+<span class="cmt">// ═══ GET /auth/me — cari istifadəçi ═══</span>
+router.<span class="fn">get</span>(<span class="str">'/me'</span>, authenticate, (req, res) =&gt; {
+  res.<span class="fn">json</span>({ <span class="prop">user</span>: req.user });
+});
+
+module.exports = router;
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ auth.routes.js yaradıldı"</span></code></pre>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 14 ======================= -->
+  <section id="b14">
+    <h2><span class="num">14</span> app.js — Express tətbiqini quraq</h2>
+    <p class="lead">
+      Bütün parçaları bir yerə yığırıq: middleware-lər, route-lar, error handler.
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title js">src/app.js</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; src/app.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt">// src/app.js — Express tətbiqi</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+
+<span class="kw">const</span> express = <span class="fn">require</span>(<span class="str">'express'</span>);
+<span class="kw">const</span> cors = <span class="fn">require</span>(<span class="str">'cors'</span>);
+<span class="kw">const</span> helmet = <span class="fn">require</span>(<span class="str">'helmet'</span>);
+<span class="kw">const</span> morgan = <span class="fn">require</span>(<span class="str">'morgan'</span>);
+
+<span class="kw">const</span> config = <span class="fn">require</span>(<span class="str">'./core/config'</span>);
+<span class="kw">const</span> logger = <span class="fn">require</span>(<span class="str">'./core/utils/logger'</span>);
+<span class="kw">const</span> { notFound, errorHandler } = <span class="fn">require</span>(<span class="str">'./core/middleware/errorHandler'</span>);
+
+<span class="kw">const</span> authRoutes = <span class="fn">require</span>(<span class="str">'./core/routes/auth.routes'</span>);
+
+<span class="kw">const</span> app = <span class="fn">express</span>();
+
+<span class="cmt">// ═══ Təhlükəsizlik middleware-ləri ═══</span>
+app.<span class="fn">use</span>(<span class="fn">helmet</span>());
+app.<span class="fn">use</span>(<span class="fn">cors</span>({
+  <span class="prop">origin</span>: config.cors.origin,
+  <span class="prop">credentials</span>: <span class="kw">true</span>
+}));
+
+<span class="cmt">// ═══ Body parser ═══</span>
+app.<span class="fn">use</span>(express.<span class="fn">json</span>({ <span class="prop">limit</span>: <span class="str">'10mb'</span> }));
+app.<span class="fn">use</span>(express.<span class="fn">urlencoded</span>({ <span class="prop">extended</span>: <span class="kw">true</span> }));
+
+<span class="cmt">// ═══ HTTP log ═══</span>
+app.<span class="fn">use</span>(<span class="fn">morgan</span>(config.isProduction ? <span class="str">'combined'</span> : <span class="str">'dev'</span>, {
+  <span class="prop">stream</span>: { <span class="prop">write</span>: (msg) =&gt; logger.<span class="fn">info</span>(msg.<span class="fn">trim</span>()) }
+}));
+
+<span class="cmt">// ═══ Health check ═══</span>
+app.<span class="fn">get</span>(<span class="str">'/health'</span>, (req, res) =&gt; {
+  res.<span class="fn">json</span>({
+    <span class="prop">status</span>: <span class="str">'ok'</span>,
+    <span class="prop">app</span>: config.app.name,
+    <span class="prop">version</span>: config.app.version,
+    <span class="prop">env</span>: config.env,
+    <span class="prop">domain</span>: config.domain,
+    <span class="prop">uptime</span>: process.<span class="fn">uptime</span>(),
+    <span class="prop">timestamp</span>: <span class="kw">new</span> <span class="fn">Date</span>().<span class="fn">toISOString</span>()
+  });
+});
+
+<span class="cmt">// ═══ Core route-ları ═══</span>
+app.<span class="fn">use</span>(<span class="str">`${config.server.apiPrefix}/auth`</span>, authRoutes);
+
+<span class="cmt">// ═══ Domain route-ları dinamik yüklənir ═══</span>
+<span class="kw">try</span> {
+  <span class="kw">const</span> domainRoutes = <span class="fn">require</span>(<span class="str">`./domain/${config.domain}`</span>);
+  app.<span class="fn">use</span>(<span class="str">`${config.server.apiPrefix}/${config.domain}`</span>, domainRoutes);
+  logger.<span class="fn">info</span>(<span class="str">`🔌 Domain yükləndi: ${config.domain}`</span>);
+} <span class="kw">catch</span> (err) {
+  logger.<span class="fn">warn</span>(<span class="str">`⚠️  Domain yüklənə bilmədi: ${config.domain} — ${err.message}`</span>);
+}
+
+<span class="cmt">// ═══ 404 və error handler (ən sonda olmalıdır!) ═══</span>
+app.<span class="fn">use</span>(notFound);
+app.<span class="fn">use</span>(errorHandler);
+
+module.exports = app;
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ app.js yaradıldı"</span></code></pre>
+    </div>
+
+    <h3>14.1. server.js-i yeniləyək</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title js">server.js (final versiya)</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; server.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt">// server.js — entry point</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+
+<span class="kw">const</span> app = <span class="fn">require</span>(<span class="str">'./src/app'</span>);
+<span class="kw">const</span> config = <span class="fn">require</span>(<span class="str">'./src/core/config'</span>);
+<span class="kw">const</span> logger = <span class="fn">require</span>(<span class="str">'./src/core/utils/logger'</span>);
+
+<span class="kw">const</span> server = app.<span class="fn">listen</span>(config.server.port, config.server.host, () =&gt; {
+  logger.<span class="fn">info</span>(<span class="str">`🚀 ${config.app.name} v${config.app.version}`</span>);
+  logger.<span class="fn">info</span>(<span class="str">`🌐 http://${config.server.host}:${config.server.port}`</span>);
+  logger.<span class="fn">info</span>(<span class="str">`🔧 Environment: ${config.env}`</span>);
+  logger.<span class="fn">info</span>(<span class="str">`📦 Domain: ${config.domain}`</span>);
+});
+
+<span class="cmt">// Graceful shutdown</span>
+<span class="kw">const</span> <span class="fn">shutdown</span> = (signal) =&gt; {
+  logger.<span class="fn">info</span>(<span class="str">`${signal} alındı, server dayandırılır...`</span>);
+  server.<span class="fn">close</span>(() =&gt; {
+    logger.<span class="fn">info</span>(<span class="str">'✅ Server dayandırıldı'</span>);
+    process.<span class="fn">exit</span>(<span class="num">0</span>);
+  });
+};
+
+process.<span class="fn">on</span>(<span class="str">'SIGTERM'</span>, () =&gt; <span class="fn">shutdown</span>(<span class="str">'SIGTERM'</span>));
+process.<span class="fn">on</span>(<span class="str">'SIGINT'</span>, () =&gt; <span class="fn">shutdown</span>(<span class="str">'SIGINT'</span>));
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ server.js yenilənd ı"</span></code></pre>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 15 ======================= -->
+  <section id="b15">
+    <h2><span class="num">15</span> Projects CRUD API</h2>
+    <p class="lead">
+      Construction domeni üçün ilk CRUD endpoint-ləri — layihələr (projects).
+      Controller + Service + Routes üç qatlı memarlıq tətbiq edirik.
+    </p>
+
+    <h3>15.1. Service qatı — SQL sorğuları</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title js">src/domain/construction/services/projects.service.js</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; src/domain/construction/services/projects.service.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt">// projects.service.js — layihələr üçün SQL əməliyyatları</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+
+<span class="kw">const</span> { query } = <span class="fn">require</span>(<span class="str">'../../../core/config/database'</span>);
+
+<span class="kw">const</span> <span class="fn">findAll</span> = <span class="kw">async</span> (filters = {}) =&gt; {
+  <span class="kw">const</span> { status, limit = <span class="num">50</span>, offset = <span class="num">0</span> } = filters;
+  <span class="kw">let</span> sql = <span class="str">'SELECT * FROM reporting.v_project_summary WHERE 1=1'</span>;
+  <span class="kw">const</span> params = [];
+
+  <span class="kw">if</span> (status) {
+    params.<span class="fn">push</span>(status);
+    sql += <span class="str">` AND status = $${params.length}`</span>;
+  }
+
+  params.<span class="fn">push</span>(limit);
+  params.<span class="fn">push</span>(offset);
+  sql += <span class="str">` ORDER BY id DESC LIMIT $${params.length - 1} OFFSET $${params.length}`</span>;
+
+  <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">query</span>(sql, params);
+  <span class="kw">return</span> result.rows;
+};
+
+<span class="kw">const</span> <span class="fn">findById</span> = <span class="kw">async</span> (id) =&gt; {
+  <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">query</span>(
+    <span class="str">'SELECT * FROM reporting.v_project_summary WHERE id = $1'</span>,
+    [id]
+  );
+  <span class="kw">return</span> result.rows[<span class="num">0</span>] || <span class="kw">null</span>;
+};
+
+<span class="kw">const</span> <span class="fn">create</span> = <span class="kw">async</span> (data, userId) =&gt; {
+  <span class="kw">const</span> {
+    project_code, object_id, manager_id, name, description,
+    project_type, start_date_planned, end_date_planned, total_budget_planned
+  } = data;
+
+  <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">query</span>(<span class="str">`
+    INSERT INTO construction.projects
+      (project_code, object_id, manager_id, name, description,
+       project_type, start_date_planned, end_date_planned,
+       total_budget_planned, created_by)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    RETURNING *
+  `</span>, [project_code, object_id, manager_id, name, description,
+      project_type, start_date_planned, end_date_planned,
+      total_budget_planned, userId]);
+
+  <span class="kw">return</span> result.rows[<span class="num">0</span>];
+};
+
+<span class="kw">const</span> <span class="fn">update</span> = <span class="kw">async</span> (id, data) =&gt; {
+  <span class="kw">const</span> fields = [];
+  <span class="kw">const</span> values = [];
+  <span class="kw">let</span> idx = <span class="num">1</span>;
+
+  <span class="kw">for</span> (<span class="kw">const</span> [key, value] <span class="kw">of</span> Object.<span class="fn">entries</span>(data)) {
+    fields.<span class="fn">push</span>(<span class="str">`${key} = $${idx++}`</span>);
+    values.<span class="fn">push</span>(value);
+  }
+  values.<span class="fn">push</span>(id);
+
+  <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">query</span>(<span class="str">`
+    UPDATE construction.projects
+    SET ${fields.<span class="fn">join</span>(<span class="str">', '</span>)}
+    WHERE id = $${idx}
+    RETURNING *
+  `</span>, values);
+
+  <span class="kw">return</span> result.rows[<span class="num">0</span>];
+};
+
+<span class="kw">const</span> <span class="fn">remove</span> = <span class="kw">async</span> (id) =&gt; {
+  <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">query</span>(
+    <span class="str">'DELETE FROM construction.projects WHERE id = $1 RETURNING id'</span>,
+    [id]
+  );
+  <span class="kw">return</span> result.rows[<span class="num">0</span>];
+};
+
+module.exports = { findAll, findById, create, update, remove };
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ projects.service.js yaradıldı"</span></code></pre>
+    </div>
+
+    <h3>15.2. Controller qatı — sorğu/cavab idarəsi</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title js">src/domain/construction/controllers/projects.controller.js</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; src/domain/construction/controllers/projects.controller.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">const</span> service = <span class="fn">require</span>(<span class="str">'../services/projects.service'</span>);
+<span class="kw">const</span> { ApiError } = <span class="fn">require</span>(<span class="str">'../../../core/middleware/errorHandler'</span>);
+
+<span class="kw">const</span> <span class="fn">list</span> = <span class="kw">async</span> (req, res, next) =&gt; {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> projects = <span class="kw">await</span> service.<span class="fn">findAll</span>(req.query);
+    res.<span class="fn">json</span>({ <span class="prop">data</span>: projects, <span class="prop">count</span>: projects.length });
+  } <span class="kw">catch</span> (err) { <span class="fn">next</span>(err); }
+};
+
+<span class="kw">const</span> <span class="fn">get</span> = <span class="kw">async</span> (req, res, next) =&gt; {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> project = <span class="kw">await</span> service.<span class="fn">findById</span>(req.params.id);
+    <span class="kw">if</span> (!project) <span class="kw">throw</span> <span class="kw">new</span> <span class="fn">ApiError</span>(<span class="num">404</span>, <span class="str">'Layihə tapılmadı'</span>);
+    res.<span class="fn">json</span>({ <span class="prop">data</span>: project });
+  } <span class="kw">catch</span> (err) { <span class="fn">next</span>(err); }
+};
+
+<span class="kw">const</span> <span class="fn">create</span> = <span class="kw">async</span> (req, res, next) =&gt; {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> project = <span class="kw">await</span> service.<span class="fn">create</span>(req.body, req.user.id);
+    res.<span class="fn">status</span>(<span class="num">201</span>).<span class="fn">json</span>({ <span class="prop">data</span>: project });
+  } <span class="kw">catch</span> (err) { <span class="fn">next</span>(err); }
+};
+
+<span class="kw">const</span> <span class="fn">update</span> = <span class="kw">async</span> (req, res, next) =&gt; {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> project = <span class="kw">await</span> service.<span class="fn">update</span>(req.params.id, req.body);
+    <span class="kw">if</span> (!project) <span class="kw">throw</span> <span class="kw">new</span> <span class="fn">ApiError</span>(<span class="num">404</span>, <span class="str">'Layihə tapılmadı'</span>);
+    res.<span class="fn">json</span>({ <span class="prop">data</span>: project });
+  } <span class="kw">catch</span> (err) { <span class="fn">next</span>(err); }
+};
+
+<span class="kw">const</span> <span class="fn">remove</span> = <span class="kw">async</span> (req, res, next) =&gt; {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> deleted = <span class="kw">await</span> service.<span class="fn">remove</span>(req.params.id);
+    <span class="kw">if</span> (!deleted) <span class="kw">throw</span> <span class="kw">new</span> <span class="fn">ApiError</span>(<span class="num">404</span>, <span class="str">'Layihə tapılmadı'</span>);
+    res.<span class="fn">json</span>({ <span class="prop">message</span>: <span class="str">'Layihə silindi'</span>, <span class="prop">id</span>: deleted.id });
+  } <span class="kw">catch</span> (err) { <span class="fn">next</span>(err); }
+};
+
+module.exports = { list, get, create, update, remove };
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ projects.controller.js yaradıldı"</span></code></pre>
+    </div>
+
+    <h3>15.3. Route qatı — URL → controller</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title js">src/domain/construction/routes/projects.routes.js</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; src/domain/construction/routes/projects.routes.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">const</span> express = <span class="fn">require</span>(<span class="str">'express'</span>);
+<span class="kw">const</span> Joi = <span class="fn">require</span>(<span class="str">'joi'</span>);
+<span class="kw">const</span> router = express.<span class="fn">Router</span>();
+
+<span class="kw">const</span> controller = <span class="fn">require</span>(<span class="str">'../controllers/projects.controller'</span>);
+<span class="kw">const</span> { authenticate, authorize } = <span class="fn">require</span>(<span class="str">'../../../core/middleware/auth'</span>);
+<span class="kw">const</span> validate = <span class="fn">require</span>(<span class="str">'../../../core/middleware/validate'</span>);
+
+<span class="kw">const</span> createSchema = Joi.<span class="fn">object</span>({
+  <span class="prop">project_code</span>: Joi.<span class="fn">string</span>().<span class="fn">max</span>(<span class="num">50</span>).<span class="fn">required</span>(),
+  <span class="prop">object_id</span>: Joi.<span class="fn">number</span>().<span class="fn">integer</span>().<span class="fn">required</span>(),
+  <span class="prop">manager_id</span>: Joi.<span class="fn">number</span>().<span class="fn">integer</span>().<span class="fn">optional</span>(),
+  <span class="prop">name</span>: Joi.<span class="fn">string</span>().<span class="fn">min</span>(<span class="num">5</span>).<span class="fn">max</span>(<span class="num">500</span>).<span class="fn">required</span>(),
+  <span class="prop">description</span>: Joi.<span class="fn">string</span>().<span class="fn">optional</span>(),
+  <span class="prop">project_type</span>: Joi.<span class="fn">string</span>().<span class="fn">valid</span>(<span class="str">'new_build'</span>, <span class="str">'major_repair'</span>, <span class="str">'current_repair'</span>, <span class="str">'reconstruction'</span>).<span class="fn">required</span>(),
+  <span class="prop">start_date_planned</span>: Joi.<span class="fn">date</span>().<span class="fn">optional</span>(),
+  <span class="prop">end_date_planned</span>: Joi.<span class="fn">date</span>().<span class="fn">optional</span>(),
+  <span class="prop">total_budget_planned</span>: Joi.<span class="fn">number</span>().<span class="fn">positive</span>().<span class="fn">optional</span>()
+});
+
+<span class="cmt">// Bütün route-lar auth tələb edir</span>
+router.<span class="fn">use</span>(authenticate);
+
+router.<span class="fn">get</span>(<span class="str">'/'</span>, controller.list);
+router.<span class="fn">get</span>(<span class="str">'/:id'</span>, controller.get);
+router.<span class="fn">post</span>(<span class="str">'/'</span>, <span class="fn">authorize</span>(<span class="str">'super_admin'</span>, <span class="str">'admin'</span>, <span class="str">'manager'</span>), <span class="fn">validate</span>(createSchema), controller.create);
+router.<span class="fn">put</span>(<span class="str">'/:id'</span>, <span class="fn">authorize</span>(<span class="str">'super_admin'</span>, <span class="str">'admin'</span>, <span class="str">'manager'</span>), controller.update);
+router.<span class="fn">delete</span>(<span class="str">'/:id'</span>, <span class="fn">authorize</span>(<span class="str">'super_admin'</span>, <span class="str">'admin'</span>), controller.remove);
+
+module.exports = router;
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ projects.routes.js yaradıldı"</span></code></pre>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 16 ======================= -->
+  <section id="b16">
+    <h2><span class="num">16</span> Dynamic domain router</h2>
+    <p class="lead">
+      Construction domeninin bütün route-larını bir yerdə yığıb "dinamik şəkildə"
+      app.js-ə təqdim edirik. Gələcəkdə yeni domen (pharmacy, education) əlavə etmək
+      üçün yalnız eyni strukturu təkrarlamaq kifayətdir.
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title js">src/domain/construction/index.js</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; src/domain/construction/index.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt">// Construction domain — bütün sub-route-ları birləşdirir</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+
+<span class="kw">const</span> express = <span class="fn">require</span>(<span class="str">'express'</span>);
+<span class="kw">const</span> router = express.<span class="fn">Router</span>();
+
+<span class="kw">const</span> projectsRoutes = <span class="fn">require</span>(<span class="str">'./routes/projects.routes'</span>);
+
+router.<span class="fn">use</span>(<span class="str">'/projects'</span>, projectsRoutes);
+
+<span class="cmt">// Gələcəkdə əlavə ediləcək route-lar:</span>
+<span class="cmt">// router.use('/budgets', budgetsRoutes);</span>
+<span class="cmt">// router.use('/teams', teamsRoutes);</span>
+<span class="cmt">// router.use('/contracts', contractsRoutes);</span>
+
+module.exports = router;
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ construction domain yükləyicisi yaradıldı"</span></code></pre>
+    </div>
+
+    <h3>16.1. Endpoint xəritəsi</h3>
+    <p>İndi bu endpoint-lər mövcuddur:</p>
+
+    <div class="endpoint"><span class="http-method get">GET</span> <code>/health</code> — Server statusu</div>
+    <div class="endpoint"><span class="http-method post">POST</span> <code>/api/v1/auth/register</code> — Qeydiyyat</div>
+    <div class="endpoint"><span class="http-method post">POST</span> <code>/api/v1/auth/login</code> — Giriş</div>
+    <div class="endpoint"><span class="http-method get">GET</span> <code>/api/v1/auth/me</code> — Cari istifadəçi (auth)</div>
+    <div class="endpoint"><span class="http-method get">GET</span> <code>/api/v1/construction/projects</code> — Layihələr siyahısı</div>
+    <div class="endpoint"><span class="http-method get">GET</span> <code>/api/v1/construction/projects/:id</code> — Bir layihə</div>
+    <div class="endpoint"><span class="http-method post">POST</span> <code>/api/v1/construction/projects</code> — Yeni layihə</div>
+    <div class="endpoint"><span class="http-method put">PUT</span> <code>/api/v1/construction/projects/:id</code> — Yenilə</div>
+    <div class="endpoint"><span class="http-method delete">DELETE</span> <code>/api/v1/construction/projects/:id</code> — Sil</div>
+
+    <div class="step-head">
+      <span class="step-num">1</span>
+      <span class="step-title">Serveri yenidən işə salırıq</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — dev serveri</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>npm run dev</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">&gt; ttis-backend@0.1.0 dev
+&gt; nodemon server.js
+
+[nodemon] 3.1.9
+[nodemon] starting `node server.js`
+14:32:01 info: 🚀 TTİS API v0.1.0
+14:32:01 info: 🌐 http://localhost:3001
+14:32:01 info: 🔧 Environment: development
+14:32:01 info: 📦 Domain: construction
+14:32:01 info: <span class="out-success">🔌 Domain yükləndi: construction</span></pre>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 17 ======================= -->
+  <section id="b17">
+    <h2><span class="num">17</span> Claude AI SDK inteqrasiyası</h2>
+    <p class="lead">
+      TTİS-in "AI agent" hissəsi məhz buradadır. Claude SDK vasitəsilə layihə təhlili,
+      avtomatik hesabat və hətta smeta optimizasiyası etmək olar.
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title js">src/shared/ai/claude.js</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; src/shared/ai/claude.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt">// src/shared/ai/claude.js — Claude SDK wrapper</span>
+<span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+
+<span class="kw">const</span> Anthropic = <span class="fn">require</span>(<span class="str">'@anthropic-ai/sdk'</span>);
+<span class="kw">const</span> config = <span class="fn">require</span>(<span class="str">'../../core/config'</span>);
+<span class="kw">const</span> logger = <span class="fn">require</span>(<span class="str">'../../core/utils/logger'</span>);
+
+<span class="kw">const</span> client = <span class="kw">new</span> Anthropic({
+  <span class="prop">apiKey</span>: config.anthropic.apiKey
+});
+
+<span class="cmt">/**
+ * Claude ilə sorğu göndərir
+ * @param {string} systemPrompt — sistem təlimatı
+ * @param {string} userPrompt — istifadəçi sorğusu
+ * @param {object} options — əlavə konfiqurasiya
+ * @returns {Promise&lt;string&gt;} Claude-un cavabı
+ */</span>
+<span class="kw">const</span> <span class="fn">ask</span> = <span class="kw">async</span> (systemPrompt, userPrompt, options = {}) =&gt; {
+  <span class="kw">const</span> start = Date.<span class="fn">now</span>();
+
+  <span class="kw">try</span> {
+    <span class="kw">const</span> response = <span class="kw">await</span> client.messages.<span class="fn">create</span>({
+      <span class="prop">model</span>: options.model || config.anthropic.model,
+      <span class="prop">max_tokens</span>: options.maxTokens || config.anthropic.maxTokens,
+      <span class="prop">system</span>: systemPrompt,
+      <span class="prop">messages</span>: [{ <span class="prop">role</span>: <span class="str">'user'</span>, <span class="prop">content</span>: userPrompt }]
+    });
+
+    <span class="kw">const</span> duration = Date.<span class="fn">now</span>() - start;
+    <span class="kw">const</span> text = response.content[<span class="num">0</span>].text;
+
+    logger.<span class="fn">info</span>(<span class="str">`🤖 Claude (${duration}ms): ${response.usage.input_tokens}→${response.usage.output_tokens} tokens`</span>);
+    <span class="kw">return</span> text;
+  } <span class="kw">catch</span> (err) {
+    logger.<span class="fn">error</span>(<span class="str">`❌ Claude xətası: ${err.message}`</span>);
+    <span class="kw">throw</span> err;
+  }
+};
+
+<span class="cmt">/**
+ * Layihə məlumatı əsasında AI təhlil generasiya edir
+ */</span>
+<span class="kw">const</span> <span class="fn">analyzeProject</span> = <span class="kw">async</span> (projectData) =&gt; {
+  <span class="kw">const</span> systemPrompt = <span class="str">`Sən Azərbaycan Respublikası təhsil obyektlərinin təmir-tikinti layihələri üzrə təcrübəli mühəndis və idarəçisən.
+Sənin vəzifən: verilmiş layihə məlumatlarını təhlil etmək və aşağıdakıları müəyyən etmək:
+1. Potensial risklər
+2. Büdcə sapma ehtimalı
+3. Müddət uyğunsuzluqları
+4. Tövsiyələr
+
+Cavabı Azərbaycan dilində, strukturlaşdırılmış formada ver.`</span>;
+
+  <span class="kw">const</span> userPrompt = <span class="str">`Layihə məlumatı:
+${JSON.<span class="fn">stringify</span>(projectData, <span class="kw">null</span>, <span class="num">2</span>)}
+
+Bu layihəni təhlil et və risklərlə birlikdə tövsiyələrini ver.`</span>;
+
+  <span class="kw">return</span> <span class="kw">await</span> <span class="fn">ask</span>(systemPrompt, userPrompt);
+};
+
+module.exports = { ask, analyzeProject };
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ claude.js yaradıldı"</span></code></pre>
+    </div>
+
+    <h3>17.1. Layihə təhlili endpoint-i</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title js">projects.controller.js-ə əlavə edirik</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># projects.controller.js-ə analyze funksiyası əlavə edirik</span>
+cat &gt;&gt; src/domain/construction/controllers/projects.controller.js &lt;&lt; <span class="str">'EOF'</span>
+
+<span class="cmt">// ═══ Claude AI ilə layihə təhlili ═══</span>
+<span class="kw">const</span> claude = <span class="fn">require</span>(<span class="str">'../../../shared/ai/claude'</span>);
+
+<span class="kw">const</span> <span class="fn">analyze</span> = <span class="kw">async</span> (req, res, next) =&gt; {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> project = <span class="kw">await</span> service.<span class="fn">findById</span>(req.params.id);
+    <span class="kw">if</span> (!project) <span class="kw">throw</span> <span class="kw">new</span> <span class="fn">ApiError</span>(<span class="num">404</span>, <span class="str">'Layihə tapılmadı'</span>);
+
+    <span class="kw">const</span> analysis = <span class="kw">await</span> claude.<span class="fn">analyzeProject</span>(project);
+
+    res.<span class="fn">json</span>({
+      <span class="prop">project_id</span>: project.id,
+      <span class="prop">analysis</span>: analysis,
+      <span class="prop">generated_at</span>: <span class="kw">new</span> <span class="fn">Date</span>().<span class="fn">toISOString</span>()
+    });
+  } <span class="kw">catch</span> (err) { <span class="fn">next</span>(err); }
+};
+
+module.exports.analyze = analyze;
+<span class="str">EOF</span>
+
+<span class="cmt"># Route-a əlavə edirik</span>
+<span class="cmt"># Faylın sonuncu sətirdən əvvəlki sətirə yeni route əlavə etmək üçün</span>
+<span class="cmt"># ən sadə yol — əllə redaktə etməkdir:</span>
+echo <span class="str">"
+router.post('/:id/analyze', controller.analyze);"</span> &gt;&gt; src/domain/construction/routes/projects.routes.js</code></pre>
+    </div>
+
+    <div class="callout warning">
+      <span class="callout-icon">!</span>
+      <div class="callout-content">
+        <div class="callout-title">API açarını .env-ə əlavə edin!</div>
+        <div class="callout-body">
+          <p>
+            <strong>https://console.anthropic.com</strong> saytına daxil olun, yeni
+            API açarı yaradın və .env faylınıza əlavə edin:
+          </p>
+          <p><code class="inline">ANTHROPIC_API_KEY=sk-ant-api03-...</code></p>
+          <p>Dərs 1-də yaratdığımız <code class="inline">.gitignore</code>-un .env-i
+          əhatə etdiyinə əmin olun!</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 18 ======================= -->
+  <section id="b18">
+    <h2><span class="num">18</span> curl ilə API testi</h2>
+    <p class="lead">
+      Heç bir GUI alətə ehtiyac yoxdur — curl ilə bütün endpoint-ləri test edə
+      bilərik. Hər testin çıxışı aşağıda göstərilir.
+    </p>
+
+    <div class="step-head">
+      <span class="step-num">1</span>
+      <span class="step-title">Health check</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — health</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>curl http://localhost:<span class="num">3001</span>/health | jq</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">{
+  <span class="out-info">"status"</span>: <span class="out-success">"ok"</span>,
+  <span class="out-info">"app"</span>: <span class="out-success">"TTİS API"</span>,
+  <span class="out-info">"version"</span>: <span class="out-success">"0.1.0"</span>,
+  <span class="out-info">"env"</span>: <span class="out-success">"development"</span>,
+  <span class="out-info">"domain"</span>: <span class="out-success">"construction"</span>,
+  <span class="out-info">"uptime"</span>: 42.83,
+  <span class="out-info">"timestamp"</span>: <span class="out-success">"2026-04-17T11:45:02.184Z"</span>
+}</pre>
+    </div>
+
+    <div class="step-head">
+      <span class="step-num">2</span>
+      <span class="step-title">Qeydiyyat</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — register</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>curl -X POST http://localhost:<span class="num">3001</span>/api/v1/auth/register \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{
+    "full_name": "Test Manager",
+    "email": "manager@arti.edu.az",
+    "phone": "+994501112233",
+    "password": "SecurePass123",
+    "role_code": "manager"
+  }'</span> | jq</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">{
+  <span class="out-info">"user"</span>: {
+    <span class="out-info">"id"</span>: 2,
+    <span class="out-info">"full_name"</span>: <span class="out-success">"Test Manager"</span>,
+    <span class="out-info">"email"</span>: <span class="out-success">"manager@arti.edu.az"</span>,
+    <span class="out-info">"role_id"</span>: 3,
+    <span class="out-info">"created_at"</span>: <span class="out-success">"2026-04-17T11:46:18.942Z"</span>
+  },
+  <span class="out-info">"token"</span>: <span class="out-success">"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."</span>
+}</pre>
+    </div>
+
+    <div class="step-head">
+      <span class="step-num">3</span>
+      <span class="step-title">Login</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — login və tokenin saxlanması</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># Login və tokeni mühit dəyişəninə yaz</span>
+<span class="kw">TOKEN</span>=$(curl -s -X POST http://localhost:<span class="num">3001</span>/api/v1/auth/login \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"email":"manager@arti.edu.az","password":"SecurePass123"}'</span> | jq -r <span class="str">.token</span>)
+
+echo <span class="str">"Token: $TOKEN"</span></code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">Token: <span class="out-success">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTcxMzM1NjUyMiwiZXhwIjoxNzEzOTYxMzIyfQ.abc123...</span></pre>
+    </div>
+
+    <div class="step-head">
+      <span class="step-num">4</span>
+      <span class="step-title">Tokenlə qorunan endpoint</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — /auth/me</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>curl http://localhost:<span class="num">3001</span>/api/v1/auth/me \
+  -H <span class="str">"Authorization: Bearer $TOKEN"</span> | jq</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">{
+  <span class="out-info">"user"</span>: {
+    <span class="out-info">"id"</span>: 2,
+    <span class="out-info">"full_name"</span>: <span class="out-success">"Test Manager"</span>,
+    <span class="out-info">"email"</span>: <span class="out-success">"manager@arti.edu.az"</span>,
+    <span class="out-info">"role_id"</span>: 3,
+    <span class="out-info">"role_code"</span>: <span class="out-success">"manager"</span>
+  }
+}</pre>
+    </div>
+
+    <div class="step-head">
+      <span class="step-num">5</span>
+      <span class="step-title">Layihələr siyahısı</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — projects list</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>curl http://localhost:<span class="num">3001</span>/api/v1/construction/projects \
+  -H <span class="str">"Authorization: Bearer $TOKEN"</span> | jq</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">{
+  <span class="out-info">"data"</span>: [
+    {
+      <span class="out-info">"id"</span>: 1,
+      <span class="out-info">"project_code"</span>: <span class="out-success">"PRJ-2026-001"</span>,
+      <span class="out-info">"project_name"</span>: <span class="out-success">"Bakı 45 saylı məktəbin əsaslı təmiri"</span>,
+      <span class="out-info">"status"</span>: <span class="out-success">"in_progress"</span>,
+      <span class="out-info">"progress_percent"</span>: 35,
+      <span class="out-info">"region"</span>: <span class="out-success">"Bakı"</span>,
+      <span class="out-info">"total_budget_planned"</span>: <span class="out-success">"485000.00"</span>
+    }
+  ],
+  <span class="out-info">"count"</span>: 1
+}</pre>
+    </div>
+
+    <div class="step-head">
+      <span class="step-num">6</span>
+      <span class="step-title">Token olmadan (401 xətası)</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — qorunan endpoint, tokensiz</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>curl http://localhost:<span class="num">3001</span>/api/v1/construction/projects | jq</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">{
+  <span class="out-info">"error"</span>: <span class="out-error">"ApiError"</span>,
+  <span class="out-info">"message"</span>: <span class="out-error">"Token təqdim edilməyib"</span>
+}</pre>
+    </div>
+
+    <div class="step-head">
+      <span class="step-num">7</span>
+      <span class="step-title">Claude AI ilə layihə təhlili</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — analyze endpoint</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>curl -X POST http://localhost:<span class="num">3001</span>/api/v1/construction/projects/<span class="num">1</span>/analyze \
+  -H <span class="str">"Authorization: Bearer $TOKEN"</span> | jq</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış (Claude-dan)</div>
+<pre class="output-content">{
+  <span class="out-info">"project_id"</span>: 1,
+  <span class="out-info">"analysis"</span>: <span class="out-success">"## Layihə Təhlili: PRJ-2026-001\n\n### Risklər:\n1. **Müddət uzantısı**: Layihə martda başlayıb, sentyabrda bitməlidir — 7 ay. 35% tamamlanıb, lakin vaxtın yarısından çoxu keçib.\n2. **Büdcə monitorinqi**: Real xərclərə dair məlumat görünmür...\n\n### Tövsiyələr:\n- Aylıq progress monitorinqi daxil edin\n- Kritik yol analizi..."</span>,
+  <span class="out-info">"generated_at"</span>: <span class="out-success">"2026-04-17T11:52:14.927Z"</span>
+}</pre>
+    </div>
+
+    <div class="callout success">
+      <span class="callout-icon">✓</span>
+      <div class="callout-content">
+        <div class="callout-title">Backend tam işlək vəziyyətdədir!</div>
+        <div class="callout-body">
+          <p>
+            15 endpoint, 4 middleware, JWT auth, PostgreSQL inteqrasiyası, Claude AI
+            təhlili — hamısı bir yerdə. İndi frontend yazmaq üçün hər şey hazırdır.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 19 ======================= -->
+  <section id="b19">
+    <h2><span class="num">19</span> Xülasə və növbəti dərs</h2>
+
+    <div class="summary-box">
+      <h3>📝 Bu Dərsdə Öyrəndiklərimiz</h3>
+      <ul>
+        <li>✅ Node.js və Express-in iş prinsipi</li>
+        <li>✅ npm paket idarəsi və package.json strukturu</li>
+        <li>✅ dotenv ilə təhlükəsiz konfiqurasiya</li>
+        <li>✅ Core + Domain + Shared arxitektura tətbiqi</li>
+        <li>✅ PostgreSQL Pool bağlantısı və tranzaksiyalar</li>
+        <li>✅ Winston ilə strukturlaşdırılmış loglama</li>
+        <li>✅ Middleware zənciri (helmet, cors, morgan, auth, validate, error)</li>
+        <li>✅ bcrypt ilə parol şifrələmə</li>
+        <li>✅ JWT token-əsaslı autentifikasiya</li>
+        <li>✅ Rol-əsaslı icazə (authorize middleware)</li>
+        <li>✅ Joi ilə input validasiyası</li>
+        <li>✅ REST CRUD endpoint-ləri (Service + Controller + Routes)</li>
+        <li>✅ Dynamic domain router</li>
+        <li>✅ Claude SDK inteqrasiyası</li>
+        <li>✅ curl ilə API test</li>
+      </ul>
+    </div>
+
+    <h3>19.1. Yaradılmış fayllar</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — bütün JS fayllara baxaq</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>find . -name <span class="str">"*.js"</span> -not -path <span class="str">"./node_modules/*"</span> | sort</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">./server.js
+./src/app.js
+./src/core/config/database.js
+./src/core/config/index.js
+./src/core/middleware/auth.js
+./src/core/middleware/errorHandler.js
+./src/core/middleware/validate.js
+./src/core/routes/auth.routes.js
+./src/core/utils/dbTest.js
+./src/core/utils/jwt.js
+./src/core/utils/logger.js
+./src/core/utils/password.js
+./src/domain/construction/controllers/projects.controller.js
+./src/domain/construction/index.js
+./src/domain/construction/routes/projects.routes.js
+./src/domain/construction/services/projects.service.js
+./src/shared/ai/claude.js</pre>
+    </div>
+
+    <h3>19.2. Git commit</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — commit</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="kw">cd</span> ~/Desktop/Claude_Modei_Təmir_tikinti
+
+<span class="cmt"># node_modules və .env git-də olmamalıdır, yoxlayaq</span>
+<span class="kw">git</span> status
+
+<span class="cmt"># Yalnız backend kodunu əlavə edirik</span>
+<span class="kw">git</span> add backend/src backend/server.js backend/package.json backend/package-lock.json
+
+<span class="kw">git</span> commit -m <span class="str">"feat(backend): initial Node.js+Express API with auth, DB, and Claude integration"</span>
+
+<span class="kw">git</span> log --oneline</code></pre>
+    </div>
+
+    <h3>19.3. Növbəti dərsdə</h3>
+    <div class="callout info">
+      <span class="callout-icon">→</span>
+      <div class="callout-content">
+        <div class="callout-title">Dərs 4: React + Vite Frontend</div>
+        <div class="callout-body">
+          <p>Növbəti dərsdə:</p>
+          <ul>
+            <li>Vite ilə React layihəsinin qurulması</li>
+            <li>Tailwind CSS tətbiqi</li>
+            <li>axios və API servisi</li>
+            <li>Auth Context və protected route-lar</li>
+            <li>Dashboard, Projects, Login səhifələri</li>
+            <li>React Hook Form ilə formalar</li>
+            <li>Backend ilə tam bağlantı</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NAV -->
+  <nav class="lesson-nav">
+    <a href="#" class="lesson-nav-btn secondary">← Dərs 2: PostgreSQL</a>
+    <a href="#" class="lesson-nav-btn">Dərs 4: React Frontend →</a>
+  </nav>
+
+</div>
+
+<script>
+function copyCode(button) {
+  const codeBlock = button.closest('.code-block');
+  const code = codeBlock.querySelector('pre.code-content').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    const originalText = button.innerHTML;
+    button.innerHTML = '✓ Kopyalandı!';
+    button.classList.add('copied');
+    setTimeout(() => { button.innerHTML = originalText; button.classList.remove('copied'); }, 2000);
+  }).catch(() => {
+    const textarea = document.createElement('textarea');
+    textarea.value = code;
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      button.innerHTML = '✓ Kopyalandı!';
+      button.classList.add('copied');
+      setTimeout(() => { button.innerHTML = '📋 Kopyala'; button.classList.remove('copied'); }, 2000);
+    } catch(e) { alert('Kopyalama uğursuz oldu'); }
+    document.body.removeChild(textarea);
+  });
+}
+</script>
+
+</body>
+</html>

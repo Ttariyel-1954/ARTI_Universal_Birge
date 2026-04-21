@@ -1,0 +1,3003 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dərs 2 — PostgreSQL 17: Quraşdırma və TTİS Verilənlər Bazası Dizaynı</title>
+<style>
+  :root {
+    --primary: #4338ca;
+    --primary-dark: #3730a3;
+    --primary-light: #e0e7ff;
+    --accent: #0891b2;
+    --accent-light: #cffafe;
+    --warning: #d97706;
+    --warning-light: #fef3c7;
+    --success: #059669;
+    --success-light: #d1fae5;
+    --danger: #dc2626;
+    --danger-light: #fee2e2;
+    --postgres: #336791;
+    --postgres-light: #dbeafe;
+    --text: #0f172a;
+    --text-muted: #475569;
+    --text-subtle: #64748b;
+    --bg: #fafbfc;
+    --surface: #ffffff;
+    --surface-alt: #f8fafc;
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --code-bg: #0f172a;
+    --code-text: #e2e8f0;
+    --code-comment: #64748b;
+    --code-keyword: #c4b5fd;
+    --code-string: #86efac;
+    --code-number: #fcd34d;
+    --code-function: #93c5fd;
+    --output-bg: #1e293b;
+    --output-text: #cbd5e1;
+    --output-green: #86efac;
+    --output-yellow: #fcd34d;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+  /* ========== HERO ========== */
+  .hero {
+    background: linear-gradient(135deg, #336791 0%, #4338ca 70%, #0891b2 100%);
+    color: white;
+    padding: 3.5rem 2.5rem;
+    border-radius: 20px;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 20px 50px -15px rgba(51, 103, 145, 0.4);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '🐘';
+    position: absolute;
+    top: -40px;
+    right: -20px;
+    font-size: 300px;
+    opacity: 0.08;
+    pointer-events: none;
+  }
+  .hero-label {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(10px);
+    padding: 0.5rem 1.25rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 1.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    position: relative;
+    z-index: 1;
+  }
+  .hero h1 {
+    font-size: 2.4rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-subtitle {
+    font-size: 1.15rem;
+    opacity: 0.94;
+    max-width: 750px;
+    line-height: 1.65;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1.75rem;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    opacity: 0.9;
+  }
+  .hero-meta-item svg { width: 18px; height: 18px; }
+
+  /* ========== OBJECTIVES ========== */
+  .objectives {
+    background: var(--primary-light);
+    border-left: 5px solid var(--primary);
+    padding: 1.75rem 2rem;
+    border-radius: 12px;
+    margin-bottom: 2.5rem;
+  }
+  .objectives h3 {
+    color: var(--primary-dark);
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+  .objectives ul {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 0.75rem 1.5rem;
+  }
+  .objectives li {
+    padding-left: 1.75rem;
+    position: relative;
+    font-size: 0.95rem;
+  }
+  .objectives li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--primary);
+    font-weight: 800;
+    font-size: 1.1rem;
+  }
+
+  /* ========== TOC ========== */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .toc h3 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-subtle);
+    margin-bottom: 1rem;
+  }
+  .toc ol {
+    list-style: none;
+    counter-reset: toc-counter;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 0.45rem 1rem;
+  }
+  .toc li { counter-increment: toc-counter; }
+  .toc a {
+    color: var(--text);
+    text-decoration: none;
+    padding: 0.5rem 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 0.92rem;
+    transition: color 0.15s;
+  }
+  .toc a::before {
+    content: counter(toc-counter, decimal-leading-zero);
+    color: var(--primary);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+  .toc a:hover { color: var(--primary); }
+
+  /* ========== SECTIONS ========== */
+  section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.25rem 2.5rem;
+    margin-bottom: 1.75rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+  section h2 {
+    font-size: 1.65rem;
+    font-weight: 750;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    letter-spacing: -0.015em;
+  }
+  section h2 .num {
+    background: var(--postgres);
+    color: white;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  section h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 1.75rem 0 0.85rem;
+    letter-spacing: -0.01em;
+  }
+  section h4 {
+    font-size: 1rem;
+    font-weight: 650;
+    margin: 1.25rem 0 0.5rem;
+  }
+  section p { margin-bottom: 1rem; }
+  section p.lead {
+    font-size: 1.08rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+  }
+  section ul, section ol { margin: 0.75rem 0 1.25rem 1.5rem; }
+  section li { margin-bottom: 0.5rem; }
+  section strong { color: var(--primary-dark); font-weight: 650; }
+  section em { color: var(--accent); font-style: normal; font-weight: 600; }
+
+  /* ========== CODE BLOCKS ========== */
+  .code-block {
+    background: var(--code-bg);
+    border-radius: 12px;
+    margin: 1.25rem 0 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .code-header {
+    background: #1e293b;
+    padding: 0.6rem 1.15rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .code-title {
+    color: #94a3b8;
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .code-title::before {
+    content: '';
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #22c55e;
+    display: inline-block;
+  }
+  .code-title.sql::before { background: #f59e0b; }
+  .code-copy {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #cbd5e1;
+    padding: 0.35rem 0.85rem;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .code-copy:hover { background: rgba(255,255,255,0.15); color: white; }
+  .code-copy.copied { background: var(--success); color: white; border-color: var(--success); }
+
+  pre.code-content {
+    padding: 1.25rem 1.35rem;
+    overflow-x: auto;
+    color: var(--code-text);
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 0.87rem;
+    line-height: 1.65;
+  }
+  .cmt { color: var(--code-comment); font-style: italic; }
+  .kw { color: var(--code-keyword); font-weight: 600; }
+  .str { color: var(--code-string); }
+  .num { color: var(--code-number); }
+  .fn { color: var(--code-function); }
+  .tbl { color: #f9a8d4; font-weight: 600; }
+
+  /* ========== EXPECTED OUTPUT BOX ========== */
+  .output-block {
+    background: var(--output-bg);
+    border-radius: 0 0 12px 12px;
+    margin: 0 0 1.5rem 0;
+    border-top: 2px dashed rgba(255,255,255,0.1);
+  }
+  .output-header {
+    background: #0f172a;
+    padding: 0.55rem 1.15rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #86efac;
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    text-transform: uppercase;
+  }
+  .output-header::before {
+    content: '▶';
+    color: #22c55e;
+  }
+  pre.output-content {
+    padding: 1rem 1.35rem;
+    overflow-x: auto;
+    color: var(--output-text);
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 0.83rem;
+    line-height: 1.55;
+    background: var(--output-bg);
+  }
+  .out-success { color: #86efac; }
+  .out-warning { color: #fcd34d; }
+  .out-info { color: #93c5fd; }
+  .out-header-line { color: #f9a8d4; font-weight: 600; }
+  .out-separator { color: #475569; }
+  .out-dim { color: #64748b; }
+
+  /* Inline code */
+  code.inline {
+    background: var(--surface-alt);
+    color: var(--primary-dark);
+    padding: 0.15rem 0.45rem;
+    border-radius: 5px;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 0.88em;
+    border: 1px solid var(--border);
+  }
+
+  /* ========== CALLOUTS ========== */
+  .callout {
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+    border-left: 4px solid;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  .callout-icon {
+    flex-shrink: 0;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+  .callout-content { flex: 1; }
+  .callout-title { font-weight: 700; margin-bottom: 0.35rem; font-size: 0.95rem; }
+  .callout-body { font-size: 0.93rem; }
+  .callout-body p:last-child { margin-bottom: 0; }
+
+  .callout.info { background: var(--primary-light); border-color: var(--primary); }
+  .callout.info .callout-icon { background: var(--primary); }
+  .callout.info .callout-title { color: var(--primary-dark); }
+
+  .callout.warning { background: var(--warning-light); border-color: var(--warning); }
+  .callout.warning .callout-icon { background: var(--warning); }
+  .callout.warning .callout-title { color: #92400e; }
+
+  .callout.success { background: var(--success-light); border-color: var(--success); }
+  .callout.success .callout-icon { background: var(--success); }
+  .callout.success .callout-title { color: #065f46; }
+
+  .callout.tip { background: var(--accent-light); border-color: var(--accent); }
+  .callout.tip .callout-icon { background: var(--accent); }
+  .callout.tip .callout-title { color: #0e7490; }
+
+  .callout.danger { background: var(--danger-light); border-color: var(--danger); }
+  .callout.danger .callout-icon { background: var(--danger); }
+  .callout.danger .callout-title { color: #991b1b; }
+
+  /* ========== TABLES ========== */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 1.25rem 0;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  table thead { background: var(--surface-alt); }
+  table th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 650;
+    border-bottom: 2px solid var(--border-strong);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  table tbody tr:last-child td { border-bottom: none; }
+  table tbody tr:hover { background: var(--surface-alt); }
+
+  /* ========== ERD DIAGRAM ========== */
+  .erd-wrap {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    overflow-x: auto;
+  }
+  .erd-wrap svg {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    height: auto;
+  }
+  .diagram-caption {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--text-subtle);
+    font-style: italic;
+    text-align: center;
+  }
+
+  /* ========== STEP INDICATOR ========== */
+  .step-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 2rem 0 1rem;
+  }
+  .step-num {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--postgres);
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+  }
+  .step-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  /* ========== SUMMARY BOX ========== */
+  .summary-box {
+    background: linear-gradient(135deg, #f5f3ff 0%, #dbeafe 100%);
+    border: 1px solid var(--primary-light);
+    border-radius: 14px;
+    padding: 1.75rem 2rem;
+    margin: 1.5rem 0;
+  }
+  .summary-box h3 {
+    color: var(--primary-dark) !important;
+    margin-top: 0 !important;
+    font-size: 1.15rem !important;
+  }
+
+  /* ========== NAVIGATION ========== */
+  .lesson-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid var(--border);
+  }
+  .lesson-nav-btn {
+    background: var(--primary);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background 0.15s;
+  }
+  .lesson-nav-btn:hover { background: var(--primary-dark); }
+  .lesson-nav-btn.secondary {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  /* ========== RESPONSIVE ========== */
+  @media (max-width: 720px) {
+    .container { padding: 1rem; }
+    .hero { padding: 2rem 1.5rem; }
+    .hero h1 { font-size: 1.75rem; }
+    section { padding: 1.5rem 1.25rem; }
+    section h2 { font-size: 1.35rem; }
+    pre.code-content, pre.output-content { font-size: 0.78rem; padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ======================= HERO ======================= -->
+  <div class="hero">
+    <span class="hero-label">🐘 DƏRS 02 / 06 — UNİVERSAL AI AGENT KURSU</span>
+    <h1>PostgreSQL 17 — Quraşdırma, Schema Dizaynı və TTİS Verilənlər Bazası</h1>
+    <p class="hero-subtitle">
+      Bu dərsdə Mac-də PostgreSQL 17-i sıfırdan quraşdıracaq, Təmir-Tikinti İdarəsi
+      üçün 18 cədvəldən ibarət tam profesional bir verilənlər bazası dizayn edəcəyik.
+      Hər addımın yanında terminal çıxışını da göstərirəm — beləliklə öz ekranınızda
+      gördüyünüzü rahatlıqla müqayisə edə biləcəksiniz.
+    </p>
+    <div class="hero-meta">
+      <span class="hero-meta-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Təxminən 90–120 dəqiqə
+      </span>
+      <span class="hero-meta-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+        18 cədvəl, 4 schema, 5+ view
+      </span>
+      <span class="hero-meta-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Hər komanda üçün çıxış göstərilir
+      </span>
+    </div>
+  </div>
+
+  <!-- ======================= OBJECTIVES ======================= -->
+  <div class="objectives">
+    <h3>🎯 Bu Dərsin Sonunda Siz Nəyi Bacaracaqsınız?</h3>
+    <ul>
+      <li>Mac-də PostgreSQL 17-i Homebrew vasitəsilə quraşdırmaq</li>
+      <li>Köhnə PostgreSQL versiyalarını təmizləmək və port münaqişəsini həll etmək</li>
+      <li>İlk verilənlər bazasını yaratmaq və ona qoşulmaq</li>
+      <li>Relational verilənlər bazasının əsas anlayışlarını izah etmək</li>
+      <li>ERD (Entity Relationship Diagram) oxumaq və çəkmək</li>
+      <li>TTİS üçün 18 cədvəlli tam schema yazmaq</li>
+      <li>PK, FK, CHECK, UNIQUE məhdudiyyətlərini düzgün təyin etmək</li>
+      <li>View-lar, indekslər və trigger-lər ilə performansı artırmaq</li>
+      <li>Test məlumatları ilə bazanı doldurmaq (seed)</li>
+      <li>psql və GUI alətlərlə bazanı idarə etmək</li>
+    </ul>
+  </div>
+
+  <!-- ======================= TOC ======================= -->
+  <nav class="toc">
+    <h3>Dərsin Bölmələri</h3>
+    <ol>
+      <li><a href="#b1">PostgreSQL nədir və niyə seçmişik?</a></li>
+      <li><a href="#b2">Mövcud vəziyyətin yoxlanması</a></li>
+      <li><a href="#b3">PostgreSQL 17-nin quraşdırılması</a></li>
+      <li><a href="#b4">İlk qoşulma və ekskursiya</a></li>
+      <li><a href="#b5">Verilənlər bazası anlayışları</a></li>
+      <li><a href="#b6">TTİS üçün ERD dizaynı</a></li>
+      <li><a href="#b7">Baza və schema-ların yaradılması</a></li>
+      <li><a href="#b8">Core schema — istifadəçi idarəsi</a></li>
+      <li><a href="#b9">Construction schema — domen cədvəlləri</a></li>
+      <li><a href="#b10">İndekslər və performans</a></li>
+      <li><a href="#b11">Reporting view-ları</a></li>
+      <li><a href="#b12">Trigger-lər və audit</a></li>
+      <li><a href="#b13">Seed məlumatları (77 rayon)</a></li>
+      <li><a href="#b14">psql ustalıqları</a></li>
+      <li><a href="#b15">Backup və restore</a></li>
+      <li><a href="#b16">Xülasə və yoxlama</a></li>
+    </ol>
+  </nav>
+
+  <!-- ======================= SECTION 1 ======================= -->
+  <section id="b1">
+    <h2><span class="num">1</span> PostgreSQL nədir və niyə seçmişik?</h2>
+    <p class="lead">
+      PostgreSQL — dünyanın ən güclü açıq-qaynaqlı relational verilənlər bazası
+      idarəetmə sistemidir (ORDBMS). 1986-cı ildən bəri inkişaf edir və 2025-ci ildə
+      həm Oracle-ı, həm MySQL-i texniki imkan baxımından keçmiş vəziyyətdədir.
+    </p>
+
+    <h3>1.1. Niyə məhz PostgreSQL?</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Tələb</th>
+            <th>PostgreSQL</th>
+            <th>MySQL</th>
+            <th>MongoDB</th>
+            <th>SQLite</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>ACID uyğunluğu</strong></td>
+            <td>✅ Tam</td>
+            <td>⚠️ Engine-ə görə</td>
+            <td>❌ Məhdud</td>
+            <td>✅ Tam</td>
+          </tr>
+          <tr>
+            <td><strong>JSONB (hibrid)</strong></td>
+            <td>✅ Native</td>
+            <td>⚠️ JSON tipi var</td>
+            <td>✅ Native</td>
+            <td>❌ Yoxdur</td>
+          </tr>
+          <tr>
+            <td><strong>Triggerlər, view-lar</strong></td>
+            <td>✅ Güclü</td>
+            <td>✅ Var</td>
+            <td>⚠️ Məhdud</td>
+            <td>⚠️ Sadə</td>
+          </tr>
+          <tr>
+            <td><strong>Concurrent istifadə</strong></td>
+            <td>✅ Mükəmməl (MVCC)</td>
+            <td>✅ Yaxşı</td>
+            <td>✅ Yaxşı</td>
+            <td>❌ Zəif</td>
+          </tr>
+          <tr>
+            <td><strong>Geo/Full-text axtarış</strong></td>
+            <td>✅ PostGIS, tsvector</td>
+            <td>⚠️ Məhdud</td>
+            <td>✅ Yaxşı</td>
+            <td>⚠️ Məhdud</td>
+          </tr>
+          <tr>
+            <td><strong>Produksiyaya yararlılıq</strong></td>
+            <td>✅ Enterprise-class</td>
+            <td>✅ Yaxşı</td>
+            <td>✅ Yaxşı</td>
+            <td>❌ Yalnız kiçik miqyas</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">i</span>
+      <div class="callout-content">
+        <div class="callout-title">Sizin əvvəlki təcrübənizə uyğunluq</div>
+        <div class="callout-body">
+          <p>
+            Siz artıq PIRLS 2026, Az_dili_standartlar, Riy_Muellim_Agent layihələrində
+            PostgreSQL ilə işləmisiniz. İstifadəçi adınız <code class="inline">royatalibova</code>
+            olub. Bu dərsdə eyni istifadəçini saxlayacağıq — beləliklə əvvəlki
+            biliklər üst-üstə düşəcək.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <h3>1.2. PostgreSQL 17-nin yeniliklərindən nə qazanırıq?</h3>
+    <ul>
+      <li><strong>Daha sürətli vakumlama</strong> — böyük cədvəllərdə 10× sürət artımı</li>
+      <li><strong>JSON_TABLE funksiyası</strong> — JSONB-i bir sorğuda relational cədvələ çevirir</li>
+      <li><strong>Incremental backup</strong> — yalnız dəyişikliklər backup olunur</li>
+      <li><strong>MERGE statement-in təkmilləşməsi</strong> — upsert əməliyyatları asanlaşır</li>
+      <li><strong>SQL/JSON standart dəstəyi</strong> — rəsmi standarta uyğun</li>
+    </ul>
+  </section>
+
+  <!-- ======================= SECTION 2 ======================= -->
+  <section id="b2">
+    <h2><span class="num">2</span> Mövcud vəziyyətin yoxlanması</h2>
+    <p class="lead">
+      Quraşdırmaqdan əvvəl Mac-də hansı PostgreSQL versiyalarının olduğunu yoxlayaq.
+      Sizin sistemdə birdən çox versiya ola bilər — bu port münaqişəsinə səbəb olur.
+    </p>
+
+    <div class="step-head">
+      <span class="step-num">1</span>
+      <span class="step-title">Terminal-ı açın və Homebrew-u yoxlayın</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — Homebrew versiyası</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># Homebrew-un versiyasını yoxlayaq</span>
+brew --version</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Terminal çıxışı (təqribi)</div>
+<pre class="output-content"><span class="out-success">Homebrew 4.4.15</span>
+<span class="out-dim">Homebrew/homebrew-core (git revision abc1234; last commit 2026-04-10)</span></pre>
+    </div>
+
+    <div class="callout warning">
+      <span class="callout-icon">!</span>
+      <div class="callout-content">
+        <div class="callout-title">Əgər "brew: command not found" görünürsə</div>
+        <div class="callout-body">
+          <p>Homebrew quraşdırılmayıb. Aşağıdakı komandanı yerinə yetirin (bir dəfə):</p>
+          <p><code class="inline">/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</code></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-head">
+      <span class="step-num">2</span>
+      <span class="step-title">Mövcud PostgreSQL versiyalarını aşkarlamaq</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — quraşdırılmış postgresql paketləri</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># Homebrew vasitəsi ilə quraşdırılmış bütün postgresql variantları</span>
+brew list | grep -i postgres
+
+<span class="cmt"># Aktiv servislərə baxaq</span>
+brew services list | grep -i postgres</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Mümkün çıxış 1 — heç nə quraşdırılmayıb</div>
+<pre class="output-content"><span class="out-dim">(boş — heç nə çıxmayacaq)</span></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Mümkün çıxış 2 — bir neçə versiya var</div>
+<pre class="output-content">postgresql@14
+postgresql@15
+postgresql@17
+
+<span class="out-header-line">Name            Status      User           File</span>
+<span class="out-separator">─────────────────────────────────────────────────────────</span>
+postgresql@14   <span class="out-warning">started</span>     royatalibova   ~/Library/LaunchAgents/...
+postgresql@15   <span class="out-dim">none</span>
+postgresql@17   <span class="out-warning">error</span>       royatalibova   ~/Library/LaunchAgents/...</pre>
+    </div>
+
+    <div class="callout danger">
+      <span class="callout-icon">!</span>
+      <div class="callout-content">
+        <div class="callout-title">Əgər birdən çox versiya varsa — port münaqişəsi!</div>
+        <div class="callout-body">
+          <p>
+            PostgreSQL default olaraq <code class="inline">5432</code> portunda işləyir.
+            Əgər iki versiya eyni anda işləyirsə, birincisi portu tutur, ikincisi
+            <strong>error</strong> statusu alır. Bu sizin memory-də qeyd olunan
+            problem idi!
+          </p>
+          <p>Gəlin bütün köhnə versiyaları təmizləyək — yalnız 17 qalacaq.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-head">
+      <span class="step-num">3</span>
+      <span class="step-title">Köhnə versiyaların təmizlənməsi (lazım olsa)</span>
+    </div>
+
+    <div class="callout warning">
+      <span class="callout-icon">!</span>
+      <div class="callout-content">
+        <div class="callout-title">VACİB: Əvvəlcə backup alın!</div>
+        <div class="callout-body">
+          <p>
+            Əgər köhnə versiyada vacib məlumatlarınız varsa, silmədən əvvəl
+            <code class="inline">pg_dumpall</code> ilə backup alın. Yoxsa — aşağıya keçin.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — təmizləmə skripti</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># ═══ 1. Bütün PostgreSQL servislərini dayandırırıq ═══</span>
+brew services stop postgresql@14 <span class="num">2</span>&gt;/dev/null
+brew services stop postgresql@15 <span class="num">2</span>&gt;/dev/null
+brew services stop postgresql@16 <span class="num">2</span>&gt;/dev/null
+brew services stop postgresql@17 <span class="num">2</span>&gt;/dev/null
+
+<span class="cmt"># ═══ 2. Köhnə versiyaları silirik (yalnız 14, 15, 16) ═══</span>
+brew uninstall --force postgresql@14 <span class="num">2</span>&gt;/dev/null
+brew uninstall --force postgresql@15 <span class="num">2</span>&gt;/dev/null
+brew uninstall --force postgresql@16 <span class="num">2</span>&gt;/dev/null
+
+<span class="cmt"># ═══ 3. Köhnə məlumat qovluqlarını silirik ═══</span>
+<span class="cmt"># DİQQƏT: Intel Mac-də yol /usr/local/var/..., M4 Max-da /opt/homebrew/var/...</span>
+rm -rf /usr/local/var/postgresql@14
+rm -rf /usr/local/var/postgresql@15
+rm -rf /usr/local/var/postgresql@16
+
+<span class="cmt"># ═══ 4. Portun boş olduğuna əmin olaq ═══</span>
+lsof -i :<span class="num">5432</span>
+
+<span class="cmt"># Əgər hələ nəsə göstərirsə, həmin prosesi manual dayandırın:</span>
+<span class="cmt"># kill -9 <PID></span></code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Port 5432 boşdursa — gözlənən çıxış</div>
+<pre class="output-content"><span class="out-dim">(boş — heç bir proses portu tutmur)</span></pre>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 3 ======================= -->
+  <section id="b3">
+    <h2><span class="num">3</span> PostgreSQL 17-nin quraşdırılması</h2>
+    <p class="lead">
+      İndi təzə, təmiz PostgreSQL 17 quraşdıraq.
+    </p>
+
+    <div class="step-head">
+      <span class="step-num">1</span>
+      <span class="step-title">Paketi quraşdırmaq</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — PostgreSQL 17 quraşdırma</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># Homebrew-u yeniləyək (əminlik üçün)</span>
+brew update
+
+<span class="cmt"># PostgreSQL 17-ni quraşdırırıq</span>
+brew install postgresql@<span class="num">17</span></code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış (qısaldılmış)</div>
+<pre class="output-content"><span class="out-info">==></span> Downloading https://ghcr.io/v2/homebrew/core/postgresql/17/...
+<span class="out-info">==></span> Fetching postgresql@17
+<span class="out-info">==></span> Installing postgresql@17
+<span class="out-info">==></span> Running `initdb` to create the initial database...
+<span class="out-info">==></span> Summary
+<span class="out-success">🍺</span>  /usr/local/Cellar/postgresql@17/17.2: 3,728 files, 63.1MB
+
+<span class="out-info">==></span> Caveats
+To start postgresql@17 now and restart at login:
+  brew services start postgresql@17
+Or, if you don't want/need a background service you can just run:
+  LC_ALL="C" /usr/local/opt/postgresql@17/bin/postgres -D /usr/local/var/postgresql@17</pre>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div class="callout-content">
+        <div class="callout-title">Yaddaşda saxlayın: 3 vacib yol</div>
+        <div class="callout-body">
+          <ul>
+            <li><strong>Binary-lər:</strong> <code class="inline">/usr/local/opt/postgresql@17/bin/</code></li>
+            <li><strong>Məlumat qovluğu:</strong> <code class="inline">/usr/local/var/postgresql@17/</code></li>
+            <li><strong>Config fayl:</strong> <code class="inline">/usr/local/var/postgresql@17/postgresql.conf</code></li>
+          </ul>
+          <p>M4 Max-da isə <code class="inline">/opt/homebrew/...</code> ilə başlayır.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-head">
+      <span class="step-num">2</span>
+      <span class="step-title">PATH-a əlavə etmək (bash_profile)</span>
+    </div>
+
+    <p>
+      PostgreSQL-in komandalarını (psql, createdb, pg_dump) hər yerdən çağıra bilmək
+      üçün onun <code class="inline">bin/</code> qovluğunu PATH-a əlavə edirik:
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — PATH-a əlavə (Intel Mac, bash_profile)</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># Sizin Mac bash istifadə edir, ~/.zshrc yox, ~/.bash_profile</span>
+echo <span class="str">'export PATH="/usr/local/opt/postgresql@17/bin:$PATH"'</span> &gt;&gt; ~/.bash_profile
+
+<span class="cmt"># Dərhal tətbiq edək</span>
+source ~/.bash_profile
+
+<span class="cmt"># Yoxlayaq</span>
+which psql
+psql --version</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">/usr/local/opt/postgresql@17/bin/psql
+<span class="out-success">psql (PostgreSQL) 17.2</span></pre>
+    </div>
+
+    <div class="step-head">
+      <span class="step-num">3</span>
+      <span class="step-title">Servisi işə salmaq</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — servisi başlatmaq</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># PostgreSQL-i işə salırıq (həmçinin sistem açılanda avtomatik başlayacaq)</span>
+brew services start postgresql@<span class="num">17</span>
+
+<span class="cmt"># 2-3 saniyə gözləyib statusa baxaq</span>
+sleep <span class="num">3</span>
+brew services list | grep postgresql</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content"><span class="out-info">==></span> Successfully started `postgresql@17`
+
+<span class="out-header-line">Name            Status       User          File</span>
+<span class="out-separator">─────────────────────────────────────────────────────────</span>
+postgresql@17   <span class="out-success">started</span>      royatalibova  ~/Library/LaunchAgents/homebrew.mxcl.postgresql@17.plist</pre>
+    </div>
+
+    <div class="callout success">
+      <span class="callout-icon">✓</span>
+      <div class="callout-content">
+        <div class="callout-title">"started" yazırsa — uğurlu!</div>
+        <div class="callout-body">
+          <p>
+            İndi PostgreSQL arxa planda işləyir, portu <code class="inline">5432</code>-də
+            qulaq asır. Sistem yenidən başladıqda avtomatik işə düşəcək.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 4 ======================= -->
+  <section id="b4">
+    <h2><span class="num">4</span> İlk qoşulma və ekskursiya</h2>
+    <p class="lead">
+      PostgreSQL işləyir. İndi ona qoşulub bir neçə komanda icra edək — sistemi "hiss
+      etmək" üçün.
+    </p>
+
+    <h3>4.1. psql ilə qoşulma</h3>
+
+    <p>
+      <code class="inline">psql</code> — PostgreSQL-in rəsmi terminal müştərisidir.
+      Onunla SQL sorğuları göndərə, bazanı idarə edə, hətta skript faylları icra edə
+      bilərsiniz.
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — ilk qoşulma</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># Default istifadəçi ilə qoşulma (sizin Mac user-iniz)</span>
+psql postgres</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content"><span class="out-success">psql (17.2)</span>
+Type "help" for help.
+
+<span class="out-warning">postgres=#</span> <span class="out-dim">←  prompt dəyişdi, artıq SQL mühitindəyik</span></pre>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">i</span>
+      <div class="callout-content">
+        <div class="callout-title">Prompt-un anlamı</div>
+        <div class="callout-body">
+          <ul>
+            <li><strong>postgres</strong> — hazırda qoşulduğunuz bazanın adı</li>
+            <li><strong>=#</strong> — superuser ilə qoşulmusunuz (# — admin)</li>
+            <li><strong>=&gt;</strong> — adi istifadəçi olsaydınız</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <h3>4.2. Bəzi yoxlama əmrləri</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title sql">psql — meta-komandalar</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt">-- Versiyanı yoxlayaq</span>
+<span class="kw">SELECT</span> <span class="fn">version</span>();
+
+<span class="cmt">-- Bütün bazaları göstər (meta-komanda)</span>
+\l
+
+<span class="cmt">-- Bütün istifadəçiləri (role) göstər</span>
+\du
+
+<span class="cmt">-- Aktiv bağlantılar</span>
+\conninfo</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">SELECT version() çıxışı</div>
+<pre class="output-content"><span class="out-header-line">                                       version</span>
+<span class="out-separator">─────────────────────────────────────────────────────────────────────────────────</span>
+ PostgreSQL 17.2 on x86_64-apple-darwin23.6.0, compiled by Apple clang version 15...
+<span class="out-dim">(1 row)</span></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">\l (List) çıxışı</div>
+<pre class="output-content"><span class="out-header-line">                                 List of databases</span>
+<span class="out-header-line">   Name    |    Owner     | Encoding | Locale Provider | Collate | Access privileges</span>
+<span class="out-separator">───────────┼──────────────┼──────────┼─────────────────┼─────────┼───────────────────</span>
+ postgres  | royatalibova | UTF8     | libc            | C       |
+ template0 | royatalibova | UTF8     | libc            | C       | =c/royatalibova  +
+           |              |          |                 |         | royatalibova=CTc/royatalibova
+ template1 | royatalibova | UTF8     | libc            | C       | =c/royatalibova  +
+           |              |          |                 |         | royatalibova=CTc/royatalibova
+<span class="out-dim">(3 rows)</span></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">\du çıxışı</div>
+<pre class="output-content"><span class="out-header-line">                              List of roles</span>
+<span class="out-header-line"> Role name    |                         Attributes</span>
+<span class="out-separator">──────────────┼──────────────────────────────────────────────────────────</span>
+ royatalibova | Superuser, Create role, Create DB, Replication, Bypass RLS</pre>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div class="callout-content">
+        <div class="callout-title">Niyə 'postgres' istifadəçi yoxdur?</div>
+        <div class="callout-body">
+          <p>
+            Homebrew-da PostgreSQL quraşdırıldıqda <em>superuser</em> kimi sizin
+            Mac istifadəçinizi yaradır (<code class="inline">royatalibova</code>).
+            Linux-da olduğu kimi <code class="inline">postgres</code> istifadəçisi
+            avtomatik yaradılmır. Bu normal və təhlükəsizdir.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <h3>4.3. psql-dən çıxış</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title sql">psql — çıxış</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>\q</code></pre>
+    </div>
+    <p style="color:var(--text-muted); font-size:0.9rem;">
+      <code class="inline">\q</code> = quit. Siz yenidən bash-a qayıdacaqsınız.
+    </p>
+  </section>
+
+  <!-- ======================= SECTION 5 ======================= -->
+  <section id="b5">
+    <h2><span class="num">5</span> Verilənlər bazası anlayışları</h2>
+    <p class="lead">
+      SQL-ə keçməzdən əvvəl ierarxiyanı aydın anlamaq lazımdır. Aşağıdakı mental
+      model sizi bütün dərs boyu müşayiət edəcək.
+    </p>
+
+    <div class="erd-wrap">
+      <svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg">
+        <!-- PostgreSQL Server -->
+        <rect x="20" y="20" width="660" height="380" rx="14" fill="#dbeafe" stroke="#336791" stroke-width="2"/>
+        <text x="40" y="50" font-size="15" font-weight="700" fill="#1e3a8a">🖥️ PostgreSQL Server (localhost:5432)</text>
+
+        <!-- Database 1 -->
+        <rect x="50" y="75" width="290" height="300" rx="10" fill="white" stroke="#6366f1" stroke-width="2"/>
+        <text x="65" y="100" font-size="13" font-weight="700" fill="#4338ca">📦 Database: ttis_db</text>
+
+        <!-- Schema core -->
+        <rect x="70" y="120" width="255" height="110" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+        <text x="85" y="140" font-size="12" font-weight="700" fill="#92400e">📁 Schema: core</text>
+        <text x="85" y="160" font-size="11" fill="#78350f">▸ Table: users</text>
+        <text x="85" y="178" font-size="11" fill="#78350f">▸ Table: roles</text>
+        <text x="85" y="196" font-size="11" fill="#78350f">▸ Table: audit_log</text>
+        <text x="85" y="214" font-size="11" fill="#78350f">▸ Table: sessions</text>
+
+        <!-- Schema construction -->
+        <rect x="70" y="245" width="255" height="110" rx="8" fill="#d1fae5" stroke="#059669" stroke-width="1.5"/>
+        <text x="85" y="265" font-size="12" font-weight="700" fill="#065f46">📁 Schema: construction</text>
+        <text x="85" y="285" font-size="11" fill="#064e3b">▸ Table: projects</text>
+        <text x="85" y="303" font-size="11" fill="#064e3b">▸ Table: budgets</text>
+        <text x="85" y="321" font-size="11" fill="#064e3b">▸ Table: teams</text>
+        <text x="85" y="339" font-size="11" fill="#064e3b">▸ ... (18 cədvəl)</text>
+
+        <!-- Database 2 -->
+        <rect x="365" y="75" width="290" height="140" rx="10" fill="white" stroke="#6366f1" stroke-width="2"/>
+        <text x="380" y="100" font-size="13" font-weight="700" fill="#4338ca">📦 Database: postgres (sistem)</text>
+        <text x="380" y="125" font-size="11" fill="#64748b">Default baza, sistem metadata</text>
+
+        <!-- Database 3 -->
+        <rect x="365" y="235" width="290" height="140" rx="10" fill="white" stroke="#6366f1" stroke-width="2" stroke-dasharray="4"/>
+        <text x="380" y="260" font-size="13" font-weight="700" fill="#4338ca">📦 Database: test_ttis (opsional)</text>
+        <text x="380" y="285" font-size="11" fill="#64748b">Test ssenariləri üçün</text>
+      </svg>
+      <p class="diagram-caption">Şəkil 1. PostgreSQL ierarxiyası: Server → Database → Schema → Table</p>
+    </div>
+
+    <h3>5.1. Hər termin nə deməkdir?</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Termin</th><th>Analogiya</th><th>Məzmunu</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Cluster</strong></td>
+            <td>Şəhər</td>
+            <td>Bir PostgreSQL quraşdırılması (bir port). Bir Mac-də adətən bir cluster var.</td>
+          </tr>
+          <tr>
+            <td><strong>Database</strong></td>
+            <td>Bina</td>
+            <td>Bir-birindən izolə edilmiş məntiqi saxlanma. Bir layihə üçün bir database.</td>
+          </tr>
+          <tr>
+            <td><strong>Schema</strong></td>
+            <td>Mərtəbə</td>
+            <td>Database daxilində namespacelər. Cədvəlləri qruplaşdırır.</td>
+          </tr>
+          <tr>
+            <td><strong>Table</strong></td>
+            <td>Otaq</td>
+            <td>Eyni struktura malik sətirlər saxlayır. Gerçək məlumat buradadır.</td>
+          </tr>
+          <tr>
+            <td><strong>Row</strong></td>
+            <td>Otaqdakı əşya</td>
+            <td>Bir konkret qeyd (məs. bir layihə).</td>
+          </tr>
+          <tr>
+            <td><strong>Column</strong></td>
+            <td>Əşyanın xüsusiyyəti</td>
+            <td>Sütun — bir atribut (məs. layihə adı, başlama tarixi).</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>5.2. Niyə schema-lara bölmək lazımdır?</h3>
+    <p>
+      Tətbiqimizdə biz 4 schema istifadə edəcəyik:
+    </p>
+    <ul>
+      <li><strong>core</strong> — istifadəçilər, rollar, audit (dəyişməz özək)</li>
+      <li><strong>construction</strong> — TTİS domen cədvəlləri (dəyişən qat)</li>
+      <li><strong>reporting</strong> — hesabat view-ları</li>
+      <li><strong>public</strong> — default schema (boş saxlanılır)</li>
+    </ul>
+    <p>
+      Bu bölgü — <strong>Dərs 1</strong>-də gördüyümüz Core + Domain + Shared
+      memarlığının bazada əksidir!
+    </p>
+  </section>
+
+  <!-- ======================= SECTION 6 ======================= -->
+  <section id="b6">
+    <h2><span class="num">6</span> TTİS üçün ERD dizaynı</h2>
+    <p class="lead">
+      ERD (Entity Relationship Diagram) — cədvəllər arası əlaqələrin vizual xəritəsidir.
+      SQL yazmazdan əvvəl həmişə ERD çəkin — bu, "xəritə olmadan yola çıxmaq"dan qoruyur.
+    </p>
+
+    <h3>6.1. Əsas bizneş entitiləri</h3>
+    <p>TTİS-də biz aşağıdakı əsas "varlıqları" modelləyirik:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Varlıq</th><th>Nədir?</th><th>Nümunələr</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Region</strong></td><td>Coğrafi bölgə</td><td>Bakı, Gəncə, Şəki...</td></tr>
+          <tr><td><strong>Object</strong></td><td>Təmir/tikinti obyekti</td><td>Məktəb #45, Lisey #1, Qəbələ Bağçası</td></tr>
+          <tr><td><strong>Project</strong></td><td>Konkret iş</td><td>"Məktəb #45 əsaslı təmiri 2026"</td></tr>
+          <tr><td><strong>Contractor</strong></td><td>Podratçı şirkət</td><td>"Azərİnşaat MMC"</td></tr>
+          <tr><td><strong>Contract</strong></td><td>Müqavilə</td><td>№ 2026/045, 250,000 AZN</td></tr>
+          <tr><td><strong>Budget item</strong></td><td>Smeta maddəsi</td><td>"Dam örtüyü 120 m²"</td></tr>
+          <tr><td><strong>Team</strong></td><td>Briqada</td><td>"Dulusçu briqada 3"</td></tr>
+          <tr><td><strong>Task</strong></td><td>Tapşırıq</td><td>"1-ci mərtəbə mala çəkmək"</td></tr>
+          <tr><td><strong>Monitoring</strong></td><td>Nəzarət səfəri</td><td>"15 may müayinə"</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>6.2. Sadələşdirilmiş ERD</h3>
+    <div class="erd-wrap">
+      <svg viewBox="0 0 820 560" xmlns="http://www.w3.org/2000/svg">
+        <!-- users -->
+        <g>
+          <rect x="30" y="30" width="150" height="75" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+          <text x="105" y="52" text-anchor="middle" font-size="13" font-weight="700" fill="#92400e">👤 users</text>
+          <line x1="30" y1="60" x2="180" y2="60" stroke="#d97706"/>
+          <text x="40" y="78" font-size="10" fill="#78350f">🔑 id</text>
+          <text x="40" y="94" font-size="10" fill="#78350f">   full_name, email</text>
+        </g>
+
+        <!-- regions -->
+        <g>
+          <rect x="340" y="30" width="150" height="75" rx="8" fill="#e0e7ff" stroke="#4338ca" stroke-width="2"/>
+          <text x="415" y="52" text-anchor="middle" font-size="13" font-weight="700" fill="#3730a3">🗺️ regions</text>
+          <line x1="340" y1="60" x2="490" y2="60" stroke="#4338ca"/>
+          <text x="350" y="78" font-size="10" fill="#1e3a8a">🔑 id</text>
+          <text x="350" y="94" font-size="10" fill="#1e3a8a">   code, name_az</text>
+        </g>
+
+        <!-- objects -->
+        <g>
+          <rect x="340" y="140" width="150" height="90" rx="8" fill="#e0e7ff" stroke="#4338ca" stroke-width="2"/>
+          <text x="415" y="162" text-anchor="middle" font-size="13" font-weight="700" fill="#3730a3">🏢 objects</text>
+          <line x1="340" y1="170" x2="490" y2="170" stroke="#4338ca"/>
+          <text x="350" y="188" font-size="10" fill="#1e3a8a">🔑 id</text>
+          <text x="350" y="202" font-size="10" fill="#1e3a8a">🔗 region_id</text>
+          <text x="350" y="216" font-size="10" fill="#1e3a8a">   name, address</text>
+        </g>
+
+        <!-- projects -->
+        <g>
+          <rect x="340" y="270" width="150" height="105" rx="8" fill="#d1fae5" stroke="#059669" stroke-width="2"/>
+          <text x="415" y="292" text-anchor="middle" font-size="13" font-weight="700" fill="#065f46">📋 projects</text>
+          <line x1="340" y1="300" x2="490" y2="300" stroke="#059669"/>
+          <text x="350" y="318" font-size="10" fill="#064e3b">🔑 id</text>
+          <text x="350" y="332" font-size="10" fill="#064e3b">🔗 object_id</text>
+          <text x="350" y="346" font-size="10" fill="#064e3b">🔗 manager_id (→users)</text>
+          <text x="350" y="360" font-size="10" fill="#064e3b">   status, dates, budget</text>
+        </g>
+
+        <!-- budget_items -->
+        <g>
+          <rect x="570" y="200" width="150" height="90" rx="8" fill="#fce7f3" stroke="#db2777" stroke-width="2"/>
+          <text x="645" y="222" text-anchor="middle" font-size="13" font-weight="700" fill="#9f1239">💰 budget_items</text>
+          <line x1="570" y1="230" x2="720" y2="230" stroke="#db2777"/>
+          <text x="580" y="248" font-size="10" fill="#831843">🔑 id</text>
+          <text x="580" y="262" font-size="10" fill="#831843">🔗 project_id</text>
+          <text x="580" y="276" font-size="10" fill="#831843">   qty, unit, price</text>
+        </g>
+
+        <!-- contracts -->
+        <g>
+          <rect x="570" y="310" width="150" height="90" rx="8" fill="#fce7f3" stroke="#db2777" stroke-width="2"/>
+          <text x="645" y="332" text-anchor="middle" font-size="13" font-weight="700" fill="#9f1239">📄 contracts</text>
+          <line x1="570" y1="340" x2="720" y2="340" stroke="#db2777"/>
+          <text x="580" y="358" font-size="10" fill="#831843">🔑 id</text>
+          <text x="580" y="372" font-size="10" fill="#831843">🔗 project_id, contractor_id</text>
+          <text x="580" y="386" font-size="10" fill="#831843">   amount, signed_date</text>
+        </g>
+
+        <!-- teams -->
+        <g>
+          <rect x="110" y="270" width="150" height="90" rx="8" fill="#fce7f3" stroke="#db2777" stroke-width="2"/>
+          <text x="185" y="292" text-anchor="middle" font-size="13" font-weight="700" fill="#9f1239">👷 teams</text>
+          <line x1="110" y1="300" x2="260" y2="300" stroke="#db2777"/>
+          <text x="120" y="318" font-size="10" fill="#831843">🔑 id</text>
+          <text x="120" y="332" font-size="10" fill="#831843">🔗 project_id</text>
+          <text x="120" y="346" font-size="10" fill="#831843">   leader, type</text>
+        </g>
+
+        <!-- tasks -->
+        <g>
+          <rect x="110" y="405" width="150" height="90" rx="8" fill="#fce7f3" stroke="#db2777" stroke-width="2"/>
+          <text x="185" y="427" text-anchor="middle" font-size="13" font-weight="700" fill="#9f1239">✅ tasks</text>
+          <line x1="110" y1="435" x2="260" y2="435" stroke="#db2777"/>
+          <text x="120" y="453" font-size="10" fill="#831843">🔑 id</text>
+          <text x="120" y="467" font-size="10" fill="#831843">🔗 project_id, team_id</text>
+          <text x="120" y="481" font-size="10" fill="#831843">   status, dates</text>
+        </g>
+
+        <!-- monitoring -->
+        <g>
+          <rect x="570" y="420" width="170" height="90" rx="8" fill="#fce7f3" stroke="#db2777" stroke-width="2"/>
+          <text x="655" y="442" text-anchor="middle" font-size="13" font-weight="700" fill="#9f1239">🔍 monitoring_visits</text>
+          <line x1="570" y1="450" x2="740" y2="450" stroke="#db2777"/>
+          <text x="580" y="468" font-size="10" fill="#831843">🔑 id</text>
+          <text x="580" y="482" font-size="10" fill="#831843">🔗 project_id, inspector_id</text>
+          <text x="580" y="496" font-size="10" fill="#831843">   findings (JSONB)</text>
+        </g>
+
+        <!-- Relationships (lines) -->
+        <!-- regions -> objects -->
+        <path d="M 415 108 L 415 140" stroke="#4338ca" stroke-width="2" marker-end="url(#arrowBlue)"/>
+        <text x="420" y="127" font-size="9" fill="#4338ca">1:N</text>
+
+        <!-- objects -> projects -->
+        <path d="M 415 230 L 415 270" stroke="#059669" stroke-width="2" marker-end="url(#arrowGreen)"/>
+        <text x="420" y="252" font-size="9" fill="#059669">1:N</text>
+
+        <!-- users -> projects (manager) -->
+        <path d="M 180 65 Q 280 150 340 295" stroke="#d97706" stroke-width="1.5" stroke-dasharray="4" fill="none" marker-end="url(#arrowOrange)"/>
+        <text x="260" y="180" font-size="9" fill="#d97706">manager</text>
+
+        <!-- projects -> budget_items -->
+        <path d="M 490 310 L 570 240" stroke="#db2777" stroke-width="1.5" marker-end="url(#arrowPink)"/>
+        <text x="515" y="278" font-size="9" fill="#db2777">1:N</text>
+
+        <!-- projects -> contracts -->
+        <path d="M 490 345 L 570 345" stroke="#db2777" stroke-width="1.5" marker-end="url(#arrowPink)"/>
+        <text x="510" y="338" font-size="9" fill="#db2777">1:N</text>
+
+        <!-- projects -> teams -->
+        <path d="M 340 315 L 260 305" stroke="#db2777" stroke-width="1.5" marker-end="url(#arrowPink)"/>
+        <text x="285" y="302" font-size="9" fill="#db2777">1:N</text>
+
+        <!-- teams -> tasks -->
+        <path d="M 185 360 L 185 405" stroke="#db2777" stroke-width="1.5" marker-end="url(#arrowPink)"/>
+        <text x="190" y="385" font-size="9" fill="#db2777">1:N</text>
+
+        <!-- projects -> monitoring -->
+        <path d="M 490 355 Q 550 390 570 450" stroke="#db2777" stroke-width="1.5" marker-end="url(#arrowPink)"/>
+        <text x="525" y="420" font-size="9" fill="#db2777">1:N</text>
+
+        <defs>
+          <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+            <polygon points="0 0, 10 5, 0 10" fill="#4338ca"/>
+          </marker>
+          <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+            <polygon points="0 0, 10 5, 0 10" fill="#059669"/>
+          </marker>
+          <marker id="arrowOrange" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+            <polygon points="0 0, 10 5, 0 10" fill="#d97706"/>
+          </marker>
+          <marker id="arrowPink" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+            <polygon points="0 0, 10 5, 0 10" fill="#db2777"/>
+          </marker>
+        </defs>
+      </svg>
+      <p class="diagram-caption">Şəkil 2. TTİS əsas cədvəlləri və əlaqələr (sadələşdirilmiş)</p>
+    </div>
+
+    <h3>6.3. Əlaqə növləri</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Əlaqə</th><th>Məna</th><th>Nümunə</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>1:1</strong> (bir-bir)</td>
+            <td>Hər qeyd digərində yalnız bir qeydə uyğundur</td>
+            <td>user ↔ user_profile</td>
+          </tr>
+          <tr>
+            <td><strong>1:N</strong> (bir-çox)</td>
+            <td>Bir qeyd digər cədvəldə çoxlu qeydə malikdir</td>
+            <td>project → budget_items</td>
+          </tr>
+          <tr>
+            <td><strong>N:M</strong> (çox-çox)</td>
+            <td>Hər iki tərəfdə çoxlu əlaqə — ara cədvəl lazımdır</td>
+            <td>user ↔ project (team_members)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 7 ======================= -->
+  <section id="b7">
+    <h2><span class="num">7</span> Baza və schema-ların yaradılması</h2>
+    <p class="lead">
+      İndi praktiki işə başlayırıq. Əvvəlcə layihə qovluğuna qayıdıb bütün SQL
+      skriptlərini <code class="inline">database/schemas/</code>-də yaratacağıq.
+    </p>
+
+    <div class="step-head">
+      <span class="step-num">1</span>
+      <span class="step-title">Bazanı yaratmaq</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — layihə qovluğuna keçid və baza yaratma</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># Layihə qovluğuna keçirik (Dərs 1-də yaratdığımız)</span>
+<span class="kw">cd</span> ~/Desktop/Claude_Modei_Təmir_tikinti
+
+<span class="cmt"># İki variant var:</span>
+<span class="cmt">-- VARIANT A: bash-dan birbaşa</span>
+createdb ttis_db
+
+<span class="cmt">-- VARIANT B: psql-dən</span>
+<span class="cmt"># psql postgres</span>
+<span class="cmt"># CREATE DATABASE ttis_db;</span>
+<span class="cmt"># \q</span>
+
+<span class="cmt"># Yoxlayaq — siyahıda görünürmü?</span>
+psql -l | grep ttis</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content"> ttis_db   | royatalibova | UTF8 | libc | C | <span class="out-dim">(boş)</span></pre>
+    </div>
+
+    <div class="step-head">
+      <span class="step-num">2</span>
+      <span class="step-title">Schema-ların yaradılması</span>
+    </div>
+
+    <p>
+      Schema-ları birbaşa SQL fayl kimi yaradacağıq. Bu, bütün komandanın
+      (developer qrupunun) eyni sxemi təkrar yaratmasına imkan verir.
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — 00_init.sql faylını yaradırıq</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># Layihə kökündə olduğumuzdan əminik</span>
+<span class="kw">pwd</span>
+
+<span class="cmt"># SQL faylını yaradırıq</span>
+cat &gt; database/schemas/<span class="num">00</span>_init.sql &lt;&lt; <span class="str">'EOF'</span>
+-- ═══════════════════════════════════════════════════════════════
+-- 00_INIT.SQL — Verilənlər bazasının ilkin hazırlığı
+-- ═══════════════════════════════════════════════════════════════
+
+-- Zaman zonası və kodlaşdırma təsdiqi
+SET client_encoding = 'UTF8';
+SET timezone = 'Asia/Baku';
+
+-- ═══ Schema-ları yaradırıq ═══
+CREATE SCHEMA IF NOT EXISTS core;
+CREATE SCHEMA IF NOT EXISTS construction;
+CREATE SCHEMA IF NOT EXISTS reporting;
+
+-- ═══ Şərhlər ═══
+COMMENT ON SCHEMA core IS 'Özək qat: istifadəçi, rol, audit';
+COMMENT ON SCHEMA construction IS 'Tikinti domeni: layihə, smeta, brigada';
+COMMENT ON SCHEMA reporting IS 'Hesabat view-ları';
+
+-- ═══ Lazımi extension-lar ═══
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";   -- UUID generasiyası
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";    -- Şifrələmə
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";     -- Trigram axtarış
+
+-- ═══ Yoxlama ═══
+SELECT 'Schema-lar hazırdır' AS status;
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ 00_init.sql yaradıldı"</span></code></pre>
+    </div>
+
+    <div class="step-head">
+      <span class="step-num">3</span>
+      <span class="step-title">Skripti baza üzərində icra etmək</span>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — SQL icrası</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># -d = database adı, -f = fayldan icra</span>
+psql -d ttis_db -f database/schemas/<span class="num">00</span>_init.sql</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">SET
+SET
+CREATE SCHEMA
+CREATE SCHEMA
+CREATE SCHEMA
+COMMENT
+COMMENT
+COMMENT
+CREATE EXTENSION
+CREATE EXTENSION
+CREATE EXTENSION
+<span class="out-header-line">       status</span>
+<span class="out-separator">─────────────────────</span>
+ <span class="out-success">Schema-lar hazırdır</span>
+<span class="out-dim">(1 row)</span></pre>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 8 ======================= -->
+  <section id="b8">
+    <h2><span class="num">8</span> Core schema — istifadəçi idarəsi</h2>
+    <p class="lead">
+      Core schema — layihənin dəyişməz özəyidir. Burada istifadəçilər, rollar və
+      audit log var.
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — 01_core.sql faylının yaradılması</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; database/schemas/<span class="num">01</span>_core.sql &lt;&lt; <span class="str">'EOF'</span>
+-- ═══════════════════════════════════════════════════════════════
+-- 01_CORE.SQL — Core qatın cədvəlləri
+-- ═══════════════════════════════════════════════════════════════
+
+SET search_path TO core, public;
+
+-- ═══ 1. ROLES ═══
+CREATE TABLE IF NOT EXISTS core.roles (
+    id           SERIAL PRIMARY KEY,
+    code         VARCHAR(50) UNIQUE NOT NULL,
+    name         VARCHAR(100) NOT NULL,
+    description  TEXT,
+    permissions  JSONB DEFAULT '[]'::jsonb,
+    is_system    BOOLEAN DEFAULT FALSE,
+    created_at   TIMESTAMPTZ DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE core.roles IS 'Sistem rolları (admin, manager, inspector, ...)';
+
+-- ═══ 2. DEPARTMENTS (şöbələr) ═══
+CREATE TABLE IF NOT EXISTS core.departments (
+    id           SERIAL PRIMARY KEY,
+    code         VARCHAR(50) UNIQUE,
+    name         VARCHAR(200) NOT NULL,
+    parent_id    INTEGER REFERENCES core.departments(id) ON DELETE SET NULL,
+    description  TEXT,
+    is_active    BOOLEAN DEFAULT TRUE,
+    created_at   TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE core.departments IS 'Təşkilati şöbələr (ierarxik)';
+
+-- ═══ 3. USERS ═══
+CREATE TABLE IF NOT EXISTS core.users (
+    id              SERIAL PRIMARY KEY,
+    full_name       VARCHAR(200) NOT NULL,
+    email           VARCHAR(150) UNIQUE NOT NULL,
+    phone           VARCHAR(20),
+    password_hash   VARCHAR(255) NOT NULL,
+    role_id         INTEGER REFERENCES core.roles(id) ON DELETE RESTRICT,
+    department_id   INTEGER REFERENCES core.departments(id) ON DELETE SET NULL,
+    avatar_url      TEXT,
+    is_active       BOOLEAN DEFAULT TRUE,
+    email_verified  BOOLEAN DEFAULT FALSE,
+    last_login_at   TIMESTAMPTZ,
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
+);
+
+COMMENT ON TABLE core.users IS 'Sistem istifadəçiləri';
+
+-- ═══ 4. SESSIONS ═══
+CREATE TABLE IF NOT EXISTS core.sessions (
+    id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id      INTEGER NOT NULL REFERENCES core.users(id) ON DELETE CASCADE,
+    token_hash   VARCHAR(255) NOT NULL,
+    ip_address   INET,
+    user_agent   TEXT,
+    expires_at   TIMESTAMPTZ NOT NULL,
+    revoked_at   TIMESTAMPTZ,
+    created_at   TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE core.sessions IS 'JWT session tarixçəsi';
+
+-- ═══ 5. AUDIT_LOG ═══
+CREATE TABLE IF NOT EXISTS core.audit_log (
+    id            BIGSERIAL PRIMARY KEY,
+    user_id       INTEGER REFERENCES core.users(id) ON DELETE SET NULL,
+    action        VARCHAR(50) NOT NULL,      -- INSERT, UPDATE, DELETE, LOGIN, ...
+    entity_type   VARCHAR(100),              -- projects, users, ...
+    entity_id     INTEGER,
+    old_values    JSONB,
+    new_values    JSONB,
+    ip_address    INET,
+    user_agent    TEXT,
+    created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE core.audit_log IS 'Bütün dəyişikliklərin tarixçəsi';
+
+-- ═══ İNDEKSLƏR ═══
+CREATE INDEX idx_users_email     ON core.users(email);
+CREATE INDEX idx_users_role      ON core.users(role_id);
+CREATE INDEX idx_users_dept      ON core.users(department_id);
+CREATE INDEX idx_sessions_user   ON core.sessions(user_id);
+CREATE INDEX idx_sessions_exp    ON core.sessions(expires_at);
+CREATE INDEX idx_audit_user      ON core.audit_log(user_id);
+CREATE INDEX idx_audit_entity    ON core.audit_log(entity_type, entity_id);
+CREATE INDEX idx_audit_created   ON core.audit_log(created_at);
+
+SELECT 'Core cədvəlləri hazırdır' AS status;
+<span class="str">EOF</span>
+
+<span class="cmt"># İcra edirik</span>
+psql -d ttis_db -f database/schemas/<span class="num">01</span>_core.sql</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış (qısaldılmış)</div>
+<pre class="output-content">SET
+CREATE TABLE
+COMMENT
+CREATE TABLE
+COMMENT
+CREATE TABLE
+COMMENT
+CREATE TABLE
+COMMENT
+CREATE TABLE
+COMMENT
+CREATE INDEX
+CREATE INDEX
+...
+<span class="out-header-line">         status</span>
+<span class="out-separator">─────────────────────────</span>
+ <span class="out-success">Core cədvəlləri hazırdır</span>
+<span class="out-dim">(1 row)</span></pre>
+    </div>
+
+    <h3>8.1. SQL konstruksiyalarının izahı</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Konstruksiya</th><th>Məna</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code class="inline">SERIAL PRIMARY KEY</code></td>
+            <td>Avtomatik artan tam ədəd + primary key məhdudiyyəti</td>
+          </tr>
+          <tr>
+            <td><code class="inline">VARCHAR(200)</code></td>
+            <td>Maks. 200 simvollu mətn sahəsi</td>
+          </tr>
+          <tr>
+            <td><code class="inline">TIMESTAMPTZ</code></td>
+            <td>Zaman + saat qurşağı məlumatı (həmişə istifadə edin!)</td>
+          </tr>
+          <tr>
+            <td><code class="inline">REFERENCES ... ON DELETE CASCADE</code></td>
+            <td>Valideyn silindikdə, övladlar da silinir</td>
+          </tr>
+          <tr>
+            <td><code class="inline">REFERENCES ... ON DELETE SET NULL</code></td>
+            <td>Valideyn silindikdə, sahə NULL olur</td>
+          </tr>
+          <tr>
+            <td><code class="inline">REFERENCES ... ON DELETE RESTRICT</code></td>
+            <td>Əgər övladlar varsa, valideyn silinməsinə icazə vermir</td>
+          </tr>
+          <tr>
+            <td><code class="inline">JSONB</code></td>
+            <td>Struktursuz JSON — binary formatda, sorğulanabilən</td>
+          </tr>
+          <tr>
+            <td><code class="inline">UUID DEFAULT uuid_generate_v4()</code></td>
+            <td>Unikal identifikator, brute-force təhlükəsiz</td>
+          </tr>
+          <tr>
+            <td><code class="inline">CONSTRAINT ... CHECK (...)</code></td>
+            <td>Məlumatın düzgünlüyünü bazada yoxlayır</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div class="callout-content">
+        <div class="callout-title">Niyə JSONB əvəzinə JSON deyil?</div>
+        <div class="callout-body">
+          <p>
+            <strong>JSONB</strong> binary formatda saxlanılır — indeksləmə və sorğu
+            sürəti qat-qat yüksəkdir. Yalnız "tam olduğu kimi" saxlamaq lazımdırsa
+            JSON istifadə edin (məs. ilkin payload-u loglamaq üçün).
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 9 ======================= -->
+  <section id="b9">
+    <h2><span class="num">9</span> Construction schema — domen cədvəlləri</h2>
+    <p class="lead">
+      İndi TTİS-in əsas cədvəllərini yaradacağıq. Bu fayl uzundur, amma parçalara
+      bölürəm və hər parçanı ayrıca izah edirəm.
+    </p>
+
+    <div class="callout info">
+      <span class="callout-icon">i</span>
+      <div class="callout-content">
+        <div class="callout-title">Yanaşma</div>
+        <div class="callout-body">
+          <p>
+            Bütün SQL-i bir faylda yaradacağıq (<code class="inline">02_construction.sql</code>),
+            amma aşağıda onu 4 məntiqi hissəyə bölürəm:
+          </p>
+          <ol>
+            <li>Reference cədvəllər (regions, object_types, budget_categories)</li>
+            <li>Əsas entitilər (objects, contractors, projects)</li>
+            <li>Əlaqələr (contracts, budget_items, materials)</li>
+            <li>İş axını (teams, tasks, monitoring, documents)</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <h3>9.1. Faylı yaratmağa başlayırıq</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — faylın baş hissəsi</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; database/schemas/<span class="num">02</span>_construction.sql &lt;&lt; <span class="str">'EOF'</span>
+-- ═══════════════════════════════════════════════════════════════
+-- 02_CONSTRUCTION.SQL — TTİS domen cədvəlləri (18 cədvəl)
+-- ═══════════════════════════════════════════════════════════════
+
+SET search_path TO construction, core, public;
+<span class="str">EOF</span>
+
+echo <span class="str">"Fayl başladıldı, növbəti bloklarla davam edəcəyik..."</span></code></pre>
+    </div>
+
+    <h3>9.2. Hissə 1 — Reference cədvəlləri</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title sql">SQL — regions, object_types, budget_categories (faylın davamı)</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt">-- cat &gt;&gt; ilə əlavə yazırıq (təkrar &gt; istifadə etmirik — yoxsa üzərinə yazacaq!)</span>
+cat &gt;&gt; database/schemas/<span class="num">02</span>_construction.sql &lt;&lt; <span class="str">'EOF'</span>
+
+-- ═══ REGIONS (77 rayon) ═══
+CREATE TABLE IF NOT EXISTS construction.regions (
+    id           SERIAL PRIMARY KEY,
+    code         VARCHAR(10) UNIQUE NOT NULL,
+    name_az      VARCHAR(100) NOT NULL,
+    name_en      VARCHAR(100),
+    region_type  VARCHAR(30) CHECK (region_type IN ('city', 'district', 'republic')),
+    parent_id    INTEGER REFERENCES construction.regions(id) ON DELETE SET NULL,
+    population   INTEGER,
+    area_sqkm    NUMERIC(10,2),
+    created_at   TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE construction.regions IS 'Azərbaycanın 77 rayonu/şəhəri (ierarxik)';
+
+-- ═══ OBJECT_TYPES (obyekt növləri) ═══
+CREATE TABLE IF NOT EXISTS construction.object_types (
+    id           SERIAL PRIMARY KEY,
+    code         VARCHAR(30) UNIQUE NOT NULL,
+    name_az      VARCHAR(100) NOT NULL,
+    icon         VARCHAR(50),
+    is_active    BOOLEAN DEFAULT TRUE
+);
+
+COMMENT ON TABLE construction.object_types IS 'Obyekt növləri: məktəb, lisey, gimnaziya, bağça, ...';
+
+-- ═══ BUDGET_CATEGORIES (smeta kateqoriyaları — ierarxik) ═══
+CREATE TABLE IF NOT EXISTS construction.budget_categories (
+    id           SERIAL PRIMARY KEY,
+    code         VARCHAR(30) UNIQUE NOT NULL,
+    name         VARCHAR(200) NOT NULL,
+    parent_id    INTEGER REFERENCES construction.budget_categories(id) ON DELETE SET NULL,
+    level        INTEGER DEFAULT 1,
+    is_active    BOOLEAN DEFAULT TRUE
+);
+
+COMMENT ON TABLE construction.budget_categories IS 'Smeta iş növləri: dam, suvaq, elektrik, ...';
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ Hissə 1: reference cədvəllər əlavə edildi"</span></code></pre>
+    </div>
+
+    <h3>9.3. Hissə 2 — Əsas entitilər</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title sql">SQL — objects, contractors, projects</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt;&gt; database/schemas/<span class="num">02</span>_construction.sql &lt;&lt; <span class="str">'EOF'</span>
+
+-- ═══ OBJECTS (obyektlər) ═══
+CREATE TABLE IF NOT EXISTS construction.objects (
+    id              SERIAL PRIMARY KEY,
+    region_id       INTEGER NOT NULL REFERENCES construction.regions(id),
+    type_id         INTEGER NOT NULL REFERENCES construction.object_types(id),
+    code            VARCHAR(30) UNIQUE,
+    name            VARCHAR(300) NOT NULL,
+    address         TEXT,
+    latitude        NUMERIC(10,7),
+    longitude       NUMERIC(10,7),
+    area_sqm        NUMERIC(10,2),
+    total_floors    INTEGER,
+    total_rooms     INTEGER,
+    student_count   INTEGER,
+    year_built      INTEGER,
+    year_last_repair INTEGER,
+    technical_condition VARCHAR(20) CHECK (technical_condition IN ('excellent','good','satisfactory','poor','emergency')),
+    metadata        JSONB DEFAULT '{}'::jsonb,
+    is_active       BOOLEAN DEFAULT TRUE,
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE construction.objects IS 'Təmir-tikinti obyektləri (məktəblər, lisey, bağçalar, ...)';
+
+-- ═══ CONTRACTORS (podratçılar) ═══
+CREATE TABLE IF NOT EXISTS construction.contractors (
+    id               SERIAL PRIMARY KEY,
+    name             VARCHAR(300) NOT NULL,
+    legal_name       VARCHAR(300),
+    tax_id           VARCHAR(20) UNIQUE,
+    legal_address    TEXT,
+    contact_person   VARCHAR(200),
+    contact_phone    VARCHAR(20),
+    contact_email    VARCHAR(150),
+    website          VARCHAR(200),
+    rating           NUMERIC(3,2) CHECK (rating BETWEEN 0 AND 5),
+    is_blacklisted   BOOLEAN DEFAULT FALSE,
+    notes            TEXT,
+    is_active        BOOLEAN DEFAULT TRUE,
+    created_at       TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE construction.contractors IS 'Podratçı şirkətlərin reyestri';
+
+-- ═══ PROJECTS (layihələr) — əsas cədvəl ═══
+CREATE TABLE IF NOT EXISTS construction.projects (
+    id                    SERIAL PRIMARY KEY,
+    project_code          VARCHAR(50) UNIQUE NOT NULL,
+    object_id             INTEGER NOT NULL REFERENCES construction.objects(id),
+    manager_id            INTEGER REFERENCES core.users(id) ON DELETE SET NULL,
+    name                  VARCHAR(500) NOT NULL,
+    description           TEXT,
+    project_type          VARCHAR(30) NOT NULL CHECK (project_type IN ('new_build', 'major_repair', 'current_repair', 'reconstruction')),
+    status                VARCHAR(30) NOT NULL DEFAULT 'planned'
+                            CHECK (status IN ('planned', 'approved', 'in_progress', 'suspended', 'completed', 'cancelled')),
+    priority              VARCHAR(10) DEFAULT 'normal' CHECK (priority IN ('low','normal','high','urgent')),
+    start_date_planned    DATE,
+    end_date_planned      DATE,
+    start_date_actual     DATE,
+    end_date_actual       DATE,
+    total_budget_planned  NUMERIC(14,2),
+    total_budget_actual   NUMERIC(14,2) DEFAULT 0,
+    currency              CHAR(3) DEFAULT 'AZN',
+    progress_percent      INTEGER DEFAULT 0 CHECK (progress_percent BETWEEN 0 AND 100),
+    metadata              JSONB DEFAULT '{}'::jsonb,
+    created_by            INTEGER REFERENCES core.users(id),
+    created_at            TIMESTAMPTZ DEFAULT NOW(),
+    updated_at            TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT date_order CHECK (end_date_planned IS NULL OR start_date_planned IS NULL OR end_date_planned >= start_date_planned)
+);
+
+COMMENT ON TABLE construction.projects IS 'Əsas layihə cədvəli — TTİS-in mərkəzi';
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ Hissə 2: əsas entitilər əlavə edildi"</span></code></pre>
+    </div>
+
+    <h3>9.4. Hissə 3 — Maliyyə və resurslar</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title sql">SQL — contracts, budget_items, materials, material_usage</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt;&gt; database/schemas/<span class="num">02</span>_construction.sql &lt;&lt; <span class="str">'EOF'</span>
+
+-- ═══ CONTRACTS (müqavilələr) ═══
+CREATE TABLE IF NOT EXISTS construction.contracts (
+    id              SERIAL PRIMARY KEY,
+    project_id      INTEGER NOT NULL REFERENCES construction.projects(id) ON DELETE CASCADE,
+    contractor_id   INTEGER NOT NULL REFERENCES construction.contractors(id),
+    contract_number VARCHAR(100) UNIQUE NOT NULL,
+    contract_type   VARCHAR(30) CHECK (contract_type IN ('main','subcontract','supply','service')),
+    signed_date     DATE NOT NULL,
+    start_date      DATE,
+    end_date        DATE,
+    total_amount    NUMERIC(14,2) NOT NULL,
+    paid_amount     NUMERIC(14,2) DEFAULT 0,
+    currency        CHAR(3) DEFAULT 'AZN',
+    status          VARCHAR(20) DEFAULT 'active' CHECK (status IN ('draft','active','completed','terminated')),
+    file_url        TEXT,
+    notes           TEXT,
+    created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ═══ BUDGET_ITEMS (smeta maddələri) ═══
+CREATE TABLE IF NOT EXISTS construction.budget_items (
+    id                    SERIAL PRIMARY KEY,
+    project_id            INTEGER NOT NULL REFERENCES construction.projects(id) ON DELETE CASCADE,
+    category_id           INTEGER REFERENCES construction.budget_categories(id),
+    item_code             VARCHAR(50),
+    name                  VARCHAR(500) NOT NULL,
+    unit                  VARCHAR(30),                  -- m², m³, ton, ədəd
+    quantity_planned      NUMERIC(12,3),
+    price_per_unit_planned NUMERIC(12,2),
+    total_planned         NUMERIC(14,2) GENERATED ALWAYS AS (quantity_planned * price_per_unit_planned) STORED,
+    quantity_actual       NUMERIC(12,3) DEFAULT 0,
+    price_per_unit_actual NUMERIC(12,2),
+    total_actual          NUMERIC(14,2) DEFAULT 0,
+    notes                 TEXT,
+    created_at            TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE construction.budget_items IS 'Layihə smetasının sətir-sətir maddələri';
+
+-- ═══ MATERIALS (material reyestri) ═══
+CREATE TABLE IF NOT EXISTS construction.materials (
+    id           SERIAL PRIMARY KEY,
+    code         VARCHAR(50) UNIQUE,
+    name         VARCHAR(300) NOT NULL,
+    category     VARCHAR(100),
+    unit         VARCHAR(30),
+    description  TEXT,
+    is_active    BOOLEAN DEFAULT TRUE
+);
+
+-- ═══ MATERIAL_USAGE (material sərfi) ═══
+CREATE TABLE IF NOT EXISTS construction.material_usage (
+    id            SERIAL PRIMARY KEY,
+    project_id    INTEGER NOT NULL REFERENCES construction.projects(id) ON DELETE CASCADE,
+    material_id   INTEGER NOT NULL REFERENCES construction.materials(id),
+    quantity      NUMERIC(12,3) NOT NULL,
+    unit_price    NUMERIC(12,2),
+    total_cost    NUMERIC(14,2) GENERATED ALWAYS AS (quantity * unit_price) STORED,
+    used_date     DATE NOT NULL DEFAULT CURRENT_DATE,
+    recorded_by   INTEGER REFERENCES core.users(id),
+    notes         TEXT,
+    created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ Hissə 3: maliyyə və material cədvəlləri əlavə edildi"</span></code></pre>
+    </div>
+
+    <h3>9.5. Hissə 4 — İş axını (briqada, tapşırıq, monitorinq)</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title sql">SQL — teams, employees, tasks, monitoring, documents, progress_reports</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt;&gt; database/schemas/<span class="num">02</span>_construction.sql &lt;&lt; <span class="str">'EOF'</span>
+
+-- ═══ TEAMS (briqadalar) ═══
+CREATE TABLE IF NOT EXISTS construction.teams (
+    id           SERIAL PRIMARY KEY,
+    project_id   INTEGER NOT NULL REFERENCES construction.projects(id) ON DELETE CASCADE,
+    name         VARCHAR(200) NOT NULL,
+    team_type    VARCHAR(50),   -- masonry, plumbing, electrical, painting, ...
+    leader_name  VARCHAR(200),
+    leader_phone VARCHAR(20),
+    member_count INTEGER DEFAULT 0,
+    is_active    BOOLEAN DEFAULT TRUE,
+    created_at   TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ═══ EMPLOYEES (briqada üzvləri) ═══
+CREATE TABLE IF NOT EXISTS construction.employees (
+    id           SERIAL PRIMARY KEY,
+    team_id      INTEGER REFERENCES construction.teams(id) ON DELETE SET NULL,
+    full_name    VARCHAR(200) NOT NULL,
+    position     VARCHAR(100),
+    phone        VARCHAR(20),
+    daily_rate   NUMERIC(10,2),
+    start_date   DATE,
+    end_date     DATE,
+    is_active    BOOLEAN DEFAULT TRUE
+);
+
+-- ═══ TASKS (tapşırıqlar) ═══
+CREATE TABLE IF NOT EXISTS construction.tasks (
+    id                SERIAL PRIMARY KEY,
+    project_id        INTEGER NOT NULL REFERENCES construction.projects(id) ON DELETE CASCADE,
+    team_id           INTEGER REFERENCES construction.teams(id),
+    title             VARCHAR(500) NOT NULL,
+    description       TEXT,
+    status            VARCHAR(20) DEFAULT 'pending'
+                        CHECK (status IN ('pending','in_progress','review','done','blocked','cancelled')),
+    priority          VARCHAR(10) DEFAULT 'normal' CHECK (priority IN ('low','normal','high','urgent')),
+    planned_start     DATE,
+    planned_end       DATE,
+    actual_start      DATE,
+    actual_end        DATE,
+    progress_percent  INTEGER DEFAULT 0 CHECK (progress_percent BETWEEN 0 AND 100),
+    assigned_to       INTEGER REFERENCES core.users(id),
+    created_by        INTEGER REFERENCES core.users(id),
+    created_at        TIMESTAMPTZ DEFAULT NOW(),
+    updated_at        TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ═══ EQUIPMENT (avadanlıq) ═══
+CREATE TABLE IF NOT EXISTS construction.equipment (
+    id                SERIAL PRIMARY KEY,
+    code              VARCHAR(50) UNIQUE,
+    name              VARCHAR(200) NOT NULL,
+    type              VARCHAR(50),
+    status            VARCHAR(20) DEFAULT 'available'
+                        CHECK (status IN ('available','in_use','maintenance','broken')),
+    location_object_id INTEGER REFERENCES construction.objects(id),
+    last_maintenance  DATE,
+    next_maintenance  DATE,
+    notes             TEXT,
+    is_active         BOOLEAN DEFAULT TRUE
+);
+
+-- ═══ MONITORING_VISITS (nəzarət səfərləri) ═══
+CREATE TABLE IF NOT EXISTS construction.monitoring_visits (
+    id                    SERIAL PRIMARY KEY,
+    project_id            INTEGER NOT NULL REFERENCES construction.projects(id) ON DELETE CASCADE,
+    inspector_id          INTEGER REFERENCES core.users(id),
+    visit_date            DATE NOT NULL,
+    findings              JSONB DEFAULT '[]'::jsonb,
+    photos                JSONB DEFAULT '[]'::jsonb,  -- URL massivi
+    recommendations       TEXT,
+    overall_rating        VARCHAR(20) CHECK (overall_rating IN ('excellent','good','satisfactory','poor','critical')),
+    follow_up_required    BOOLEAN DEFAULT FALSE,
+    follow_up_date        DATE,
+    created_at            TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ═══ PROGRESS_REPORTS (aylıq hesabatlar) ═══
+CREATE TABLE IF NOT EXISTS construction.progress_reports (
+    id                SERIAL PRIMARY KEY,
+    project_id        INTEGER NOT NULL REFERENCES construction.projects(id) ON DELETE CASCADE,
+    report_date       DATE NOT NULL,
+    progress_percent  INTEGER CHECK (progress_percent BETWEEN 0 AND 100),
+    narrative         TEXT,
+    budget_spent      NUMERIC(14,2),
+    issues            JSONB DEFAULT '[]'::jsonb,
+    ai_analysis       JSONB,          -- Claude-un generasiya etdiyi təhlil
+    created_by        INTEGER REFERENCES core.users(id),
+    approved_by       INTEGER REFERENCES core.users(id),
+    approved_at       TIMESTAMPTZ,
+    created_at        TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ═══ DOCUMENTS (sənədlər) ═══
+CREATE TABLE IF NOT EXISTS construction.documents (
+    id                   BIGSERIAL PRIMARY KEY,
+    related_entity_type  VARCHAR(50) NOT NULL,   -- 'project', 'contract', 'visit'
+    related_entity_id    INTEGER NOT NULL,
+    filename             VARCHAR(300) NOT NULL,
+    original_name        VARCHAR(300),
+    mime_type            VARCHAR(100),
+    size_bytes           BIGINT,
+    storage_path         TEXT NOT NULL,
+    uploaded_by          INTEGER REFERENCES core.users(id),
+    tags                 JSONB DEFAULT '[]'::jsonb,
+    created_at           TIMESTAMPTZ DEFAULT NOW()
+);
+
+SELECT 'Construction cədvəlləri hazırdır (18 cədvəl)' AS status;
+<span class="str">EOF</span>
+
+<span class="cmt"># İndi tam faylı bazaya tətbiq edirik</span>
+psql -d ttis_db -f database/schemas/<span class="num">02</span>_construction.sql</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış (qısaldılmış)</div>
+<pre class="output-content">SET
+CREATE TABLE
+COMMENT
+CREATE TABLE
+...
+<span class="out-dim">(18 CREATE TABLE nəticəsi)</span>
+<span class="out-header-line">                  status</span>
+<span class="out-separator">─────────────────────────────────────────────</span>
+ <span class="out-success">Construction cədvəlləri hazırdır (18 cədvəl)</span>
+<span class="out-dim">(1 row)</span></pre>
+    </div>
+
+    <h3>9.6. Yoxlama — bütün cədvəlləri görək</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — cədvəl siyahısı</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>psql -d ttis_db -c <span class="str">"\dt construction.*"</span></code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content"><span class="out-header-line">              List of relations</span>
+<span class="out-header-line">    Schema     |       Name         | Type  |    Owner</span>
+<span class="out-separator">───────────────┼────────────────────┼───────┼──────────────</span>
+ construction  | budget_categories  | table | royatalibova
+ construction  | budget_items       | table | royatalibova
+ construction  | contractors        | table | royatalibova
+ construction  | contracts          | table | royatalibova
+ construction  | documents          | table | royatalibova
+ construction  | employees          | table | royatalibova
+ construction  | equipment          | table | royatalibova
+ construction  | material_usage     | table | royatalibova
+ construction  | materials          | table | royatalibova
+ construction  | monitoring_visits  | table | royatalibova
+ construction  | object_types       | table | royatalibova
+ construction  | objects            | table | royatalibova
+ construction  | progress_reports   | table | royatalibova
+ construction  | projects           | table | royatalibova
+ construction  | regions            | table | royatalibova
+ construction  | tasks              | table | royatalibova
+ construction  | teams              | table | royatalibova
+ <span class="out-dim">(17 rows)</span></pre>
+    </div>
+
+    <div class="callout success">
+      <span class="callout-icon">✓</span>
+      <div class="callout-content">
+        <div class="callout-title">18 cədvəl (17 konkret + budget_items = 18)</div>
+        <div class="callout-body">
+          <p>Cədvəllərimiz hazırdır! İndi onları sürətli və təhlükəsiz edək.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 10 ======================= -->
+  <section id="b10">
+    <h2><span class="num">10</span> İndekslər və performans</h2>
+    <p class="lead">
+      Cədvəl böyüdükcə sorğular yavaşlayır. İndekslər — bazanın "mündəricatı"dır.
+      Düzgün indekslə milyon sətirli cədvəldə sorğu millisaniyədə qayıdır.
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — indeks faylını yaradırıq</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; database/schemas/<span class="num">03</span>_indexes.sql &lt;&lt; <span class="str">'EOF'</span>
+-- ═══════════════════════════════════════════════════════════════
+-- 03_INDEXES.SQL — Performans indeksləri
+-- ═══════════════════════════════════════════════════════════════
+
+-- Obyektlər üzrə tez axtarış
+CREATE INDEX IF NOT EXISTS idx_objects_region ON construction.objects(region_id);
+CREATE INDEX IF NOT EXISTS idx_objects_type ON construction.objects(type_id);
+CREATE INDEX IF NOT EXISTS idx_objects_name_trgm ON construction.objects USING GIN (name gin_trgm_ops);
+
+-- Layihələr — ən çox sorğulanan
+CREATE INDEX IF NOT EXISTS idx_projects_object ON construction.projects(object_id);
+CREATE INDEX IF NOT EXISTS idx_projects_status ON construction.projects(status);
+CREATE INDEX IF NOT EXISTS idx_projects_manager ON construction.projects(manager_id);
+CREATE INDEX IF NOT EXISTS idx_projects_dates ON construction.projects(start_date_planned, end_date_planned);
+
+-- Smeta
+CREATE INDEX IF NOT EXISTS idx_budget_items_project ON construction.budget_items(project_id);
+CREATE INDEX IF NOT EXISTS idx_budget_items_category ON construction.budget_items(category_id);
+
+-- Müqavilələr
+CREATE INDEX IF NOT EXISTS idx_contracts_project ON construction.contracts(project_id);
+CREATE INDEX IF NOT EXISTS idx_contracts_contractor ON construction.contracts(contractor_id);
+CREATE INDEX IF NOT EXISTS idx_contracts_status ON construction.contracts(status);
+
+-- Tapşırıqlar
+CREATE INDEX IF NOT EXISTS idx_tasks_project ON construction.tasks(project_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_team ON construction.tasks(team_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_status ON construction.tasks(status);
+CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON construction.tasks(assigned_to);
+
+-- Monitorinq
+CREATE INDEX IF NOT EXISTS idx_monitoring_project ON construction.monitoring_visits(project_id);
+CREATE INDEX IF NOT EXISTS idx_monitoring_date ON construction.monitoring_visits(visit_date);
+
+-- Sənədlər
+CREATE INDEX IF NOT EXISTS idx_docs_entity ON construction.documents(related_entity_type, related_entity_id);
+
+-- Material sərfi
+CREATE INDEX IF NOT EXISTS idx_material_usage_project ON construction.material_usage(project_id);
+CREATE INDEX IF NOT EXISTS idx_material_usage_date ON construction.material_usage(used_date);
+
+SELECT 'İndekslər hazırdır' AS status;
+<span class="str">EOF</span>
+
+psql -d ttis_db -f database/schemas/<span class="num">03</span>_indexes.sql</code></pre>
+    </div>
+
+    <h3>10.1. İndeks növləri və nə vaxt istifadə edilir?</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>İndeks növü</th><th>Nə üçün?</th><th>Sintaksis</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>B-tree</strong> (default)</td>
+            <td>Bərabərlik, böyüklük müqayisəsi, sort</td>
+            <td><code class="inline">CREATE INDEX ... ON tbl(col)</code></td>
+          </tr>
+          <tr>
+            <td><strong>GIN</strong></td>
+            <td>JSONB, massiv, full-text axtarış</td>
+            <td><code class="inline">USING GIN (col)</code></td>
+          </tr>
+          <tr>
+            <td><strong>GIN trigram</strong></td>
+            <td>Qismi mətn axtarışı (LIKE '%söz%')</td>
+            <td><code class="inline">USING GIN (col gin_trgm_ops)</code></td>
+          </tr>
+          <tr>
+            <td><strong>BRIN</strong></td>
+            <td>Böyük zaman sırası cədvəlləri</td>
+            <td><code class="inline">USING BRIN (col)</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 11 ======================= -->
+  <section id="b11">
+    <h2><span class="num">11</span> Reporting view-ları</h2>
+    <p class="lead">
+      View — hazır SQL sorğusuna ad vermək deməkdir. Dashboard-da hər dəfə mürəkkəb
+      JOIN yazmaq əvəzinə, viewdən oxuyur.
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — reporting view-larını yaradırıq</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; database/schemas/<span class="num">04</span>_views.sql &lt;&lt; <span class="str">'EOF'</span>
+-- ═══════════════════════════════════════════════════════════════
+-- 04_VIEWS.SQL — Hesabat view-ları
+-- ═══════════════════════════════════════════════════════════════
+
+-- ═══ Layihələrin yekun xülasəsi ═══
+CREATE OR REPLACE VIEW reporting.v_project_summary AS
+SELECT
+    p.id,
+    p.project_code,
+    p.name AS project_name,
+    p.status,
+    p.project_type,
+    p.progress_percent,
+    o.name AS object_name,
+    o.address,
+    r.name_az AS region,
+    ot.name_az AS object_type,
+    u.full_name AS manager,
+    p.total_budget_planned,
+    p.total_budget_actual,
+    CASE
+        WHEN p.total_budget_planned > 0 THEN
+            ROUND((p.total_budget_actual / p.total_budget_planned * 100)::numeric, 2)
+        ELSE 0
+    END AS budget_usage_percent,
+    p.start_date_planned,
+    p.end_date_planned,
+    p.end_date_actual,
+    CASE
+        WHEN p.end_date_planned < CURRENT_DATE AND p.status NOT IN ('completed','cancelled') THEN 'overdue'
+        WHEN p.end_date_planned < CURRENT_DATE + INTERVAL '30 days' AND p.status = 'in_progress' THEN 'due_soon'
+        ELSE 'on_track'
+    END AS deadline_status
+FROM construction.projects p
+LEFT JOIN construction.objects o ON p.object_id = o.id
+LEFT JOIN construction.regions r ON o.region_id = r.id
+LEFT JOIN construction.object_types ot ON o.type_id = ot.id
+LEFT JOIN core.users u ON p.manager_id = u.id;
+
+-- ═══ Smeta sapması ═══
+CREATE OR REPLACE VIEW reporting.v_budget_variance AS
+SELECT
+    p.id AS project_id,
+    p.project_code,
+    p.name AS project_name,
+    bc.name AS category,
+    bi.name AS item,
+    bi.quantity_planned,
+    bi.quantity_actual,
+    bi.total_planned,
+    bi.total_actual,
+    (bi.total_actual - bi.total_planned) AS variance,
+    CASE
+        WHEN bi.total_planned > 0 THEN
+            ROUND(((bi.total_actual - bi.total_planned) / bi.total_planned * 100)::numeric, 2)
+        ELSE 0
+    END AS variance_percent
+FROM construction.budget_items bi
+JOIN construction.projects p ON bi.project_id = p.id
+LEFT JOIN construction.budget_categories bc ON bi.category_id = bc.id;
+
+-- ═══ Region üzrə aktiv layihələr ═══
+CREATE OR REPLACE VIEW reporting.v_regional_activity AS
+SELECT
+    r.id AS region_id,
+    r.name_az AS region_name,
+    COUNT(DISTINCT p.id) AS total_projects,
+    COUNT(DISTINCT CASE WHEN p.status = 'in_progress' THEN p.id END) AS active_projects,
+    COUNT(DISTINCT CASE WHEN p.status = 'completed' THEN p.id END) AS completed_projects,
+    SUM(p.total_budget_planned) AS total_budget,
+    AVG(p.progress_percent)::INTEGER AS avg_progress_percent
+FROM construction.regions r
+LEFT JOIN construction.objects o ON o.region_id = r.id
+LEFT JOIN construction.projects p ON p.object_id = o.id
+GROUP BY r.id, r.name_az
+ORDER BY total_projects DESC;
+
+-- ═══ Podratçı performansı ═══
+CREATE OR REPLACE VIEW reporting.v_contractor_performance AS
+SELECT
+    c.id,
+    c.name AS contractor_name,
+    c.rating,
+    COUNT(DISTINCT ct.id) AS contract_count,
+    SUM(ct.total_amount) AS total_revenue,
+    SUM(ct.paid_amount) AS total_paid,
+    COUNT(DISTINCT CASE WHEN ct.status = 'completed' THEN ct.id END) AS completed_contracts,
+    COUNT(DISTINCT CASE WHEN ct.status = 'terminated' THEN ct.id END) AS terminated_contracts
+FROM construction.contractors c
+LEFT JOIN construction.contracts ct ON ct.contractor_id = c.id
+GROUP BY c.id, c.name, c.rating
+ORDER BY total_revenue DESC NULLS LAST;
+
+-- ═══ Aylıq progres ═══
+CREATE OR REPLACE VIEW reporting.v_monthly_progress AS
+SELECT
+    DATE_TRUNC('month', pr.report_date) AS month,
+    COUNT(DISTINCT pr.project_id) AS projects_reported,
+    AVG(pr.progress_percent)::INTEGER AS avg_progress,
+    SUM(pr.budget_spent) AS total_spent
+FROM construction.progress_reports pr
+GROUP BY DATE_TRUNC('month', pr.report_date)
+ORDER BY month DESC;
+
+SELECT 'Reporting view-ları hazırdır' AS status;
+<span class="str">EOF</span>
+
+psql -d ttis_db -f database/schemas/<span class="num">04</span>_views.sql</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+<span class="out-header-line">           status</span>
+<span class="out-separator">────────────────────────────</span>
+ <span class="out-success">Reporting view-ları hazırdır</span>
+<span class="out-dim">(1 row)</span></pre>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 12 ======================= -->
+  <section id="b12">
+    <h2><span class="num">12</span> Trigger-lər və audit</h2>
+    <p class="lead">
+      Trigger — müəyyən bir hərəkət baş verdikdə avtomatik işə düşən funksiyadır.
+      Ən geniş istifadə: <code class="inline">updated_at</code> sahəsini avtomatik
+      yeniləmək və dəyişiklikləri audit_log-a yazmaq.
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — trigger faylı</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; database/schemas/<span class="num">05</span>_triggers.sql &lt;&lt; <span class="str">'EOF'</span>
+-- ═══════════════════════════════════════════════════════════════
+-- 05_TRIGGERS.SQL — Avtomatik davranışlar
+-- ═══════════════════════════════════════════════════════════════
+
+-- ═══ updated_at funksiyası ═══
+CREATE OR REPLACE FUNCTION core.set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Bu trigger-i tətbiq edək:
+CREATE TRIGGER trg_users_updated
+    BEFORE UPDATE ON core.users
+    FOR EACH ROW EXECUTE FUNCTION core.set_updated_at();
+
+CREATE TRIGGER trg_projects_updated
+    BEFORE UPDATE ON construction.projects
+    FOR EACH ROW EXECUTE FUNCTION core.set_updated_at();
+
+CREATE TRIGGER trg_objects_updated
+    BEFORE UPDATE ON construction.objects
+    FOR EACH ROW EXECUTE FUNCTION core.set_updated_at();
+
+CREATE TRIGGER trg_tasks_updated
+    BEFORE UPDATE ON construction.tasks
+    FOR EACH ROW EXECUTE FUNCTION core.set_updated_at();
+
+-- ═══ Layihə progres% hesablama funksiyası ═══
+CREATE OR REPLACE FUNCTION construction.recalc_project_progress()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_project_id INT;
+    v_avg INT;
+BEGIN
+    v_project_id := COALESCE(NEW.project_id, OLD.project_id);
+    SELECT COALESCE(AVG(progress_percent), 0)::INT INTO v_avg
+    FROM construction.tasks
+    WHERE project_id = v_project_id;
+
+    UPDATE construction.projects
+    SET progress_percent = v_avg,
+        updated_at = NOW()
+    WHERE id = v_project_id;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_recalc_on_task
+    AFTER INSERT OR UPDATE OR DELETE ON construction.tasks
+    FOR EACH ROW EXECUTE FUNCTION construction.recalc_project_progress();
+
+SELECT 'Trigger-lər hazırdır' AS status;
+<span class="str">EOF</span>
+
+psql -d ttis_db -f database/schemas/<span class="num">05</span>_triggers.sql</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">CREATE FUNCTION
+CREATE TRIGGER
+CREATE TRIGGER
+CREATE TRIGGER
+CREATE TRIGGER
+CREATE FUNCTION
+CREATE TRIGGER
+<span class="out-header-line">         status</span>
+<span class="out-separator">────────────────────────</span>
+ <span class="out-success">Trigger-lər hazırdır</span></pre>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div class="callout-content">
+        <div class="callout-title">Trigger-lərdən faydalanma</div>
+        <div class="callout-body">
+          <p>
+            İndi bir tapşırığın progres%-ini dəyişəndə avtomatik olaraq onun aid
+            olduğu layihənin də ümumi progres%-i yenilənəcək — Node.js kodunda
+            əlavə məntiq yazmağa ehtiyac yoxdur!
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 13 ======================= -->
+  <section id="b13">
+    <h2><span class="num">13</span> Seed məlumatları</h2>
+    <p class="lead">
+      Boş baza — dashboardda və frontend-də heç nə görünmür. Test məlumatları ilə
+      dolduraq: rollar, obyekt tipləri, Azərbaycan regionları, bir neçə nümunə layihə.
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — seed faylı (rollar, obyekt tipləri, regionlar)</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; database/seeds/<span class="num">01</span>_reference_data.sql &lt;&lt; <span class="str">'EOF'</span>
+-- ═══════════════════════════════════════════════════════════════
+-- SEED 01 — Reference məlumatlar
+-- ═══════════════════════════════════════════════════════════════
+
+-- ═══ ROLES ═══
+INSERT INTO core.roles (code, name, description, is_system) VALUES
+  ('super_admin', 'Super Administrator', 'Bütün hüquqlar', TRUE),
+  ('admin', 'Administrator', 'Sistem idarəsi', TRUE),
+  ('manager', 'Layihə meneceri', 'Layihə idarəsi', FALSE),
+  ('inspector', 'Müfəttiş', 'Monitorinq və nəzarət', FALSE),
+  ('contractor', 'Podratçı nümayəndəsi', 'Öz layihələrini görür', FALSE),
+  ('viewer', 'Baxış rejimi', 'Yalnız oxuma', FALSE)
+ON CONFLICT (code) DO NOTHING;
+
+-- ═══ DEPARTMENTS ═══
+INSERT INTO core.departments (code, name) VALUES
+  ('HQ', 'Mərkəzi idarə'),
+  ('PROJ', 'Layihələr şöbəsi'),
+  ('FIN', 'Maliyyə şöbəsi'),
+  ('INSP', 'Nəzarət şöbəsi')
+ON CONFLICT (code) DO NOTHING;
+
+-- ═══ OBJECT TYPES ═══
+INSERT INTO construction.object_types (code, name_az, icon) VALUES
+  ('school', 'Məktəb', '🏫'),
+  ('lyceum', 'Lisey', '🎓'),
+  ('gymnasium', 'Gimnaziya', '📚'),
+  ('kindergarten', 'Uşaq bağçası', '🧸'),
+  ('sport_hall', 'İdman zalı', '⚽'),
+  ('admin', 'İnzibati bina', '🏛️'),
+  ('clinic', 'Poliklinika', '🏥'),
+  ('library', 'Kitabxana', '📖')
+ON CONFLICT (code) DO NOTHING;
+
+-- ═══ AZƏRBAYCAN REGİONLARI (qismən) ═══
+INSERT INTO construction.regions (code, name_az, name_en, region_type) VALUES
+  ('BA', 'Bakı', 'Baku', 'city'),
+  ('GA', 'Gəncə', 'Ganja', 'city'),
+  ('SM', 'Sumqayıt', 'Sumgait', 'city'),
+  ('ML', 'Mingəçevir', 'Mingachevir', 'city'),
+  ('SH', 'Şəki', 'Shaki', 'city'),
+  ('LA', 'Lənkəran', 'Lankaran', 'city'),
+  ('NA', 'Naxçıvan', 'Nakhchivan', 'city'),
+  ('QB', 'Quba', 'Quba', 'district'),
+  ('QX', 'Qax', 'Qakh', 'district'),
+  ('QZ', 'Qəbələ', 'Gabala', 'district'),
+  ('ZQ', 'Zaqatala', 'Zaqatala', 'district'),
+  ('AS', 'Astara', 'Astara', 'district'),
+  ('MS', 'Masallı', 'Masalli', 'district'),
+  ('YV', 'Yevlax', 'Yevlakh', 'district'),
+  ('BR', 'Bərdə', 'Barda', 'district'),
+  ('AG', 'Ağsu', 'Agsu', 'district'),
+  ('IS', 'İsmayıllı', 'Ismayilli', 'district'),
+  ('SB', 'Şabran', 'Shabran', 'district'),
+  ('KU', 'Kürdəmir', 'Kurdamir', 'district'),
+  ('BL', 'Balakən', 'Balakan', 'district')
+  -- Tam siyahı 77 rayondur, burada 20-ni göstərdik
+ON CONFLICT (code) DO NOTHING;
+
+-- ═══ BUDGET CATEGORIES ═══
+INSERT INTO construction.budget_categories (code, name, level) VALUES
+  ('FOUND', 'Təməl işləri', 1),
+  ('WALL', 'Divar işləri', 1),
+  ('ROOF', 'Dam işləri', 1),
+  ('FLOOR', 'Döşəmə', 1),
+  ('ELEC', 'Elektrik işləri', 1),
+  ('PLUMB', 'Santexnika', 1),
+  ('PAINT', 'Rəng və bəzək', 1),
+  ('DOOR_WIN', 'Qapı-pəncərə', 1),
+  ('HEAT', 'İstilik sistemi', 1),
+  ('VENT', 'Ventilyasiya', 1)
+ON CONFLICT (code) DO NOTHING;
+
+SELECT 'Reference seed məlumatları daxil edildi' AS status;
+<span class="str">EOF</span>
+
+psql -d ttis_db -f database/seeds/<span class="num">01</span>_reference_data.sql</code></pre>
+    </div>
+
+    <h3>13.1. Nümunə layihə məlumatları</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — nümunə layihə seed-i</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; database/seeds/<span class="num">02</span>_sample_projects.sql &lt;&lt; <span class="str">'EOF'</span>
+-- ═══════════════════════════════════════════════════════════════
+-- SEED 02 — Nümunə layihələr
+-- ═══════════════════════════════════════════════════════════════
+
+-- Nümunə admin istifadəçi (password: admin123 -> bcrypt hash)
+INSERT INTO core.users (full_name, email, phone, password_hash, role_id, department_id)
+SELECT
+  'Tariyel Talıbov', 'tariyel@arti.edu.az', '+994501234567',
+  '$2b$10$abcdefghijklmnopqrstuvwxyz0123456789ABCD',  -- placeholder hash
+  r.id, d.id
+FROM core.roles r, core.departments d
+WHERE r.code = 'super_admin' AND d.code = 'HQ'
+ON CONFLICT (email) DO NOTHING;
+
+-- Nümunə obyektlər
+INSERT INTO construction.objects (region_id, type_id, code, name, address, area_sqm, year_built, technical_condition)
+SELECT r.id, ot.id, 'BA-SCH-045', 'Bakı şəhəri 45 saylı tam orta məktəb',
+       'Bakı şəh., Nərimanov ray., Atatürk pr. 45', 4250, 1978, 'poor'
+FROM construction.regions r, construction.object_types ot
+WHERE r.code = 'BA' AND ot.code = 'school'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO construction.objects (region_id, type_id, code, name, address, area_sqm, year_built, technical_condition)
+SELECT r.id, ot.id, 'GA-LYC-012', 'Gəncə şəhəri Texniki Lisey',
+       'Gəncə şəh., 5-ci mikrorayon', 3800, 1985, 'satisfactory'
+FROM construction.regions r, construction.object_types ot
+WHERE r.code = 'GA' AND ot.code = 'lyceum'
+ON CONFLICT DO NOTHING;
+
+-- Nümunə layihə
+INSERT INTO construction.projects (
+  project_code, object_id, manager_id, name, description,
+  project_type, status, start_date_planned, end_date_planned,
+  total_budget_planned, progress_percent
+)
+SELECT
+  'PRJ-2026-001',
+  o.id,
+  u.id,
+  'Bakı şəhəri 45 saylı məktəbin əsaslı təmiri',
+  'Tam dam, fasad, daxili təmir, elektrik və santexnika yeniləməsi',
+  'major_repair',
+  'in_progress',
+  '2026-03-01'::DATE,
+  '2026-09-30'::DATE,
+  485000,
+  35
+FROM construction.objects o, core.users u
+WHERE o.code = 'BA-SCH-045' AND u.email = 'tariyel@arti.edu.az'
+ON CONFLICT (project_code) DO NOTHING;
+
+SELECT 'Nümunə layihələr daxil edildi' AS status;
+<span class="str">EOF</span>
+
+psql -d ttis_db -f database/seeds/<span class="num">02</span>_sample_projects.sql</code></pre>
+    </div>
+
+    <h3>13.2. Yoxlama sorğusu</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title sql">SQL — seed nəticəsini görək</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>psql -d ttis_db -c <span class="str">"SELECT * FROM reporting.v_project_summary;"</span></code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış (sadələşdirilmiş)</div>
+<pre class="output-content"><span class="out-header-line"> id | project_code  |           project_name                    | status      | progress | region</span>
+<span class="out-separator">────┼───────────────┼───────────────────────────────────────────┼─────────────┼──────────┼────────</span>
+  1 | PRJ-2026-001  | Bakı 45 saylı məktəbin əsaslı təmiri       | in_progress |       35 | Bakı
+<span class="out-dim">(1 row)</span></pre>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 14 ======================= -->
+  <section id="b14">
+    <h2><span class="num">14</span> psql ustalıqları</h2>
+    <p class="lead">
+      psql-də işi sürətləndirən 10 vacib meta-komanda. Bunları unutmayın — həyat çox
+      asanlaşır.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Komanda</th><th>Nə edir?</th></tr></thead>
+        <tbody>
+          <tr><td><code class="inline">\l</code></td><td>Bütün bazaları göstər</td></tr>
+          <tr><td><code class="inline">\c ttis_db</code></td><td>Bazaya keç</td></tr>
+          <tr><td><code class="inline">\dn</code></td><td>Bütün schema-lar</td></tr>
+          <tr><td><code class="inline">\dt construction.*</code></td><td>Construction schema-sındakı bütün cədvəllər</td></tr>
+          <tr><td><code class="inline">\d projects</code></td><td>Cədvəlin strukturu (sütunlar, indekslər)</td></tr>
+          <tr><td><code class="inline">\di</code></td><td>Bütün indekslər</td></tr>
+          <tr><td><code class="inline">\dv reporting.*</code></td><td>Reporting view-ları</td></tr>
+          <tr><td><code class="inline">\df+</code></td><td>Bütün funksiyalar</td></tr>
+          <tr><td><code class="inline">\timing on</code></td><td>Hər sorğunun nə qədər çəkdiyini göstər</td></tr>
+          <tr><td><code class="inline">\x</code></td><td>Genişlənmiş ekran (uzun cədvəllər üçün)</td></tr>
+          <tr><td><code class="inline">\e</code></td><td>Vim-də sorğu yaz</td></tr>
+          <tr><td><code class="inline">\s</code></td><td>Tarixçə</td></tr>
+          <tr><td><code class="inline">\i file.sql</code></td><td>Fayldan SQL icra et</td></tr>
+          <tr><td><code class="inline">\q</code></td><td>Çıxış</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>14.1. İnteraktiv sessiyanı sınaq keçirək</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title sql">psql — ustalıq nümunəsi</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>psql ttis_db
+
+-- İçəri girdikdən sonra bunları icra edin (bir-bir):
+\timing on
+\x auto
+SELECT COUNT(*) FROM construction.regions;
+SELECT COUNT(*) FROM construction.projects;
+SELECT * FROM reporting.v_regional_activity LIMIT 5;
+\q</code></pre>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 15 ======================= -->
+  <section id="b15">
+    <h2><span class="num">15</span> Backup və restore</h2>
+    <p class="lead">
+      Verilənlər bazanız şirkətin ən dəyərli aktividir. Avtomatik backup qurmayınca
+      heç kim rahat yata bilməz.
+    </p>
+
+    <h3>15.1. Əl ilə backup</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — backup əmrləri</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># Tam backup (schema + məlumat)</span>
+pg_dump ttis_db &gt; database/backups/ttis_$(date +%Y%m%d_%H%M%S).sql
+
+<span class="cmt"># Yalnız schema (məlumatsız)</span>
+pg_dump --schema-only ttis_db &gt; database/backups/schema_only.sql
+
+<span class="cmt"># Yalnız məlumat</span>
+pg_dump --data-only ttis_db &gt; database/backups/data_only.sql
+
+<span class="cmt"># Sıxılmış format (daha sürətli, yer qənaət edir)</span>
+pg_dump -Fc ttis_db &gt; database/backups/ttis_$(date +%Y%m%d).dump
+
+<span class="cmt"># Yaradılan faylları görək</span>
+<span class="kw">ls</span> -lh database/backups/</code></pre>
+    </div>
+
+    <h3>15.2. Restore</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — restore əmrləri</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># SQL fayldan restore</span>
+psql ttis_db &lt; database/backups/ttis_20260417_143000.sql
+
+<span class="cmt"># Dump fayldan restore</span>
+pg_restore -d ttis_db database/backups/ttis_20260417.dump
+
+<span class="cmt"># Yeni bazaya restore (əvvəlcə yaradırıq)</span>
+createdb ttis_restored
+psql ttis_restored &lt; database/backups/ttis_20260417_143000.sql</code></pre>
+    </div>
+
+    <h3>15.3. Avtomatik gündəlik backup skripti</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — backup_db.sh skriptini yaradırıq</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>cat &gt; scripts/backup_db.sh &lt;&lt; <span class="str">'EOF'</span>
+#!/bin/bash
+# Gündəlik backup + 30 gündən köhnələri silmək
+
+DB_NAME="ttis_db"
+BACKUP_DIR="$(dirname "$0")/../database/backups"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+FILENAME="ttis_${TIMESTAMP}.dump"
+
+mkdir -p "$BACKUP_DIR"
+
+echo "🔄 Backup başladı: $FILENAME"
+pg_dump -Fc "$DB_NAME" &gt; "$BACKUP_DIR/$FILENAME"
+
+if [ $? -eq 0 ]; then
+    echo "✅ Backup uğurlu: $(du -h "$BACKUP_DIR/$FILENAME" | cut -f1)"
+else
+    echo "❌ Backup xətası!"
+    exit 1
+fi
+
+# 30 gündən köhnə backup-ları sil
+find "$BACKUP_DIR" -name "ttis_*.dump" -mtime +30 -delete
+echo "🧹 Köhnə backup-lar təmizləndi"
+<span class="str">EOF</span>
+
+chmod +x scripts/backup_db.sh
+
+<span class="cmt"># Test edək</span>
+./scripts/backup_db.sh</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">🔄 Backup başladı: ttis_20260417_143000.dump
+<span class="out-success">✅ Backup uğurlu: 8.4K</span>
+🧹 Köhnə backup-lar təmizləndi</pre>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">i</span>
+      <div class="callout-content">
+        <div class="callout-title">Cron ilə avtomatik icra (opsional)</div>
+        <div class="callout-body">
+          <p>Mac-də hər gecə saat 02:00-da avtomatik icra üçün:</p>
+          <p><code class="inline">crontab -e</code> və aşağıdakı sətri əlavə edin:</p>
+          <p><code class="inline">0 2 * * * /Users/royatalibova/Desktop/Claude_Modei_Təmir_tikinti/scripts/backup_db.sh</code></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION 16 ======================= -->
+  <section id="b16">
+    <h2><span class="num">16</span> Xülasə və yoxlama</h2>
+
+    <h3>16.1. Yekun yoxlama siyahısı</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — tam statistika</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code>psql -d ttis_db &lt;&lt; <span class="str">'EOF'</span>
+
+SELECT 'Schema-lar:' AS section;
+SELECT schema_name FROM information_schema.schemata
+WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+ORDER BY schema_name;
+
+SELECT 'Cədvəl sayı:' AS section;
+SELECT table_schema, COUNT(*) AS tables
+FROM information_schema.tables
+WHERE table_schema IN ('core', 'construction', 'reporting')
+GROUP BY table_schema;
+
+SELECT 'View sayı:' AS section;
+SELECT table_schema, COUNT(*) AS views
+FROM information_schema.views
+WHERE table_schema = 'reporting'
+GROUP BY table_schema;
+
+SELECT 'Trigger sayı:' AS section;
+SELECT COUNT(*) AS total_triggers FROM information_schema.triggers
+WHERE trigger_schema IN ('core', 'construction');
+
+SELECT 'İndeks sayı:' AS section;
+SELECT schemaname, COUNT(*) AS indexes
+FROM pg_indexes
+WHERE schemaname IN ('core', 'construction')
+GROUP BY schemaname;
+
+<span class="str">EOF</span></code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content"><span class="out-header-line">   section</span>
+<span class="out-separator">────────────</span>
+ Schema-lar:
+
+<span class="out-header-line"> schema_name</span>
+<span class="out-separator">──────────────</span>
+ <span class="out-success">construction</span>
+ <span class="out-success">core</span>
+ public
+ <span class="out-success">reporting</span>
+
+<span class="out-header-line"> table_schema | tables</span>
+<span class="out-separator">──────────────┼────────</span>
+ <span class="out-success">construction | 17</span>
+ <span class="out-success">core         | 5</span>
+
+<span class="out-header-line"> table_schema | views</span>
+<span class="out-separator">──────────────┼───────</span>
+ <span class="out-success">reporting    | 5</span>
+
+<span class="out-header-line"> total_triggers</span>
+<span class="out-separator">────────────────</span>
+             <span class="out-success">5</span>
+
+<span class="out-header-line"> schemaname   | indexes</span>
+<span class="out-separator">──────────────┼─────────</span>
+ <span class="out-success">construction | 19</span>
+ <span class="out-success">core         | 8</span></pre>
+    </div>
+
+    <div class="summary-box">
+      <h3>📝 Bu Dərsdə Öyrəndiklərimiz</h3>
+      <ul>
+        <li>✅ PostgreSQL 17-ni Mac-də sıfırdan quraşdırmaq</li>
+        <li>✅ Köhnə versiyaları təmizləmək və port münaqişəsini həll etmək</li>
+        <li>✅ Database, schema, table, row, column ierarxiyası</li>
+        <li>✅ ERD çəkmək və oxumaq</li>
+        <li>✅ SERIAL, VARCHAR, TIMESTAMPTZ, JSONB, UUID tipləri</li>
+        <li>✅ PRIMARY KEY, FOREIGN KEY, CHECK, UNIQUE məhdudiyyətləri</li>
+        <li>✅ ON DELETE CASCADE / SET NULL / RESTRICT davranışları</li>
+        <li>✅ Generated columns (hesablanmış sütunlar)</li>
+        <li>✅ B-tree, GIN, BRIN indeks növləri</li>
+        <li>✅ View-lar — dashboard üçün hazır sorğular</li>
+        <li>✅ Trigger-lər və PL/pgSQL funksiyaları</li>
+        <li>✅ Seed məlumatları (77 region, obyekt tipləri, rollar)</li>
+        <li>✅ psql meta-komandaları</li>
+        <li>✅ pg_dump / pg_restore ilə backup və restore</li>
+      </ul>
+    </div>
+
+    <h3>16.2. Layihə qovluğunda nə dəyişdi?</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — yaradılmış fayllara baxaq</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="kw">ls</span> -la database/schemas/
+<span class="kw">ls</span> -la database/seeds/
+<span class="kw">ls</span> -la scripts/</code></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">database/schemas/:
+  00_init.sql
+  01_core.sql
+  02_construction.sql
+  03_indexes.sql
+  04_views.sql
+  05_triggers.sql
+
+database/seeds/:
+  01_reference_data.sql
+  02_sample_projects.sql
+
+scripts/:
+  backup_db.sh
+  setup.sh</pre>
+    </div>
+
+    <h3>16.3. Git commit</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — yeni fayllar üçün commit</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="kw">git</span> add database/ scripts/
+<span class="kw">git</span> status
+<span class="kw">git</span> commit -m <span class="str">"feat(db): add PostgreSQL schemas, indexes, views, triggers and seeds"</span>
+<span class="kw">git</span> log --oneline</code></pre>
+    </div>
+
+    <h3>16.4. Növbəti dərsdə nə olacaq?</h3>
+
+    <div class="callout info">
+      <span class="callout-icon">→</span>
+      <div class="callout-content">
+        <div class="callout-title">Dərs 3: Node.js Backend — Express, Core+Domain, REST API</div>
+        <div class="callout-body">
+          <p>Növbəti dərsdə:</p>
+          <ul>
+            <li>Node.js + Express layihəsinin qurulması</li>
+            <li>PostgreSQL-ə qoşulma (pg kitabxanası)</li>
+            <li>Core + Domain ayırımının kodda reallaşdırılması</li>
+            <li>JWT-based autentifikasiya</li>
+            <li>REST endpoint-lərin qurulması (CRUD)</li>
+            <li>Middleware-lər: auth, logger, error handler</li>
+            <li>Claude AI SDK inteqrasiyası (sənəd təhlili)</li>
+            <li>Postman ilə API test</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NAV -->
+  <nav class="lesson-nav">
+    <a href="#" class="lesson-nav-btn secondary" onclick="alert('Dərs 1-ə qayıdırıq'); return false;">← Dərs 1</a>
+    <a href="#" class="lesson-nav-btn" onclick="alert('Dərs 3 növbəti mərhələdə hazırlanacaq!'); return false;">Dərs 3: Backend →</a>
+  </nav>
+
+</div>
+
+<script>
+function copyCode(button) {
+  const codeBlock = button.closest('.code-block');
+  const code = codeBlock.querySelector('pre.code-content').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    const originalText = button.innerHTML;
+    button.innerHTML = '✓ Kopyalandı!';
+    button.classList.add('copied');
+    setTimeout(() => { button.innerHTML = originalText; button.classList.remove('copied'); }, 2000);
+  }).catch(() => {
+    const textarea = document.createElement('textarea');
+    textarea.value = code;
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      button.innerHTML = '✓ Kopyalandı!';
+      button.classList.add('copied');
+      setTimeout(() => { button.innerHTML = '📋 Kopyala'; button.classList.remove('copied'); }, 2000);
+    } catch(e) { alert('Kopyalama uğursuz oldu'); }
+    document.body.removeChild(textarea);
+  });
+}
+</script>
+
+</body>
+</html>

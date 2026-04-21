@@ -1,0 +1,1769 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dərs 1 — Universal AI Agent: Layihə Memarlığı və Qovluq Strukturu</title>
+<style>
+  :root {
+    --primary: #4338ca;
+    --primary-dark: #3730a3;
+    --primary-light: #e0e7ff;
+    --accent: #0891b2;
+    --accent-light: #cffafe;
+    --warning: #d97706;
+    --warning-light: #fef3c7;
+    --success: #059669;
+    --success-light: #d1fae5;
+    --danger: #dc2626;
+    --danger-light: #fee2e2;
+    --text: #0f172a;
+    --text-muted: #475569;
+    --text-subtle: #64748b;
+    --bg: #fafbfc;
+    --surface: #ffffff;
+    --surface-alt: #f8fafc;
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --code-bg: #0f172a;
+    --code-text: #e2e8f0;
+    --code-comment: #64748b;
+    --code-keyword: #c4b5fd;
+    --code-string: #86efac;
+    --code-number: #fcd34d;
+    --code-function: #93c5fd;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  /* ============ HEADER ============ */
+  .hero {
+    background: linear-gradient(135deg, #4338ca 0%, #6366f1 50%, #0891b2 100%);
+    color: white;
+    padding: 3.5rem 2.5rem;
+    border-radius: 20px;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 20px 50px -15px rgba(67, 56, 202, 0.4);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-label {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(10px);
+    padding: 0.5rem 1.25rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 1.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+  }
+  .hero h1 {
+    font-size: 2.4rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+  }
+  .hero-subtitle {
+    font-size: 1.15rem;
+    opacity: 0.94;
+    max-width: 750px;
+    line-height: 1.65;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1.75rem;
+    flex-wrap: wrap;
+  }
+  .hero-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    opacity: 0.9;
+  }
+  .hero-meta-item svg { width: 18px; height: 18px; }
+
+  /* ============ LEARNING OBJECTIVES ============ */
+  .objectives {
+    background: var(--primary-light);
+    border-left: 5px solid var(--primary);
+    padding: 1.75rem 2rem;
+    border-radius: 12px;
+    margin-bottom: 2.5rem;
+  }
+  .objectives h3 {
+    color: var(--primary-dark);
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .objectives ul {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 0.75rem 1.5rem;
+  }
+  .objectives li {
+    padding-left: 1.75rem;
+    position: relative;
+    color: var(--text);
+    font-size: 0.95rem;
+  }
+  .objectives li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--primary);
+    font-weight: 800;
+    font-size: 1.1rem;
+  }
+
+  /* ============ TABLE OF CONTENTS ============ */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .toc h3 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-subtle);
+    margin-bottom: 1rem;
+  }
+  .toc ol {
+    list-style: none;
+    counter-reset: toc-counter;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 0.5rem 1rem;
+  }
+  .toc li {
+    counter-increment: toc-counter;
+  }
+  .toc a {
+    color: var(--text);
+    text-decoration: none;
+    padding: 0.5rem 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 0.93rem;
+    transition: color 0.15s;
+  }
+  .toc a::before {
+    content: counter(toc-counter, decimal-leading-zero);
+    color: var(--primary);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+  .toc a:hover { color: var(--primary); }
+
+  /* ============ SECTIONS ============ */
+  section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.25rem 2.5rem;
+    margin-bottom: 1.75rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+  section h2 {
+    font-size: 1.65rem;
+    font-weight: 750;
+    color: var(--text);
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    letter-spacing: -0.015em;
+  }
+  section h2 .num {
+    background: var(--primary);
+    color: white;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  section h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 1.75rem 0 0.85rem;
+    letter-spacing: -0.01em;
+  }
+  section h4 {
+    font-size: 1rem;
+    font-weight: 650;
+    color: var(--text);
+    margin: 1.25rem 0 0.5rem;
+  }
+  section p {
+    margin-bottom: 1rem;
+    color: var(--text);
+  }
+  section p.lead {
+    font-size: 1.08rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+  }
+  section ul, section ol {
+    margin: 0.75rem 0 1.25rem 1.5rem;
+  }
+  section li {
+    margin-bottom: 0.5rem;
+  }
+  section strong { color: var(--primary-dark); font-weight: 650; }
+  section em { color: var(--accent); font-style: normal; font-weight: 600; }
+
+  /* ============ CODE BLOCKS ============ */
+  .code-block {
+    background: var(--code-bg);
+    border-radius: 12px;
+    margin: 1.25rem 0;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .code-header {
+    background: #1e293b;
+    padding: 0.6rem 1.15rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .code-title {
+    color: #94a3b8;
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .code-title::before {
+    content: '';
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #22c55e;
+    display: inline-block;
+  }
+  .code-copy {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #cbd5e1;
+    padding: 0.35rem 0.85rem;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .code-copy:hover {
+    background: rgba(255,255,255,0.15);
+    color: white;
+  }
+  .code-copy.copied {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+  }
+  pre.code-content {
+    padding: 1.25rem 1.35rem;
+    overflow-x: auto;
+    color: var(--code-text);
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 0.88rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  pre.code-content code { color: inherit; }
+  .cmt { color: var(--code-comment); font-style: italic; }
+  .kw { color: var(--code-keyword); font-weight: 600; }
+  .str { color: var(--code-string); }
+  .num { color: var(--code-number); }
+  .fn { color: var(--code-function); }
+
+  /* Inline code */
+  code.inline {
+    background: var(--surface-alt);
+    color: var(--primary-dark);
+    padding: 0.15rem 0.45rem;
+    border-radius: 5px;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 0.88em;
+    border: 1px solid var(--border);
+  }
+
+  /* ============ CALLOUTS ============ */
+  .callout {
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+    border-left: 4px solid;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  .callout-icon {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+  .callout-content { flex: 1; }
+  .callout-title {
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+    font-size: 0.95rem;
+  }
+  .callout-body { font-size: 0.93rem; color: var(--text); }
+  .callout-body p:last-child { margin-bottom: 0; }
+
+  .callout.info { background: var(--primary-light); border-color: var(--primary); }
+  .callout.info .callout-icon { background: var(--primary); }
+  .callout.info .callout-title { color: var(--primary-dark); }
+
+  .callout.warning { background: var(--warning-light); border-color: var(--warning); }
+  .callout.warning .callout-icon { background: var(--warning); }
+  .callout.warning .callout-title { color: #92400e; }
+
+  .callout.success { background: var(--success-light); border-color: var(--success); }
+  .callout.success .callout-icon { background: var(--success); }
+  .callout.success .callout-title { color: #065f46; }
+
+  .callout.tip { background: var(--accent-light); border-color: var(--accent); }
+  .callout.tip .callout-icon { background: var(--accent); }
+  .callout.tip .callout-title { color: #0e7490; }
+
+  /* ============ TABLES ============ */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 1.25rem 0;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+  }
+  table thead {
+    background: var(--surface-alt);
+  }
+  table th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 650;
+    color: var(--text);
+    border-bottom: 2px solid var(--border-strong);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  table tbody tr:last-child td { border-bottom: none; }
+  table tbody tr:hover { background: var(--surface-alt); }
+
+  /* ============ TECH CARDS ============ */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  .tech-card {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .tech-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    border-color: var(--primary);
+  }
+  .tech-card-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+    background: var(--primary-light);
+    color: var(--primary);
+  }
+  .tech-card h4 {
+    font-size: 1.05rem;
+    margin: 0 0 0.35rem;
+    color: var(--text);
+  }
+  .tech-card .tech-role {
+    font-size: 0.78rem;
+    color: var(--primary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.6rem;
+  }
+  .tech-card p {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  /* ============ FOLDER TREE ============ */
+  .folder-tree {
+    background: var(--code-bg);
+    color: var(--code-text);
+    border-radius: 12px;
+    padding: 1.5rem 1.75rem;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 0.86rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    margin: 1.25rem 0;
+  }
+  .folder-tree .dir { color: #fcd34d; font-weight: 600; }
+  .folder-tree .file { color: #cbd5e1; }
+  .folder-tree .cmt { color: #64748b; font-style: italic; }
+
+  /* ============ SVG DIAGRAM CONTAINER ============ */
+  .diagram-wrap {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    text-align: center;
+  }
+  .diagram-wrap svg {
+    max-width: 100%;
+    height: auto;
+  }
+  .diagram-caption {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--text-subtle);
+    font-style: italic;
+  }
+
+  /* ============ NAVIGATION FOOTER ============ */
+  .lesson-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid var(--border);
+  }
+  .lesson-nav-btn {
+    background: var(--primary);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background 0.15s;
+  }
+  .lesson-nav-btn:hover { background: var(--primary-dark); }
+  .lesson-nav-btn.disabled {
+    background: var(--border);
+    color: var(--text-subtle);
+    cursor: not-allowed;
+  }
+
+  /* ============ SUMMARY BOX ============ */
+  .summary-box {
+    background: linear-gradient(135deg, #f5f3ff 0%, #ecfeff 100%);
+    border: 1px solid var(--primary-light);
+    border-radius: 14px;
+    padding: 1.75rem 2rem;
+    margin: 1.5rem 0;
+  }
+  .summary-box h3 {
+    color: var(--primary-dark) !important;
+    margin-top: 0 !important;
+    font-size: 1.15rem !important;
+  }
+  .summary-box ul {
+    margin-bottom: 0 !important;
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 720px) {
+    .container { padding: 1rem; }
+    .hero { padding: 2rem 1.5rem; }
+    .hero h1 { font-size: 1.75rem; }
+    section { padding: 1.5rem 1.25rem; }
+    section h2 { font-size: 1.35rem; }
+    pre.code-content { font-size: 0.78rem; padding: 1rem; }
+  }
+
+  /* Print */
+  @media print {
+    body { background: white; }
+    .code-copy, .lesson-nav { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ═══════════════════════════════ HERO ═══════════════════════════════ -->
+  <div class="hero">
+    <span class="hero-label">🎓 DƏRS 01 / 06 — UNİVERSAL AI AGENT KURSU</span>
+    <h1>Layihənin Memarlığı, Texnologiya Stack-i və Qovluq Strukturunun Yaradılması</h1>
+    <p class="hero-subtitle">
+      Bu dərsdə biz kiçik və orta biznes qrupları üçün universal AI agent layihəsinin
+      təməl memarlığını, istifadə edəcəyimiz müasir texnologiya stack-ini və
+      profesional qovluq strukturunu yaradacağıq. Model olaraq Təmir-Tikinti İdarəsi
+      (TTİS) domen sahəsini götürürük, lakin sxem digər sahələrə də (pərakəndə ticarət,
+      səhiyyə, logistika, təhsil) asanlıqla köçürülə biləcək formada qurulur.
+    </p>
+    <div class="hero-meta">
+      <span class="hero-meta-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Təxminən 45–60 dəqiqə
+      </span>
+      <span class="hero-meta-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Başlanğıc səviyyəsi — qavramsal
+      </span>
+      <span class="hero-meta-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Mac Terminal ilə praktiki
+      </span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ LEARNING OBJECTIVES ═══════════════════════════════ -->
+  <div class="objectives">
+    <h3>🎯 Bu Dərsin Sonunda Siz Nəyi Bacaracaqsınız?</h3>
+    <ul>
+      <li>Universal AI Agent anlayışını və onun biznes üçün əhəmiyyətini izah etmək</li>
+      <li>Çoxqatlı (multi-layer) layihə memarlığını oxumaq və təsvir etmək</li>
+      <li>PostgreSQL + Node.js + React + Shiny stack-inin hər komponentinin rolunu bilmək</li>
+      <li>Mac terminalında profesional qovluq strukturu yaratmaq</li>
+      <li>Domen-dəyişən (domain-swappable) prinsipi tətbiq etmək</li>
+      <li>Git ilə layihəni versiya nəzarətinə qoşmaq və ilkin sənədlərini yazmaq</li>
+    </ul>
+  </div>
+
+  <!-- ═══════════════════════════════ TOC ═══════════════════════════════ -->
+  <nav class="toc">
+    <h3>Dərsin Bölmələri</h3>
+    <ol>
+      <li><a href="#bolme-1">Nə üçün Universal AI Agent?</a></li>
+      <li><a href="#bolme-2">Layihənin üç qatı memarlığı</a></li>
+      <li><a href="#bolme-3">Texnologiya stack-inin seçimi</a></li>
+      <li><a href="#bolme-4">Domen-dəyişən prinsipi</a></li>
+      <li><a href="#bolme-5">Profesional qovluq strukturu</a></li>
+      <li><a href="#bolme-6">Mac terminalında praktika</a></li>
+      <li><a href="#bolme-7">Git və ilkin sənədlər</a></li>
+      <li><a href="#bolme-8">Yoxlama və xülasə</a></li>
+    </ol>
+  </nav>
+
+  <!-- ═══════════════════════════════ SECTION 1 ═══════════════════════════════ -->
+  <section id="bolme-1">
+    <h2><span class="num">1</span> Nə üçün Universal AI Agent?</h2>
+
+    <p class="lead">
+      Azərbaycanda və dünyada kiçik və orta biznes (SMB) sektoru iqtisadiyyatın onurğa
+      sütunudur. Lakin bu bizneslər çox vaxt modern AI texnologiyalarından kənarda
+      qalırlar — çünki fərdi bir həll yaratmaq bahalı, hazır həllər isə həmişə onların
+      spesifik ehtiyaclarına uyğun olmur.
+    </p>
+
+    <h3>1.1. Problem: eyni ssenari, fərqli sahələr</h3>
+    <p>
+      Baxın, bir tikinti şirkəti, bir aptek şəbəkəsi və bir logistika firması —
+      zahirən fərqli işlər görürlər. Lakin onların informasiya sistemlərinin özəyinə
+      diqqət yetirsək, heyrətamiz bir oxşarlıq görərik:
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Fəaliyyət</th>
+            <th>Tikinti İdarəsi</th>
+            <th>Aptek Şəbəkəsi</th>
+            <th>Logistika</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Obyektlərin idarə olunması</strong></td>
+            <td>Obyektlər, inşaat sahələri</td>
+            <td>Filiallar, anbarlar</td>
+            <td>Depolar, marşrutlar</td>
+          </tr>
+          <tr>
+            <td><strong>İnventar / resurs</strong></td>
+            <td>Materiallar, avadanlıq</td>
+            <td>Dərmanlar, ehtiyat</td>
+            <td>Mal-yük, vasitələr</td>
+          </tr>
+          <tr>
+            <td><strong>İnsan resursları</strong></td>
+            <td>Briqadalar, fəhlələr</td>
+            <td>Əczaçılar, konsultantlar</td>
+            <td>Sürücülər, ekspeditorlar</td>
+          </tr>
+          <tr>
+            <td><strong>Maliyyə axını</strong></td>
+            <td>Smeta, hesablaşma</td>
+            <td>Satış, qaimələr</td>
+            <td>Fraxt, komisyon</td>
+          </tr>
+          <tr>
+            <td><strong>AI istifadə halı</strong></td>
+            <td>Smeta təhlili, risk proqnozu</td>
+            <td>Sifariş proqnozu, müşteri sorğuları</td>
+            <td>Marşrut optimizasiyası</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      Bax bu oxşarlıq bizə bir möhtəşəm fürsət verir: <strong>bir dəfə yaxşı qurulmuş
+      skelet → onlarla biznes sahəsinə uyğunlaşdırıla bilər</strong>. Bu fəlsəfəyə
+      <em>"Universal Agent"</em> deyirik.
+    </p>
+
+    <div class="callout info">
+      <span class="callout-icon">i</span>
+      <div class="callout-content">
+        <div class="callout-title">Bu nə üçün həm də Anthropic Claude əsrinə uyğundur?</div>
+        <div class="callout-body">
+          <p>
+            Müasir LLM-lər (Claude, GPT-4, vs.) bir ümumi zəka təmin edir. Biznesə
+            tətbiq etmək üçün bizə <strong>kontekst</strong> lazımdır — məlumat bazası,
+            biznesin qaydaları, istifadəçi interfeysi. Bizim universal agent modeli
+            məhz bu "kontekst qabığı"nı təmin edir. LLM-ə yalnız domen məlumatını
+            dəyişməklə biz onu bir sahədən digərinə keçirə bilərik.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <h3>1.2. Nə üçün Təmir-Tikinti modeldir?</h3>
+    <p>
+      TTİS (Təmir-Tikinti İdarəsi Sistemi) xoşbəxtlikdən ən <em>zəngin</em> domen
+      sahəsidir: orada layihələr, smetalar, müqavilələr, briqadalar, materiallar,
+      avadanlıq, tərəddadlar, monitorinq, hesabat — hamısı bir yerdədir. Bunu
+      qurduqdan sonra hər hansı sadə domenə keçid asanlaşır.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════════════ SECTION 2 ═══════════════════════════════ -->
+  <section id="bolme-2">
+    <h2><span class="num">2</span> Layihənin üç qatı memarlığı</h2>
+
+    <p class="lead">
+      Bizim universal agent <strong>üç əsas qatdan (layer)</strong> ibarətdir. Hər qat
+      öz məsuliyyətini daşıyır və digərlərindən müstəqildir. Bu prinsipə "separation
+      of concerns" (məsələlərin ayrılması) deyilir.
+    </p>
+
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 760 520" xmlns="http://www.w3.org/2000/svg">
+        <!-- Presentation Layer -->
+        <rect x="40" y="30" width="680" height="130" rx="14" fill="#e0e7ff" stroke="#4338ca" stroke-width="2"/>
+        <text x="380" y="60" text-anchor="middle" font-size="18" font-weight="700" fill="#3730a3">📱 TƏQDİMAT QATI (Presentation Layer)</text>
+        <text x="380" y="82" text-anchor="middle" font-size="12" fill="#4338ca">İstifadəçinin gördüyü və qarşılıqlı əlaqə qurduğu hər şey</text>
+
+        <rect x="70" y="100" width="180" height="45" rx="8" fill="white" stroke="#6366f1"/>
+        <text x="160" y="122" text-anchor="middle" font-size="13" font-weight="600" fill="#4338ca">React + Vite</text>
+        <text x="160" y="138" text-anchor="middle" font-size="10" fill="#6366f1">Admin paneli, CRUD</text>
+
+        <rect x="290" y="100" width="180" height="45" rx="8" fill="white" stroke="#6366f1"/>
+        <text x="380" y="122" text-anchor="middle" font-size="13" font-weight="600" fill="#4338ca">R Shiny Dashboard</text>
+        <text x="380" y="138" text-anchor="middle" font-size="10" fill="#6366f1">Analitika, hesabatlar</text>
+
+        <rect x="510" y="100" width="180" height="45" rx="8" fill="white" stroke="#6366f1"/>
+        <text x="600" y="122" text-anchor="middle" font-size="13" font-weight="600" fill="#4338ca">Mobil / PWA</text>
+        <text x="600" y="138" text-anchor="middle" font-size="10" fill="#6366f1">Sahədə iş (gələcək)</text>
+
+        <!-- Arrow down -->
+        <path d="M 380 160 L 380 195" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <!-- Business Logic Layer -->
+        <rect x="40" y="200" width="680" height="130" rx="14" fill="#cffafe" stroke="#0891b2" stroke-width="2"/>
+        <text x="380" y="230" text-anchor="middle" font-size="18" font-weight="700" fill="#0e7490">⚙️ BİZNES MƏNTİQ QATI (Business Logic Layer)</text>
+        <text x="380" y="252" text-anchor="middle" font-size="12" fill="#0891b2">Node.js serverin "beyni" — qaydalar, AI inteqrasiyası</text>
+
+        <rect x="70" y="270" width="180" height="45" rx="8" fill="white" stroke="#06b6d4"/>
+        <text x="160" y="292" text-anchor="middle" font-size="13" font-weight="600" fill="#0e7490">Express API</text>
+        <text x="160" y="308" text-anchor="middle" font-size="10" fill="#0891b2">REST marşrutları</text>
+
+        <rect x="290" y="270" width="180" height="45" rx="8" fill="white" stroke="#06b6d4"/>
+        <text x="380" y="292" text-anchor="middle" font-size="13" font-weight="600" fill="#0e7490">Domen Modulları</text>
+        <text x="380" y="308" text-anchor="middle" font-size="10" fill="#0891b2">Dəyişdirilə bilən</text>
+
+        <rect x="510" y="270" width="180" height="45" rx="8" fill="white" stroke="#06b6d4"/>
+        <text x="600" y="292" text-anchor="middle" font-size="13" font-weight="600" fill="#0e7490">Claude AI SDK</text>
+        <text x="600" y="308" text-anchor="middle" font-size="10" fill="#0891b2">Təhlil və tövsiyə</text>
+
+        <!-- Arrow down -->
+        <path d="M 380 330 L 380 365" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <!-- Data Layer -->
+        <rect x="40" y="370" width="680" height="130" rx="14" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+        <text x="380" y="400" text-anchor="middle" font-size="18" font-weight="700" fill="#92400e">💾 MƏLUMAT QATI (Data Layer)</text>
+        <text x="380" y="422" text-anchor="middle" font-size="12" fill="#d97706">Daimi saxlanma və fayl idarəçiliyi</text>
+
+        <rect x="70" y="440" width="180" height="45" rx="8" fill="white" stroke="#f59e0b"/>
+        <text x="160" y="462" text-anchor="middle" font-size="13" font-weight="600" fill="#92400e">PostgreSQL</text>
+        <text x="160" y="478" text-anchor="middle" font-size="10" fill="#d97706">Əsas relational baza</text>
+
+        <rect x="290" y="440" width="180" height="45" rx="8" fill="white" stroke="#f59e0b"/>
+        <text x="380" y="462" text-anchor="middle" font-size="13" font-weight="600" fill="#92400e">Fayl Saxlanması</text>
+        <text x="380" y="478" text-anchor="middle" font-size="10" fill="#d97706">PDF, şəkil, sənəd</text>
+
+        <rect x="510" y="440" width="180" height="45" rx="8" fill="white" stroke="#f59e0b"/>
+        <text x="600" y="462" text-anchor="middle" font-size="13" font-weight="600" fill="#92400e">Redis Cache</text>
+        <text x="600" y="478" text-anchor="middle" font-size="10" fill="#d97706">Sürət (opsional)</text>
+
+        <defs>
+          <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+            <polygon points="0 0, 12 6, 0 12" fill="#475569"/>
+          </marker>
+        </defs>
+      </svg>
+      <p class="diagram-caption">Şəkil 1. Universal AI Agent-in üç qatı memarlığı</p>
+    </div>
+
+    <h3>2.1. Bu qatların praktiki əhəmiyyəti</h3>
+    <p>
+      Bu ayırma bizə nə qazandırır? Gəlin real ssenari üzərində baxaq:
+    </p>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div class="callout-content">
+        <div class="callout-title">Praktiki ssenari</div>
+        <div class="callout-body">
+          <p>
+            Fərz edək ki, siz TTİS üçün qurduğunuz sistemi <strong>aptek şəbəkəsinə</strong>
+            köçürmək istəyirsiniz. Üç qat memarlıq sayəsində:
+          </p>
+          <ul>
+            <li><strong>Məlumat qatı</strong> demək olar ki eynidir — cədvəllərin adları dəyişir (projects→pharmacies, materials→medications)</li>
+            <li><strong>Biznes məntiq qatı</strong>nda yalnız "domen modulları" dəyişir — əsas Express skeleti saxlanılır</li>
+            <li><strong>Təqdimat qatı</strong>nda formlar və dashboards dəyişir, amma komponentlər təkrar istifadə olunur</li>
+          </ul>
+          <p>Nəticədə: 6 aylıq yeni layihə → 3 həftəlik adaptasiya!</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ SECTION 3 ═══════════════════════════════ -->
+  <section id="bolme-3">
+    <h2><span class="num">3</span> Texnologiya stack-inin seçimi</h2>
+
+    <p class="lead">
+      Bu layihədə istifadə edəcəyimiz texnologiyalar bir-birinə tamamlayıcı və 2025–2026
+      il standartlarına uyğundur. Hər birinin seçilməsinin səbəbini açıq izah edirəm.
+    </p>
+
+    <div class="tech-grid">
+      <div class="tech-card">
+        <div class="tech-card-icon">🐘</div>
+        <div class="tech-role">Verilənlər Bazası</div>
+        <h4>PostgreSQL 17</h4>
+        <p>Açıq mənbəli, ACID-uyğun, JSONB dəstəkli ən güclü relational DB. Schema versiyalama, triggerlər, stored procedure-lar üçün ideal.</p>
+      </div>
+
+      <div class="tech-card">
+        <div class="tech-card-icon">🟢</div>
+        <div class="tech-role">Backend</div>
+        <h4>Node.js + Express</h4>
+        <p>JavaScript runtime ilə sürətli API yaradılması. npm ekosistemi sayəsində min-min hazır paket. Claude SDK rəvanca işləyir.</p>
+      </div>
+
+      <div class="tech-card">
+        <div class="tech-card-icon">⚛️</div>
+        <div class="tech-role">Frontend</div>
+        <h4>React + Vite</h4>
+        <p>Komponent əsaslı UI. Vite bildir çox sürətli dev-server və build verir. Tailwind CSS ilə yanaşı dizayn sürəti qat-qat artır.</p>
+      </div>
+
+      <div class="tech-card">
+        <div class="tech-card-icon">📊</div>
+        <div class="tech-role">Dashboard</div>
+        <h4>R Shiny</h4>
+        <p>Statistiki təhlil və interaktiv dashboards üçün ən güclü alət. Sizin təcrübəniz olduğu sahədir — IRT, CAT, psixometriya.</p>
+      </div>
+
+      <div class="tech-card">
+        <div class="tech-card-icon">🤖</div>
+        <div class="tech-role">AI</div>
+        <h4>Claude API (Anthropic)</h4>
+        <p>Sənəd analizi, təbii dil sorğuları, təhlil və tövsiyələr üçün. Azərbaycan dili dəstəyi var.</p>
+      </div>
+
+      <div class="tech-card">
+        <div class="tech-card-icon">🔄</div>
+        <div class="tech-role">Process İdarəsi</div>
+        <h4>PM2</h4>
+        <p>Node.js prosesini daim işlək saxlamaq, yenidən başlatmaq, loglamaq üçün. Sizin artıq tanış olduğunuz alətdir.</p>
+      </div>
+
+      <div class="tech-card">
+        <div class="tech-card-icon">🌐</div>
+        <div class="tech-role">Şəbəkə</div>
+        <h4>Tailscale VPN</h4>
+        <p>Uzaq serverinizə (Multipass VM) təhlükəsiz çıxış üçün. 100.116.171.28 IP-li serverinizlə uyğundur.</p>
+      </div>
+
+      <div class="tech-card">
+        <div class="tech-card-icon">📦</div>
+        <div class="tech-role">Konteynerlər</div>
+        <h4>Docker (opsional)</h4>
+        <p>Gələcəkdə produksiyaya tam köçürmə üçün. docker-compose ilə hər şeyi bir komanda ilə başlatmaq imkanı.</p>
+      </div>
+    </div>
+
+    <h3>3.1. Stack arasındakı əlaqə</h3>
+    <p>
+      Bu komponentlər bir-biri ilə necə əlaqə qurur? Baxın:
+    </p>
+
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 720 340" xmlns="http://www.w3.org/2000/svg">
+        <!-- User -->
+        <circle cx="60" cy="170" r="30" fill="#4338ca"/>
+        <text x="60" y="175" text-anchor="middle" font-size="14" font-weight="700" fill="white">👤</text>
+        <text x="60" y="215" text-anchor="middle" font-size="11" fill="#475569">İstifadəçi</text>
+
+        <!-- React Frontend -->
+        <rect x="140" y="80" width="140" height="70" rx="10" fill="#e0e7ff" stroke="#4338ca" stroke-width="2"/>
+        <text x="210" y="105" text-anchor="middle" font-size="13" font-weight="700" fill="#3730a3">React/Vite</text>
+        <text x="210" y="124" text-anchor="middle" font-size="10" fill="#4338ca">localhost:5173</text>
+        <text x="210" y="138" text-anchor="middle" font-size="10" fill="#4338ca">Admin UI</text>
+
+        <!-- Shiny -->
+        <rect x="140" y="190" width="140" height="70" rx="10" fill="#e0e7ff" stroke="#4338ca" stroke-width="2"/>
+        <text x="210" y="215" text-anchor="middle" font-size="13" font-weight="700" fill="#3730a3">R Shiny</text>
+        <text x="210" y="234" text-anchor="middle" font-size="10" fill="#4338ca">localhost:3838</text>
+        <text x="210" y="248" text-anchor="middle" font-size="10" fill="#4338ca">Dashboard</text>
+
+        <!-- Arrows from user -->
+        <path d="M 95 150 L 135 110" stroke="#4338ca" stroke-width="2" marker-end="url(#ar2)"/>
+        <path d="M 95 190 L 135 225" stroke="#4338ca" stroke-width="2" marker-end="url(#ar2)"/>
+
+        <!-- Node Backend -->
+        <rect x="330" y="135" width="150" height="70" rx="10" fill="#cffafe" stroke="#0891b2" stroke-width="2"/>
+        <text x="405" y="160" text-anchor="middle" font-size="13" font-weight="700" fill="#0e7490">Node.js API</text>
+        <text x="405" y="179" text-anchor="middle" font-size="10" fill="#0891b2">localhost:3001</text>
+        <text x="405" y="193" text-anchor="middle" font-size="10" fill="#0891b2">Express</text>
+
+        <!-- Arrow from front to back -->
+        <path d="M 285 115 L 325 150" stroke="#0891b2" stroke-width="2" marker-end="url(#ar2)"/>
+        <path d="M 285 225 L 325 190" stroke="#0891b2" stroke-width="2" marker-end="url(#ar2)"/>
+        <text x="300" y="125" font-size="9" fill="#0891b2">REST</text>
+        <text x="300" y="220" font-size="9" fill="#0891b2">REST</text>
+
+        <!-- PostgreSQL -->
+        <rect x="540" y="60" width="140" height="70" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+        <text x="610" y="85" text-anchor="middle" font-size="13" font-weight="700" fill="#92400e">PostgreSQL</text>
+        <text x="610" y="104" text-anchor="middle" font-size="10" fill="#d97706">localhost:5432</text>
+        <text x="610" y="118" text-anchor="middle" font-size="10" fill="#d97706">ttis_db</text>
+
+        <!-- Claude API -->
+        <rect x="540" y="150" width="140" height="70" rx="10" fill="#fce7f3" stroke="#db2777" stroke-width="2"/>
+        <text x="610" y="175" text-anchor="middle" font-size="13" font-weight="700" fill="#9f1239">Claude API</text>
+        <text x="610" y="194" text-anchor="middle" font-size="10" fill="#db2777">api.anthropic.com</text>
+        <text x="610" y="208" text-anchor="middle" font-size="10" fill="#db2777">AI Təhlil</text>
+
+        <!-- File Storage -->
+        <rect x="540" y="240" width="140" height="60" rx="10" fill="#d1fae5" stroke="#059669" stroke-width="2"/>
+        <text x="610" y="265" text-anchor="middle" font-size="13" font-weight="700" fill="#065f46">Fayl Saxlama</text>
+        <text x="610" y="283" text-anchor="middle" font-size="10" fill="#059669">/uploads/ qovluğu</text>
+
+        <!-- Arrows from backend -->
+        <path d="M 485 155 L 535 110" stroke="#d97706" stroke-width="2" marker-end="url(#ar2)"/>
+        <path d="M 485 175 L 535 180" stroke="#db2777" stroke-width="2" marker-end="url(#ar2)"/>
+        <path d="M 485 195 L 535 255" stroke="#059669" stroke-width="2" marker-end="url(#ar2)"/>
+        <text x="495" y="130" font-size="9" fill="#d97706">SQL</text>
+        <text x="500" y="175" font-size="9" fill="#db2777">HTTPS</text>
+        <text x="495" y="240" font-size="9" fill="#059669">I/O</text>
+
+        <defs>
+          <marker id="ar2" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+            <polygon points="0 0, 10 5, 0 10" fill="currentColor"/>
+          </marker>
+        </defs>
+      </svg>
+      <p class="diagram-caption">Şəkil 2. Komponentlər arasında məlumat axını</p>
+    </div>
+
+    <div class="callout warning">
+      <span class="callout-icon">!</span>
+      <div class="callout-content">
+        <div class="callout-title">Diqqət: portlar</div>
+        <div class="callout-body">
+          <p>
+            Hər komponent öz portunda işləyir. Bu, sizin Mac-də paralel işlətmək üçün
+            vacibdir. Lazım olarsa portları dəyişə bilərsiniz (<code class="inline">.env</code>
+            faylında) — amma default olaraq: <strong>5173</strong> (React), <strong>3001</strong>
+            (Node.js), <strong>3838</strong> (Shiny), <strong>5432</strong> (PostgreSQL).
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ SECTION 4 ═══════════════════════════════ -->
+  <section id="bolme-4">
+    <h2><span class="num">4</span> Domen-dəyişən prinsipi</h2>
+
+    <p class="lead">
+      Bu layihənin ən əhəmiyyətli cəhəti — <strong>universallıq</strong>. Bunu necə
+      texniki olaraq təmin edirik? "Domen modulları" (domain modules) yanaşması ilə.
+    </p>
+
+    <h3>4.1. Domen nədir?</h3>
+    <p>
+      <em>Domen</em> — sizin biznesin həll etdiyi konkret problem sahəsidir. Məsələn:
+    </p>
+    <ul>
+      <li><strong>Tikinti domeni</strong> — layihələr, smetalar, briqadalar, materiallar</li>
+      <li><strong>Aptek domeni</strong> — filiallar, dərmanlar, resept, satış</li>
+      <li><strong>Təhsil domeni</strong> — məktəblər, kurrikulum, şagirdlər, imtahanlar</li>
+    </ul>
+
+    <h3>4.2. Strategiya: "Core + Plugin"</h3>
+    <p>
+      Biz layihəni iki hissəyə bölürük:
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Hissə</th>
+            <th>Nə edir?</th>
+            <th>Dəyişirmi?</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Core (Özək)</strong></td>
+            <td>Autentifikasiya, baza bağlantısı, loglama, API gateway, istifadəçi idarəsi, rol-əsaslı icazə</td>
+            <td>❌ Heç vaxt dəyişmir</td>
+          </tr>
+          <tr>
+            <td><strong>Domain (Domen)</strong></td>
+            <td>Konkret iş sahəsinin cədvəlləri, formaları, hesabatları, biznes qaydaları</td>
+            <td>✅ Sahəyə görə dəyişir</td>
+          </tr>
+          <tr>
+            <td><strong>Shared (Ortaq)</strong></td>
+            <td>Ümumi komponentlər: fayl yükləmə, bildiriş, PDF eksport, cədvəl komponenti</td>
+            <td>⚠️ Az-az dəyişir</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      Backend-də bu prinsip belə reallaşır (bunu Dərs 3-də praktiki görəcəyik):
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">backend/src/server.js — domen yükləmə prinsipi</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt">// ═══ CORE qatı — heç vaxt dəyişmir ═══</span>
+<span class="kw">const</span> express = <span class="fn">require</span>(<span class="str">'express'</span>);
+<span class="kw">const</span> app = <span class="fn">express</span>();
+
+<span class="fn">require</span>(<span class="str">'./core/middleware/auth'</span>)(app);     <span class="cmt">// autentifikasiya</span>
+<span class="fn">require</span>(<span class="str">'./core/middleware/logging'</span>)(app);  <span class="cmt">// loglama</span>
+<span class="fn">require</span>(<span class="str">'./core/routes/users'</span>)(app);        <span class="cmt">// istifadəçi idarəsi</span>
+
+<span class="cmt">// ═══ DOMAIN qatı — sahəyə görə dəyişir ═══</span>
+<span class="kw">const</span> domain = process.env.<span class="fn">DOMAIN</span> || <span class="str">'construction'</span>;
+<span class="fn">require</span>(<span class="str">`./domain/</span><span class="num">${domain}</span><span class="str">/routes`</span>)(app);
+
+<span class="cmt">// ═══ SHARED qatı — ümumi xidmətlər ═══</span>
+<span class="fn">require</span>(<span class="str">'./shared/services/files'</span>)(app);
+<span class="fn">require</span>(<span class="str">'./shared/services/ai'</span>)(app);       <span class="cmt">// Claude API</span>
+
+app.<span class="fn">listen</span>(<span class="num">3001</span>);</code></pre>
+    </div>
+
+    <div class="callout success">
+      <span class="callout-icon">✓</span>
+      <div class="callout-content">
+        <div class="callout-title">Nəticə</div>
+        <div class="callout-body">
+          <p>
+            Aptek şəbəkəsinə keçid üçün yalnız <code class="inline">DOMAIN=pharmacy</code>
+            environ dəyişəni qoymaq və <code class="inline">/domain/pharmacy/</code>
+            qovluğu yazmaq kifayətdir. Bütün qalan sistem eyni qalır!
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ SECTION 5 ═══════════════════════════════ -->
+  <section id="bolme-5">
+    <h2><span class="num">5</span> Profesional qovluq strukturu</h2>
+
+    <p class="lead">
+      İndi baxacağımız qovluq strukturu industry-standard səviyyədədir. Yəni dünyada
+      hər hansı ciddi layihədə görəcəyiniz tip sxem.
+    </p>
+
+    <div class="folder-tree">
+<span class="dir">Claude_Modei_Təmir_tikinti/</span>
+├── <span class="dir">backend/</span>                          <span class="cmt"># Node.js + Express API</span>
+│   ├── <span class="dir">src/</span>
+│   │   ├── <span class="dir">core/</span>                     <span class="cmt"># Özək qat (dəyişməz)</span>
+│   │   │   ├── <span class="dir">config/</span>               <span class="cmt">#   konfiqurasiya faylları</span>
+│   │   │   ├── <span class="dir">middleware/</span>           <span class="cmt">#   auth, cors, logger, errors</span>
+│   │   │   ├── <span class="dir">routes/</span>               <span class="cmt">#   users, auth, health</span>
+│   │   │   └── <span class="dir">utils/</span>                <span class="cmt">#   helper funksiyalar</span>
+│   │   ├── <span class="dir">domain/</span>                   <span class="cmt"># Domen qatı (dəyişir)</span>
+│   │   │   └── <span class="dir">construction/</span>         <span class="cmt">#   TTİS konkret məntiqi</span>
+│   │   │       ├── <span class="dir">controllers/</span>      <span class="cmt">#     endpoint işləyicilər</span>
+│   │   │       ├── <span class="dir">models/</span>            <span class="cmt">#     DB modellər (Sequelize/Prisma)</span>
+│   │   │       ├── <span class="dir">routes/</span>            <span class="cmt">#     projects, budgets, teams</span>
+│   │   │       └── <span class="dir">services/</span>          <span class="cmt">#     biznes məntiqi</span>
+│   │   ├── <span class="dir">shared/</span>                   <span class="cmt"># Ortaq xidmətlər</span>
+│   │   │   ├── <span class="dir">ai/</span>                   <span class="cmt">#   Claude API wrapper</span>
+│   │   │   ├── <span class="dir">files/</span>                <span class="cmt">#   fayl yükləmə/endirmə</span>
+│   │   │   └── <span class="dir">notifications/</span>        <span class="cmt">#   email, sms, webhook</span>
+│   │   └── <span class="file">server.js</span>                <span class="cmt"># giriş nöqtəsi</span>
+│   ├── <span class="dir">tests/</span>                        <span class="cmt"># vahid və inteqrasiya testləri</span>
+│   ├── <span class="file">.env.example</span>                 <span class="cmt"># mühit dəyişən şablonu</span>
+│   ├── <span class="file">package.json</span>
+│   └── <span class="file">ecosystem.config.js</span>          <span class="cmt"># PM2 konfiqi</span>
+│
+├── <span class="dir">frontend/</span>                         <span class="cmt"># React + Vite UI</span>
+│   ├── <span class="dir">src/</span>
+│   │   ├── <span class="dir">components/</span>               <span class="cmt"># təkrar istifadə</span>
+│   │   │   ├── <span class="dir">ui/</span>                   <span class="cmt">#   Button, Input, Modal</span>
+│   │   │   ├── <span class="dir">layout/</span>               <span class="cmt">#   Header, Sidebar, Footer</span>
+│   │   │   └── <span class="dir">forms/</span>                <span class="cmt">#   dinamik formalar</span>
+│   │   ├── <span class="dir">pages/</span>                    <span class="cmt"># ayrı səhifələr</span>
+│   │   │   ├── <span class="dir">Projects/</span>             <span class="cmt">#   layihələr (TTİS)</span>
+│   │   │   ├── <span class="dir">Budgets/</span>              <span class="cmt">#   smetalar</span>
+│   │   │   └── <span class="dir">Teams/</span>                <span class="cmt">#   briqadalar</span>
+│   │   ├── <span class="dir">services/</span>                 <span class="cmt"># API çağırışları</span>
+│   │   ├── <span class="dir">hooks/</span>                    <span class="cmt"># custom React hooks</span>
+│   │   ├── <span class="dir">context/</span>                  <span class="cmt"># global state (auth, theme)</span>
+│   │   ├── <span class="dir">utils/</span>
+│   │   ├── <span class="file">App.jsx</span>
+│   │   └── <span class="file">main.jsx</span>
+│   ├── <span class="dir">public/</span>
+│   ├── <span class="file">index.html</span>
+│   ├── <span class="file">vite.config.js</span>
+│   └── <span class="file">package.json</span>
+│
+├── <span class="dir">dashboard/</span>                        <span class="cmt"># R Shiny Analitika</span>
+│   ├── <span class="file">app.R</span>                        <span class="cmt"># əsas giriş</span>
+│   ├── <span class="file">global.R</span>                     <span class="cmt"># kitabxana yüklənməsi</span>
+│   ├── <span class="dir">modules/</span>                      <span class="cmt"># Shiny modulları</span>
+│   │   ├── <span class="file">mod_overview.R</span>
+│   │   ├── <span class="file">mod_projects.R</span>
+│   │   └── <span class="file">mod_finance.R</span>
+│   ├── <span class="dir">data/</span>                         <span class="cmt"># lokal test məlumatları</span>
+│   └── <span class="dir">www/</span>                          <span class="cmt"># CSS, JS, şəkillər</span>
+│
+├── <span class="dir">database/</span>                         <span class="cmt"># PostgreSQL artefaktları</span>
+│   ├── <span class="dir">schemas/</span>                      <span class="cmt"># cədvəl təriflər</span>
+│   │   ├── <span class="file">01_core.sql</span>              <span class="cmt">#   users, roles, sessions</span>
+│   │   ├── <span class="file">02_construction.sql</span>      <span class="cmt">#   TTİS cədvəlləri</span>
+│   │   └── <span class="file">03_views.sql</span>             <span class="cmt">#   hesabat view-lar</span>
+│   ├── <span class="dir">migrations/</span>                   <span class="cmt"># versiyalı dəyişikliklər</span>
+│   ├── <span class="dir">seeds/</span>                        <span class="cmt"># test məlumatları</span>
+│   └── <span class="dir">backups/</span>                      <span class="cmt"># .sql dump-lar</span>
+│
+├── <span class="dir">ai/</span>                              <span class="cmt"># AI konfiqurasiyaları</span>
+│   ├── <span class="dir">prompts/</span>                      <span class="cmt"># Claude sistem promptları</span>
+│   │   ├── <span class="file">budget_analysis.md</span>
+│   │   └── <span class="file">project_summary.md</span>
+│   ├── <span class="dir">schemas/</span>                      <span class="cmt"># JSON Schema-lar</span>
+│   └── <span class="dir">templates/</span>                    <span class="cmt"># hesabat şablonları</span>
+│
+├── <span class="dir">deploy/</span>                          <span class="cmt"># Yerləşdirmə</span>
+│   ├── <span class="dir">pm2/</span>                          <span class="cmt">#   process idarəsi</span>
+│   ├── <span class="dir">nginx/</span>                        <span class="cmt">#   reverse proxy konfiqi</span>
+│   ├── <span class="dir">docker/</span>                       <span class="cmt">#   Dockerfile, compose</span>
+│   └── <span class="dir">scripts/</span>                      <span class="cmt">#   bash skriptlər</span>
+│
+├── <span class="dir">docs/</span>                            <span class="cmt"># Sənədlər</span>
+│   ├── <span class="dir">lessons/</span>                      <span class="cmt">#   HTML dərslər (bu fayl burda)</span>
+│   ├── <span class="dir">api/</span>                          <span class="cmt">#   OpenAPI/Swagger</span>
+│   └── <span class="dir">architecture/</span>                 <span class="cmt">#   memarlıq sənədləri</span>
+│
+├── <span class="dir">scripts/</span>                         <span class="cmt"># Yardımçı skriptlər</span>
+│   ├── <span class="file">setup.sh</span>                     <span class="cmt">#   ilk quraşdırma</span>
+│   ├── <span class="file">backup_db.sh</span>                 <span class="cmt">#   DB backup</span>
+│   └── <span class="file">deploy.sh</span>                    <span class="cmt">#   deployment</span>
+│
+├── <span class="dir">config/</span>                          <span class="cmt"># Kök səviyyədə konfiqlər</span>
+├── <span class="file">.gitignore</span>
+├── <span class="file">.env.example</span>
+├── <span class="file">README.md</span>                        <span class="cmt"># əsas sənəd</span>
+├── <span class="file">ARCHITECTURE.md</span>                  <span class="cmt"># memarlıq izahı</span>
+└── <span class="file">docker-compose.yml</span>               <span class="cmt"># bütün xidmətləri bir yerdə</span>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">i</span>
+      <div class="callout-content">
+        <div class="callout-title">Niyə bu qədər qovluq?</div>
+        <div class="callout-body">
+          <p>
+            Əvvəlcə çox görünür, lakin hər qovluğun aydın məsuliyyəti var. Layihə
+            böyüdükcə bu struktur sizi xaosdan qoruyur. 5 ay sonra koda qayıdanda
+            "hara nə qoymuşdum?" sualını sual etməyəcəksiniz.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ SECTION 6 ═══════════════════════════════ -->
+  <section id="bolme-6">
+    <h2><span class="num">6</span> Mac terminalında praktika</h2>
+
+    <p class="lead">
+      İndi yuxarıda görüntülədiyimiz strukturu sizin Mac-də yaradacağıq. Bütün əmrləri
+      birər-birər izah edəcəm. Hər kod bloğunun yanındakı <strong>📋 Kopyala</strong>
+      düyməsi ilə kodu bufferə alıb Terminal-a yapışdıra bilərsiniz.
+    </p>
+
+    <h3>6.1. Addım 1 — Terminal-ı açın və masaüstünə keçin</h3>
+    <p>
+      Mac-də <code class="inline">Command + Space</code> → "Terminal" yazın → Enter.
+      Sonra masaüstünə keçək:
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — masaüstünə keçid</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># Masaüstünə keçirik. ~ simvolu — istifadəçi home qovluğudur</span>
+<span class="kw">cd</span> ~/Desktop
+
+<span class="cmt"># Təsdiq etmək üçün haradayıq baxaq</span>
+<span class="kw">pwd</span>
+
+<span class="cmt"># Nəticə təxminən belə olmalıdır:</span>
+<span class="cmt"># /Users/royatalibova/Desktop</span></code></pre>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div class="callout-content">
+        <div class="callout-title">Əmrlər haqqında</div>
+        <div class="callout-body">
+          <ul>
+            <li><code class="inline">cd</code> = <em>change directory</em> — qovluq dəyişir</li>
+            <li><code class="inline">~</code> = istifadəçinin ev qovluğu (home)</li>
+            <li><code class="inline">pwd</code> = <em>print working directory</em> — haradayıq yazdırır</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <h3>6.2. Addım 2 — Əsas qovluğu yaradın</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — əsas qovluğun yaradılması</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># Əsas layihə qovluğunu yaradırıq</span>
+<span class="kw">mkdir</span> Claude_Modei_Təmir_tikinti
+
+<span class="cmt"># İçinə keçirik</span>
+<span class="kw">cd</span> Claude_Modei_Təmir_tikinti
+
+<span class="cmt"># Yoxlayırıq</span>
+<span class="kw">pwd</span>
+<span class="cmt"># Nəticə: /Users/royatalibova/Desktop/Claude_Modei_Təmir_tikinti</span></code></pre>
+    </div>
+
+    <h3>6.3. Addım 3 — Bütün alt qovluq strukturunu bir əmrlə yaradın</h3>
+
+    <p>
+      Bash-da <code class="inline">mkdir -p</code> ilə iç-içə qovluqları bir dəfəyə
+      yarada bilərik. <code class="inline">-p</code> bayrağı — "valideyn qovluqlar da
+      avtomatik yarat" deməkdir:
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — tam qovluq strukturu</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># ═══ BACKEND qovluqları ═══</span>
+<span class="kw">mkdir</span> -p backend/src/core/config
+<span class="kw">mkdir</span> -p backend/src/core/middleware
+<span class="kw">mkdir</span> -p backend/src/core/routes
+<span class="kw">mkdir</span> -p backend/src/core/utils
+<span class="kw">mkdir</span> -p backend/src/domain/construction/controllers
+<span class="kw">mkdir</span> -p backend/src/domain/construction/models
+<span class="kw">mkdir</span> -p backend/src/domain/construction/routes
+<span class="kw">mkdir</span> -p backend/src/domain/construction/services
+<span class="kw">mkdir</span> -p backend/src/shared/ai
+<span class="kw">mkdir</span> -p backend/src/shared/files
+<span class="kw">mkdir</span> -p backend/src/shared/notifications
+<span class="kw">mkdir</span> -p backend/tests
+
+<span class="cmt"># ═══ FRONTEND qovluqları ═══</span>
+<span class="kw">mkdir</span> -p frontend/src/components/ui
+<span class="kw">mkdir</span> -p frontend/src/components/layout
+<span class="kw">mkdir</span> -p frontend/src/components/forms
+<span class="kw">mkdir</span> -p frontend/src/pages/Projects
+<span class="kw">mkdir</span> -p frontend/src/pages/Budgets
+<span class="kw">mkdir</span> -p frontend/src/pages/Teams
+<span class="kw">mkdir</span> -p frontend/src/services
+<span class="kw">mkdir</span> -p frontend/src/hooks
+<span class="kw">mkdir</span> -p frontend/src/context
+<span class="kw">mkdir</span> -p frontend/src/utils
+<span class="kw">mkdir</span> -p frontend/public
+
+<span class="cmt"># ═══ DASHBOARD (R Shiny) ═══</span>
+<span class="kw">mkdir</span> -p dashboard/modules
+<span class="kw">mkdir</span> -p dashboard/data
+<span class="kw">mkdir</span> -p dashboard/www
+
+<span class="cmt"># ═══ DATABASE ═══</span>
+<span class="kw">mkdir</span> -p database/schemas
+<span class="kw">mkdir</span> -p database/migrations
+<span class="kw">mkdir</span> -p database/seeds
+<span class="kw">mkdir</span> -p database/backups
+
+<span class="cmt"># ═══ AI ═══</span>
+<span class="kw">mkdir</span> -p ai/prompts
+<span class="kw">mkdir</span> -p ai/schemas
+<span class="kw">mkdir</span> -p ai/templates
+
+<span class="cmt"># ═══ DEPLOY ═══</span>
+<span class="kw">mkdir</span> -p deploy/pm2
+<span class="kw">mkdir</span> -p deploy/nginx
+<span class="kw">mkdir</span> -p deploy/docker
+<span class="kw">mkdir</span> -p deploy/scripts
+
+<span class="cmt"># ═══ DOCS ═══</span>
+<span class="kw">mkdir</span> -p docs/lessons
+<span class="kw">mkdir</span> -p docs/api
+<span class="kw">mkdir</span> -p docs/architecture
+
+<span class="cmt"># ═══ Digərləri ═══</span>
+<span class="kw">mkdir</span> -p scripts
+<span class="kw">mkdir</span> -p config
+
+<span class="kw">echo</span> <span class="str">"✅ Bütün qovluqlar yaradıldı!"</span></code></pre>
+    </div>
+
+    <h3>6.4. Addım 4 — Strukturu yoxlayın</h3>
+    <p>
+      İndi gəlin strukturun düzgün yaradıldığını yoxlayaq. Əvvəlcə <code class="inline">tree</code>
+      əmrini quraşdıraq (əgər yoxdursa):
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — tree aləti və yoxlama</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># tree komandası qovluqları gözəl ağac şəklində göstərir</span>
+<span class="cmt"># Əgər brew ilə quraşdırılmayıbsa:</span>
+brew install tree
+
+<span class="cmt"># Qovluq strukturuna baxaq (yalnız 3 səviyyəyə qədər)</span>
+tree -L 3
+
+<span class="cmt"># Əgər tree quraşdırmaq istəmirsinizsə, find istifadə edə bilərsiniz:</span>
+<span class="kw">find</span> . -type d | <span class="kw">sort</span></code></pre>
+    </div>
+
+    <div class="callout success">
+      <span class="callout-icon">✓</span>
+      <div class="callout-content">
+        <div class="callout-title">Nəticə belə görünəcək</div>
+        <div class="callout-body">
+          <p>Tree əmri sizə yuxarıda gördüyünüz ağac şəklində strukturu çıxaracaq.
+          Bu — sizin universal agent layihənizin təməlidir!</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>6.5. Addım 5 — Kök səviyyəli faylları yaradın</h3>
+
+    <p>Bu fayllar hər ciddi layihənin əsasıdır: <code class="inline">.gitignore</code>,
+    <code class="inline">README.md</code>, <code class="inline">.env.example</code>.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — kök faylların yaradılması</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># Boş fayllar yaradırıq — içini sonra dolduracağıq</span>
+<span class="kw">touch</span> README.md
+<span class="kw">touch</span> ARCHITECTURE.md
+<span class="kw">touch</span> .env.example
+<span class="kw">touch</span> .gitignore
+<span class="kw">touch</span> docker-compose.yml
+
+<span class="cmt"># Təsdiq edirik</span>
+<span class="kw">ls</span> -la</code></pre>
+    </div>
+
+    <h3>6.6. Addım 6 — .gitignore faylını doldurun</h3>
+
+    <p>
+      Bu fayl Git-ə hansı faylları nəzərə almamalı olduğunu deyir. Kredensialları,
+      məlumatlar bazası şifrələrini, node_modules-u — heç vaxt Git-ə yükləməmək
+      lazımdır!
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — .gitignore-un avtomatik doldurulması</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="kw">cat</span> > .gitignore <span class="str">&lt;&lt; 'EOF'</span>
+<span class="cmt"># ═══ Node.js ═══</span>
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp.*
+
+<span class="cmt"># ═══ Environment ═══</span>
+.env
+.env.local
+.env.*.local
+!.env.example
+
+<span class="cmt"># ═══ Build outputs ═══</span>
+dist/
+build/
+.vite/
+.next/
+
+<span class="cmt"># ═══ Logs ═══</span>
+logs/
+*.log
+pm2.log
+
+<span class="cmt"># ═══ OS ═══</span>
+.DS_Store
+Thumbs.db
+
+<span class="cmt"># ═══ Editor ═══</span>
+.vscode/
+.idea/
+*.swp
+
+<span class="cmt"># ═══ Database ═══</span>
+database/backups/*.sql
+*.sqlite
+*.db
+
+<span class="cmt"># ═══ R ═══</span>
+.Rhistory
+.Rapp.history
+.Renviron
+.RData
+*.rdb
+*.rdx
+
+<span class="cmt"># ═══ Uploads ═══</span>
+uploads/
+temp/
+
+<span class="cmt"># ═══ Tests ═══</span>
+coverage/
+.nyc_output/
+<span class="str">EOF</span>
+
+<span class="kw">echo</span> <span class="str">"✅ .gitignore yaradıldı!"</span>
+<span class="kw">cat</span> .gitignore | <span class="kw">head</span> -20</code></pre>
+    </div>
+
+    <div class="callout warning">
+      <span class="callout-icon">!</span>
+      <div class="callout-content">
+        <div class="callout-title">Vacib: API açarları barədə</div>
+        <div class="callout-body">
+          <p>
+            Siz əvvəllər API açar sızdırma hadisəsi yaşamısınız — xatırlayırsınız.
+            Bu .gitignore məhz həmin problemi qarşısını alır. <code class="inline">.env</code>
+            faylı heç vaxt Git-ə getməyəcək, yalnız <code class="inline">.env.example</code>
+            şablon kimi saxlanılacaq.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ SECTION 7 ═══════════════════════════════ -->
+  <section id="bolme-7">
+    <h2><span class="num">7</span> Git və ilkin sənədlər</h2>
+
+    <p class="lead">
+      Profesional layihələrdə ilk işimiz Git repozitoriyası yaratmaqdır. Bu, kodumuzun
+      tarixini saxlayır və gələcəkdə GitHub-a yükləmək üçün hazırlayır.
+    </p>
+
+    <h3>7.1. Git-in initializasiyası</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — git inicializasiyası</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># Git repozitoriyasını yaradırıq</span>
+<span class="kw">git</span> init
+
+<span class="cmt"># Əsas branch adını 'main' olaraq təyin edirik (köhnə default 'master' idi)</span>
+<span class="kw">git</span> branch -M main
+
+<span class="cmt"># İstifadəçi adı və email-i yoxlayaq (bir dəfə təyin olunmalıdır)</span>
+<span class="kw">git</span> config user.name
+<span class="kw">git</span> config user.email
+
+<span class="cmt"># Əgər boş gəlsə, təyin edin (YALNIZ ilk dəfədirsə):</span>
+<span class="cmt"># git config --global user.name "Tariyel Talıbov"</span>
+<span class="cmt"># git config --global user.email "sizin@email.com"</span></code></pre>
+    </div>
+
+    <h3>7.2. README.md faylının yazılması</h3>
+
+    <p>
+      Hər layihənin "sifəti" — README faylıdır. GitHub-da ilk göründüyündə bu
+      görünür. Gəlin gözəl bir README yaradaq:
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — README.md yazılması</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="kw">cat</span> > README.md <span class="str">&lt;&lt; 'EOF'</span>
+<span class="cmt"># 🏗️ Claude Model — Təmir-Tikinti İdarəsi (TTİS)</span>
+
+<span class="cmt">> Universal AI Agent for Small and Medium Businesses</span>
+<span class="cmt">> Model domain: Construction & Repair Management</span>
+
+<span class="cmt">## 📖 Layihə haqqında</span>
+
+Bu layihə kiçik və orta biznes qrupları üçün universal AI agent şablonudur.
+Model olaraq Təmir-Tikinti İdarəsi sahəsi seçilib, lakin memarlıq başqa
+sahələrə (aptek, logistika, təhsil, və s.) də asanlıqla köçürülə bilər.
+
+<span class="cmt">## 🛠️ Texnologiya Stack-i</span>
+
+- **Backend:** Node.js + Express
+- **Frontend:** React + Vite + Tailwind CSS
+- **Database:** PostgreSQL 17
+- **Dashboard:** R Shiny
+- **AI:** Claude API (Anthropic)
+- **Process Manager:** PM2
+- **VPN:** Tailscale
+
+<span class="cmt">## 📂 Qovluq Strukturu</span>
+
+\`\`\`
+Claude_Modei_Təmir_tikinti/
+├── backend/      # Node.js + Express API
+├── frontend/     # React + Vite UI
+├── dashboard/    # R Shiny analitika
+├── database/     # PostgreSQL schemas, migrations
+├── ai/           # Claude promptları
+├── deploy/       # PM2, Nginx, Docker konfigleri
+├── docs/         # Sənədlər və dərslər
+└── scripts/      # Yardımçı skriptlər
+\`\`\`
+
+<span class="cmt">## 🚀 Sürətli başlanğıc</span>
+
+\`\`\`bash
+<span class="cmt"># 1. Repozitoriyanı klonlayın</span>
+git clone <repo-url>
+cd Claude_Modei_Təmir_tikinti
+
+<span class="cmt"># 2. .env faylını yaradın</span>
+cp .env.example .env
+
+<span class="cmt"># 3. Asılılıqları quraşdırın</span>
+cd backend && npm install
+cd ../frontend && npm install
+\`\`\`
+
+<span class="cmt">## 📚 Dərslər</span>
+
+- [Dərs 1: Layihə Memarlığı](docs/lessons/Dərs_01_Layihə_Strukturu.html)
+- [Dərs 2: PostgreSQL Quraşdırılması](docs/lessons/Dərs_02_PostgreSQL.html) (tezliklə)
+- [Dərs 3: Node.js Backend](docs/lessons/Dərs_03_Backend.html) (tezliklə)
+- [Dərs 4: React Frontend](docs/lessons/Dərs_04_Frontend.html) (tezliklə)
+- [Dərs 5: R Shiny Dashboard](docs/lessons/Dərs_05_Shiny.html) (tezliklə)
+- [Dərs 6: Deployment](docs/lessons/Dərs_06_Deploy.html) (tezliklə)
+
+<span class="cmt">## 👤 Müəllif</span>
+
+**Talıbov Tariyel İsmayıl oğlu**
+ARTI (Azərbaycan Respublikası Təhsil İnstitutu)
+Qiymətləndirmə, Təhlil və Monitorinq Departamenti
+
+<span class="cmt">## 📄 Lisenziya</span>
+
+MIT License — təhsil və kommersiya məqsədləri üçün sərbəst istifadə.
+<span class="str">EOF</span>
+
+<span class="kw">echo</span> <span class="str">"✅ README.md yaradıldı!"</span></code></pre>
+    </div>
+
+    <h3>7.3. İlk commit</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — ilk commit</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># Bütün faylları staging-ə əlavə edirik</span>
+<span class="kw">git</span> add .
+
+<span class="cmt"># Hansı faylların əlavə olunduğuna baxırıq</span>
+<span class="kw">git</span> status
+
+<span class="cmt"># İlk commit</span>
+<span class="kw">git</span> commit -m <span class="str">"chore: initial project structure with full directory tree"</span>
+
+<span class="cmt"># Tarixi görmək</span>
+<span class="kw">git</span> log --oneline</code></pre>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div class="callout-content">
+        <div class="callout-title">Commit message konvensiyası</div>
+        <div class="callout-body">
+          <p>
+            Biz <strong>Conventional Commits</strong> standartını istifadə edirik:
+          </p>
+          <ul>
+            <li><code class="inline">feat:</code> — yeni funksionallıq</li>
+            <li><code class="inline">fix:</code> — xəta düzəlişi</li>
+            <li><code class="inline">docs:</code> — sənədləşdirmə</li>
+            <li><code class="inline">chore:</code> — texniki iş (dep yeniləmə, struktur)</li>
+            <li><code class="inline">refactor:</code> — kod yenidən təşkili</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ SECTION 8 ═══════════════════════════════ -->
+  <section id="bolme-8">
+    <h2><span class="num">8</span> Yoxlama və xülasə</h2>
+
+    <h3>8.1. Yekun yoxlama siyahısı</h3>
+    <p>Dərsin sonuna gəldik! Gəlin aşağıdakıları yoxlayaq:</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-title">bash — yekun yoxlama</span>
+        <button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button>
+      </div>
+<pre class="code-content"><code><span class="cmt"># 1. Düzgün qovluqda olduğumuzu yoxlayırıq</span>
+<span class="kw">pwd</span>
+<span class="cmt"># Gözləntim: .../Desktop/Claude_Modei_Təmir_tikinti</span>
+
+<span class="cmt"># 2. Qovluq strukturuna baxırıq</span>
+<span class="kw">ls</span> -la
+
+<span class="cmt"># 3. Bütün alt qovluqları sayırıq</span>
+<span class="kw">find</span> . -type d | <span class="kw">wc</span> -l
+<span class="cmt"># Gözləntim: 40+ qovluq</span>
+
+<span class="cmt"># 4. Git statusunu yoxlayırıq</span>
+<span class="kw">git</span> status
+<span class="cmt"># Gözləntim: "nothing to commit, working tree clean"</span>
+
+<span class="cmt"># 5. README-nin oxunduğuna əmin olaq</span>
+<span class="kw">head</span> -15 README.md</code></pre>
+    </div>
+
+    <div class="summary-box">
+      <h3>📝 Bu dərsdə öyrəndiklərimiz</h3>
+      <ul>
+        <li><strong>Universal AI Agent</strong> konsepsiyasını — niyə vacibdir, kimə lazımdır</li>
+        <li><strong>Üç qatlı memarlıq</strong> — təqdimat, biznes məntiq, məlumat qatları</li>
+        <li><strong>Texnologiya stack</strong> — PostgreSQL, Node.js, React, R Shiny, Claude API</li>
+        <li><strong>Domen-dəyişən prinsipi</strong> — Core + Plugin yanaşması</li>
+        <li><strong>Profesional qovluq strukturu</strong> — industry-standard sxem</li>
+        <li><strong>Mac terminal əsas əmrləri</strong> — mkdir, cd, ls, find, cat, git</li>
+        <li><strong>Git initializasiyası</strong> və ilk commit</li>
+      </ul>
+    </div>
+
+    <h3>8.2. Növbəti dərsdə nə olacaq?</h3>
+
+    <div class="callout info">
+      <span class="callout-icon">→</span>
+      <div class="callout-content">
+        <div class="callout-title">Dərs 2: PostgreSQL Verilənlər Bazasının Qurulması</div>
+        <div class="callout-body">
+          <p>Növbəti dərsdə:</p>
+          <ul>
+            <li>PostgreSQL 17-in Mac-də quraşdırılması (Intel Homebrew yolu)</li>
+            <li>TTİS üçün tam relational schema dizaynı (10+ cədvəl)</li>
+            <li>Cədvəllər arasındakı əlaqələr (FK, indekslər, triggerlər)</li>
+            <li>Core + Domain ayrımının DB səviyyəsində tətbiqi</li>
+            <li>Migration və seed skriptlər</li>
+            <li>Test məlumatlarının doldurulması</li>
+            <li>psql və GUI alətlərlə baza idarəçiliyi</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <h3>8.3. Tapşırıq (opsional)</h3>
+    <p>
+      Növbəti dərsə qədər aşağıdakı düşünmə tapşırıqlarına baxın:
+    </p>
+    <ol>
+      <li>Sizin təsəvvür etdiyiniz digər bir biznes sahəsi (məsələn, xüsusi təhsil mərkəzi) üçün "domain" qovluğunda hansı alt qovluqlar olmalıdır?</li>
+      <li>TTİS üçün düşünəndə, hansı cədvəllər <em>mütləq</em> olmalıdır? Siyahı tərtib edin.</li>
+      <li>Universal agent-in hansı funksiyalarından Claude AI faydalana bilər? 3–5 konkret ssenari düşünün.</li>
+    </ol>
+  </section>
+
+  <!-- ═══════════════════════════════ NAVIGATION ═══════════════════════════════ -->
+  <nav class="lesson-nav">
+    <span class="lesson-nav-btn disabled">← Əvvəlki dərs</span>
+    <a href="#" class="lesson-nav-btn" onclick="alert('Dərs 2 növbəti mərhələdə hazırlanacaq!'); return false;">
+      Dərs 2: PostgreSQL →
+    </a>
+  </nav>
+
+</div>
+
+<script>
+  // Copy-to-clipboard funksiyası
+  function copyCode(button) {
+    const codeBlock = button.closest('.code-block');
+    const code = codeBlock.querySelector('pre.code-content').innerText;
+
+    navigator.clipboard.writeText(code).then(() => {
+      const originalText = button.innerHTML;
+      button.innerHTML = '✓ Kopyalandı!';
+      button.classList.add('copied');
+
+      setTimeout(() => {
+        button.innerHTML = originalText;
+        button.classList.remove('copied');
+      }, 2000);
+    }).catch(err => {
+      console.error('Kopyalama xətası:', err);
+
+      // Fallback: textarea vasitəsilə
+      const textarea = document.createElement('textarea');
+      textarea.value = code;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        button.innerHTML = '✓ Kopyalandı!';
+        button.classList.add('copied');
+        setTimeout(() => {
+          button.innerHTML = '📋 Kopyala';
+          button.classList.remove('copied');
+        }, 2000);
+      } catch (e) {
+        alert('Kopyalama uğursuz oldu. Manual kopyalayın.');
+      }
+      document.body.removeChild(textarea);
+    });
+  }
+</script>
+
+</body>
+</html>

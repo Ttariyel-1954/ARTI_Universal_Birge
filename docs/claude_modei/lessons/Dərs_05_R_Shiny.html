@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dərs 5 — R Shiny Analitika Mərkəzi: bs4Dash, Modular Şəkildə TTİS BI</title>
+<style>
+  :root {
+    --primary: #7c3aed; --primary-dark: #5b21b6; --primary-light: #ede9fe;
+    --accent: #db2777; --accent-light: #fce7f3;
+    --r-blue: #276DC3; --shiny-blue: #428bca;
+    --warning: #d97706; --warning-light: #fef3c7;
+    --success: #059669; --success-light: #d1fae5;
+    --danger: #dc2626; --danger-light: #fee2e2;
+    --text: #0f172a; --text-muted: #475569; --text-subtle: #64748b;
+    --bg: #fafbfc; --surface: #ffffff; --surface-alt: #f8fafc;
+    --border: #e2e8f0; --border-strong: #cbd5e1;
+    --code-bg: #0f172a; --code-text: #e2e8f0;
+    --code-comment: #64748b; --code-keyword: #c4b5fd; --code-string: #86efac;
+    --code-number: #fcd34d; --code-function: #93c5fd;
+    --output-bg: #1e293b; --output-text: #cbd5e1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; font-size: 16px; -webkit-font-smoothing: antialiased; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+  .hero { background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 50%, #db2777 100%); color: white; padding: 3.5rem 2.5rem; border-radius: 20px; margin-bottom: 2.5rem; box-shadow: 0 20px 50px -15px rgba(124, 58, 237, 0.4); position: relative; overflow: hidden; }
+  .hero::before { content: '📊'; position: absolute; top: -30px; right: -10px; font-size: 280px; opacity: 0.08; pointer-events: none; }
+  .hero-label { display: inline-block; background: rgba(255, 255, 255, 0.18); backdrop-filter: blur(10px); padding: 0.5rem 1.25rem; border-radius: 50px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 1.25rem; border: 1px solid rgba(255, 255, 255, 0.25); position: relative; z-index: 1; }
+  .hero h1 { font-size: 2.4rem; font-weight: 800; line-height: 1.2; margin-bottom: 1rem; letter-spacing: -0.02em; position: relative; z-index: 1; }
+  .hero-subtitle { font-size: 1.15rem; opacity: 0.94; max-width: 750px; line-height: 1.65; position: relative; z-index: 1; }
+  .hero-meta { display: flex; gap: 1.5rem; margin-top: 1.75rem; flex-wrap: wrap; position: relative; z-index: 1; }
+  .hero-meta-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; opacity: 0.9; }
+  .objectives { background: var(--primary-light); border-left: 5px solid var(--primary); padding: 1.75rem 2rem; border-radius: 12px; margin-bottom: 2.5rem; }
+  .objectives h3 { color: var(--primary-dark); font-size: 1.05rem; font-weight: 700; margin-bottom: 1rem; }
+  .objectives ul { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 0.75rem 1.5rem; }
+  .objectives li { padding-left: 1.75rem; position: relative; font-size: 0.95rem; }
+  .objectives li::before { content: '✓'; position: absolute; left: 0; color: var(--primary); font-weight: 800; font-size: 1.1rem; }
+  .toc { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 2rem; margin-bottom: 2.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .toc h3 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-subtle); margin-bottom: 1rem; }
+  .toc ol { list-style: none; counter-reset: toc-counter; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.45rem 1rem; }
+  .toc li { counter-increment: toc-counter; }
+  .toc a { color: var(--text); text-decoration: none; padding: 0.5rem 0; display: flex; align-items: flex-start; gap: 0.75rem; font-size: 0.92rem; transition: color 0.15s; }
+  .toc a::before { content: counter(toc-counter, decimal-leading-zero); color: var(--primary); font-weight: 700; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  .toc a:hover { color: var(--primary); }
+  section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2.25rem 2.5rem; margin-bottom: 1.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
+  section h2 { font-size: 1.65rem; font-weight: 750; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 0.75rem; letter-spacing: -0.015em; }
+  section h2 .num { background: var(--primary); color: white; width: 38px; height: 38px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  section h3 { font-size: 1.2rem; font-weight: 700; margin: 1.75rem 0 0.85rem; letter-spacing: -0.01em; }
+  section h4 { font-size: 1rem; font-weight: 650; margin: 1.25rem 0 0.5rem; }
+  section p { margin-bottom: 1rem; }
+  section p.lead { font-size: 1.08rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+  section ul, section ol { margin: 0.75rem 0 1.25rem 1.5rem; }
+  section li { margin-bottom: 0.5rem; }
+  section strong { color: var(--primary-dark); font-weight: 650; }
+  section em { color: var(--accent); font-style: normal; font-weight: 600; }
+  .code-block { background: var(--code-bg); border-radius: 12px; margin: 1.25rem 0 0.5rem; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .code-header { background: #1e293b; padding: 0.6rem 1.15rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .code-title { color: #94a3b8; font-size: 0.78rem; font-weight: 600; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; display: flex; align-items: center; gap: 0.5rem; }
+  .code-title::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: #22c55e; display: inline-block; }
+  .code-title.r::before { background: #276DC3; }
+  .code-title.sql::before { background: #f59e0b; }
+  .code-title.env::before { background: #a78bfa; }
+  .code-copy { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; padding: 0.35rem 0.85rem; border-radius: 6px; font-size: 0.78rem; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .code-copy:hover { background: rgba(255,255,255,0.15); color: white; }
+  .code-copy.copied { background: var(--success); color: white; border-color: var(--success); }
+  pre.code-content { padding: 1.25rem 1.35rem; overflow-x: auto; color: var(--code-text); font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 0.87rem; line-height: 1.65; }
+  .cmt { color: var(--code-comment); font-style: italic; }
+  .kw { color: var(--code-keyword); font-weight: 600; }
+  .str { color: var(--code-string); }
+  .num { color: var(--code-number); }
+  .fn { color: var(--code-function); }
+  .obj { color: #f9a8d4; }
+  .prop { color: #fde047; }
+  .output-block { background: var(--output-bg); border-radius: 0 0 12px 12px; margin: 0 0 1.5rem 0; border-top: 2px dashed rgba(255,255,255,0.1); }
+  .output-header { background: #0f172a; padding: 0.55rem 1.15rem; display: flex; align-items: center; gap: 0.5rem; color: #86efac; font-size: 0.76rem; font-weight: 600; letter-spacing: 0.5px; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; text-transform: uppercase; }
+  .output-header::before { content: '▶'; color: #22c55e; }
+  pre.output-content { padding: 1rem 1.35rem; overflow-x: auto; color: var(--output-text); font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 0.83rem; line-height: 1.55; background: var(--output-bg); }
+  .out-success { color: #86efac; }
+  .out-warning { color: #fcd34d; }
+  .out-info { color: #93c5fd; }
+  .out-error { color: #fca5a5; }
+  .out-header-line { color: #f9a8d4; font-weight: 600; }
+  .out-separator { color: #475569; }
+  .out-dim { color: #64748b; }
+  code.inline { background: var(--surface-alt); color: var(--primary-dark); padding: 0.15rem 0.45rem; border-radius: 5px; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 0.88em; border: 1px solid var(--border); }
+  .callout { border-radius: 12px; padding: 1.25rem 1.5rem; margin: 1.5rem 0; border-left: 4px solid; display: flex; gap: 1rem; align-items: flex-start; }
+  .callout-icon { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.85rem; }
+  .callout-content { flex: 1; }
+  .callout-title { font-weight: 700; margin-bottom: 0.35rem; font-size: 0.95rem; }
+  .callout-body { font-size: 0.93rem; }
+  .callout-body p:last-child { margin-bottom: 0; }
+  .callout.info { background: #e0e7ff; border-color: #4338ca; }
+  .callout.info .callout-icon { background: #4338ca; }
+  .callout.info .callout-title { color: #3730a3; }
+  .callout.warning { background: var(--warning-light); border-color: var(--warning); }
+  .callout.warning .callout-icon { background: var(--warning); }
+  .callout.warning .callout-title { color: #92400e; }
+  .callout.success { background: var(--success-light); border-color: var(--success); }
+  .callout.success .callout-icon { background: var(--success); }
+  .callout.success .callout-title { color: #065f46; }
+  .callout.tip { background: #cffafe; border-color: #0891b2; }
+  .callout.tip .callout-icon { background: #0891b2; }
+  .callout.tip .callout-title { color: #0e7490; }
+  .callout.danger { background: var(--danger-light); border-color: var(--danger); }
+  .callout.danger .callout-icon { background: var(--danger); }
+  .callout.danger .callout-title { color: #991b1b; }
+  .table-wrap { overflow-x: auto; margin: 1.25rem 0; border-radius: 10px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  table thead { background: var(--surface-alt); }
+  table th { padding: 0.75rem 1rem; text-align: left; font-weight: 650; border-bottom: 2px solid var(--border-strong); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  table tbody tr:last-child td { border-bottom: none; }
+  table tbody tr:hover { background: var(--surface-alt); }
+  .file-tree { background: var(--surface-alt); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; margin: 1.25rem 0; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 0.88rem; line-height: 1.8; color: var(--text); }
+  .file-tree .folder { color: var(--primary-dark); font-weight: 600; }
+  .file-tree .file { color: var(--text-muted); }
+  .file-tree .comment { color: var(--text-subtle); font-style: italic; }
+  .browser-mockup { background: #f1f5f9; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin: 1.5rem 0; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .browser-bar { background: #e2e8f0; padding: 0.5rem 0.75rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid #cbd5e1; }
+  .browser-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .browser-dot.red { background: #ef4444; }
+  .browser-dot.yellow { background: #f59e0b; }
+  .browser-dot.green { background: #10b981; }
+  .browser-url { flex: 1; background: white; padding: 0.35rem 0.75rem; border-radius: 5px; font-size: 0.82rem; color: var(--text-muted); font-family: ui-monospace, monospace; margin-left: 0.5rem; }
+  .browser-content { padding: 1.5rem; min-height: 150px; background: white; }
+  .summary-box { background: linear-gradient(135deg, #ede9fe 0%, #fce7f3 100%); border: 1px solid var(--primary-light); border-radius: 14px; padding: 1.75rem 2rem; margin: 1.5rem 0; }
+  .summary-box h3 { color: var(--primary-dark) !important; margin-top: 0 !important; font-size: 1.15rem !important; }
+  .step-head { display: flex; align-items: center; gap: 0.75rem; margin: 2rem 0 1rem; }
+  .step-num { width: 34px; height: 34px; border-radius: 50%; background: var(--primary); color: white; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem; flex-shrink: 0; }
+  .step-title { font-size: 1.15rem; font-weight: 700; color: var(--text); }
+  .erd-wrap { background: var(--surface-alt); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; overflow-x: auto; }
+  .erd-wrap svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+  .diagram-caption { margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-subtle); font-style: italic; text-align: center; }
+  .lesson-nav { display: flex; justify-content: space-between; gap: 1rem; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--border); }
+  .lesson-nav-btn { background: var(--primary); color: white; padding: 1rem 1.5rem; border-radius: 10px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem; transition: background 0.15s; }
+  .lesson-nav-btn:hover { background: var(--primary-dark); }
+  .lesson-nav-btn.secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  @media (max-width: 720px) { .container { padding: 1rem; } .hero { padding: 2rem 1.5rem; } .hero h1 { font-size: 1.75rem; } section { padding: 1.5rem 1.25rem; } section h2 { font-size: 1.35rem; } pre.code-content, pre.output-content { font-size: 0.78rem; padding: 1rem; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="hero">
+  <span class="hero-label">📊 DƏRS 05 / 06 — UNİVERSAL AI AGENT KURSU</span>
+  <h1>R Shiny Analitika Mərkəzi — bs4Dash, Modular Arxitektura və Claude AI</h1>
+  <p class="hero-subtitle">Siz artıq R Shiny ustası olduğunuzdan (Riy_Muellim_Agent, EDU-INSIGHT AI, ARTI-2026) bu dərsdə <strong>yeni texnikalara</strong> fokuslanacağıq: TTİS PostgreSQL bazasına inteqrasiya, modular Shiny yanaşma, Leaflet xəritələri, Plotly qrafiklər və ən vacibi — Claude API-nin birbaşa R-dən istifadəsi ilə avtomatik statistik insights generasiyası.</p>
+  <div class="hero-meta">
+    <span class="hero-meta-item">⏱ Təxminən 150–200 dəqiqə</span>
+    <span class="hero-meta-item">📦 6 modul + AI insights</span>
+    <span class="hero-meta-item">🎨 bs4Dash + Plotly + Leaflet</span>
+  </div>
+</div>
+
+<div class="objectives">
+  <h3>🎯 Bu Dərsin Sonunda Siz Nəyi Bacaracaqsınız?</h3>
+  <ul>
+    <li>Shiny layihəsini Node.js backend ilə paralel qurmaq</li>
+    <li>DBI + pool ilə PostgreSQL Pool-a qoşulmaq</li>
+    <li>reporting schema view-larından birbaşa oxumaq</li>
+    <li>bs4Dash ilə modern enterprise UI qurmaq</li>
+    <li>Modular Shiny yanaşmasını (moduleServer) tətbiq etmək</li>
+    <li>Leaflet ilə Azərbaycan xəritəsində region analitikası</li>
+    <li>Plotly ilə interaktiv büdcə və trend qrafikləri</li>
+    <li>DT paketi ilə dinamik, filter olunan cədvəllər</li>
+    <li>Claude API-ni R-dən birbaşa çağırıb insights generasiya etmək</li>
+    <li>Reactive poll-dan bazadan avtomatik yenilənmə</li>
+    <li>ShinyApps.io və Multipass VM-ə deployment</li>
+  </ul>
+</div>
+
+<nav class="toc">
+  <h3>Dərsin Bölmələri</h3>
+  <ol>
+    <li><a href="#b1">Niyə Shiny, React varkən?</a></li>
+    <li><a href="#b2">R və paketlərin quraşdırılması</a></li>
+    <li><a href="#b3">Layihə strukturu</a></li>
+    <li><a href="#b4">global.R — bağlantı və sabitlər</a></li>
+    <li><a href="#b5">PostgreSQL-ə qoşulma testi</a></li>
+    <li><a href="#b6">ui.R — bs4Dash arxitekturası</a></li>
+    <li><a href="#b7">server.R — modullərin yüklənməsi</a></li>
+    <li><a href="#b8">Modul 1: KPI kartları</a></li>
+    <li><a href="#b9">Modul 2: Regional xəritə (Leaflet)</a></li>
+    <li><a href="#b10">Modul 3: Büdcə təhlili (Plotly)</a></li>
+    <li><a href="#b11">Modul 4: Gantt və taym-layn</a></li>
+    <li><a href="#b12">Modul 5: Podratçı performansı</a></li>
+    <li><a href="#b13">Modul 6: Claude AI insights</a></li>
+    <li><a href="#b14">Reactive poll — avtomatik refresh</a></li>
+    <li><a href="#b15">Yerli test və işə salma</a></li>
+    <li><a href="#b16">ShinyApps.io-ya deployment</a></li>
+    <li><a href="#b17">Multipass VM-də deploy</a></li>
+    <li><a href="#b18">Node.js backend ilə inteqrasiya</a></li>
+    <li><a href="#b19">Xülasə və növbəti dərs</a></li>
+  </ol>
+</nav>
+
+<section id="b1">
+  <h2><span class="num">1</span> Niyə Shiny, React varkən?</h2>
+  <p class="lead">Dərs 4-də gözəl React dashboard qurduq. Bəs niyə yenidən Shiny yazırıq? Çünki hər iki alətin öz güclü tərəfi var və onlar <strong>bir-birini əvəz etmir, tamamlayır</strong>.</p>
+
+  <h3>1.1. Rol bölgüsü: React vs Shiny</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Xüsusiyyət</th><th>React (Dərs 4)</th><th>R Shiny (Dərs 5)</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Hədəf auditoriya</strong></td><td>Son istifadəçi (menecer, inspektor, podratçı)</td><td>Analitik, statistik, rəhbərlik</td></tr>
+        <tr><td><strong>Əsas funksiya</strong></td><td>Əməliyyat — CRUD, forma, status dəyişmək</td><td>Analitik — trend, regresyon, aqreqat</td></tr>
+        <tr><td><strong>Güclü tərəf</strong></td><td>Sürət, mobile, istifadəçi təcrübəsi</td><td>Statistika, ggplot, IRT/CAT, ANOVA</td></tr>
+        <tr><td><strong>Data science</strong></td><td>❌ Yox</td><td>✅ Mükəmməl — tidyverse, caret</td></tr>
+        <tr><td><strong>Forecast modelləri</strong></td><td>❌ JavaScript-də çətin</td><td>✅ prophet, forecast paketləri</td></tr>
+        <tr><td><strong>Export PDF/DOCX</strong></td><td>⚠️ Kitabxana lazımdır</td><td>✅ rmarkdown native</td></tr>
+        <tr><td><strong>İnkişaf sürəti (analitika)</strong></td><td>⚠️ Orta</td><td>✅ Çox sürətli</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout info">
+    <span class="callout-icon">i</span>
+    <div class="callout-content">
+      <div class="callout-title">TTİS-də iki səviyyəli frontend</div>
+      <div class="callout-body">
+        <p><strong>React frontend</strong> (port 5173) — gündəlik istifadəçilər: layihə yaratmaq, status yeniləmək, tapşırıq vermək.</p>
+        <p><strong>Shiny dashboard</strong> (port 3838) — analitiklər və rəhbərlik: "77 rayonun statistikası", "büdcə sapma proqnozu", "podratçı reytinqi" kimi dərin təhlil.</p>
+        <p>Hər ikisi eyni PostgreSQL bazasından oxuyur — real-zamanlı sinxronluq təmin edilir.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>1.2. Memarlıq baxımından</h3>
+
+  <div class="erd-wrap">
+    <svg viewBox="0 0 800 340" xmlns="http://www.w3.org/2000/svg">
+      <rect x="300" y="130" width="180" height="80" rx="10" fill="#dbeafe" stroke="#336791" stroke-width="2"/>
+      <text x="390" y="165" text-anchor="middle" font-size="14" font-weight="700" fill="#1e3a8a">🐘 PostgreSQL</text>
+      <text x="390" y="185" text-anchor="middle" font-size="11" fill="#1e3a8a">ttis_db · reporting schema</text>
+
+      <rect x="40" y="30" width="180" height="70" rx="10" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+      <text x="130" y="55" text-anchor="middle" font-size="13" font-weight="700" fill="#047857">⬢ Node.js Backend</text>
+      <text x="130" y="75" text-anchor="middle" font-size="11" fill="#047857">port 3001 (CRUD API)</text>
+
+      <rect x="40" y="250" width="180" height="70" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+      <text x="130" y="275" text-anchor="middle" font-size="13" font-weight="700" fill="#1e40af">⚛ React Frontend</text>
+      <text x="130" y="295" text-anchor="middle" font-size="11" fill="#1e40af">port 5173 (CRUD UI)</text>
+
+      <rect x="560" y="130" width="200" height="80" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+      <text x="660" y="160" text-anchor="middle" font-size="14" font-weight="700" fill="#5b21b6">📊 R Shiny Dashboard</text>
+      <text x="660" y="180" text-anchor="middle" font-size="11" fill="#5b21b6">port 3838 (Analitika)</text>
+      <text x="660" y="195" text-anchor="middle" font-size="11" fill="#5b21b6">TTİS Analitika Mərkəzi</text>
+
+      <path d="M 220 65 L 310 145" stroke="#059669" stroke-width="2" marker-end="url(#arrow1)"/>
+      <path d="M 220 280 Q 320 280 335 210" stroke="#2563eb" stroke-width="2" fill="none" marker-end="url(#arrow2)"/>
+      <path d="M 480 170 L 560 170" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow3)"/>
+
+      <text x="240" y="105" font-size="10" fill="#059669">SQL + AI</text>
+      <text x="240" y="240" font-size="10" fill="#2563eb">REST API</text>
+      <text x="510" y="160" font-size="10" fill="#7c3aed">DBI/pool</text>
+
+      <defs>
+        <marker id="arrow1" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><polygon points="0 0, 10 5, 0 10" fill="#059669"/></marker>
+        <marker id="arrow2" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><polygon points="0 0, 10 5, 0 10" fill="#2563eb"/></marker>
+        <marker id="arrow3" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><polygon points="0 0, 10 5, 0 10" fill="#7c3aed"/></marker>
+      </defs>
+    </svg>
+    <p class="diagram-caption">Şəkil 1. TTİS ekosistemi — 3 client, 1 database</p>
+  </div>
+</section>
+
+<section id="b2">
+  <h2><span class="num">2</span> R və paketlərin quraşdırılması</h2>
+  <p class="lead">Siz artıq R və RStudio-nuzu qurmuşsunuz. Amma bu layihə üçün vacib olan yeni paketləri siyahıya almalıyıq.</p>
+
+  <div class="step-head"><span class="step-num">1</span><span class="step-title">R və RStudio versiyasını yoxla</span></div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — R versiyası</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>R --version</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content"><span class="out-success">R version 4.4.1 (2024-06-14) -- "Race for Your Life"</span>
+Copyright (C) 2024 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin20 (64-bit)</pre>
+  </div>
+
+  <div class="step-head"><span class="step-num">2</span><span class="step-title">Lazımi paketlər</span></div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Paket</th><th>Təyinat</th></tr></thead>
+      <tbody>
+        <tr><td><code class="inline">shiny</code></td><td>Əsas çərçivə</td></tr>
+        <tr><td><code class="inline">bs4Dash</code></td><td>Modern Bootstrap 4/5 dashboard UI</td></tr>
+        <tr><td><code class="inline">DBI</code> + <code class="inline">RPostgres</code></td><td>PostgreSQL driver</td></tr>
+        <tr><td><code class="inline">pool</code></td><td>Bağlantı hovuzu (vacib!)</td></tr>
+        <tr><td><code class="inline">plotly</code></td><td>İnteraktiv qrafiklər</td></tr>
+        <tr><td><code class="inline">leaflet</code></td><td>İnteraktiv xəritələr</td></tr>
+        <tr><td><code class="inline">DT</code></td><td>JavaScript DataTables</td></tr>
+        <tr><td><code class="inline">dplyr</code>, <code class="inline">tidyr</code>, <code class="inline">lubridate</code></td><td>Data manipulation</td></tr>
+        <tr><td><code class="inline">ggplot2</code></td><td>Statik qrafiklər (export üçün)</td></tr>
+        <tr><td><code class="inline">httr2</code>, <code class="inline">jsonlite</code></td><td>Claude API çağırışı</td></tr>
+        <tr><td><code class="inline">shinyjs</code></td><td>JavaScript inteqrasiyası</td></tr>
+        <tr><td><code class="inline">waiter</code></td><td>Yüklənmə animasiyaları</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title r">R — paketlərin quraşdırılması</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># RStudio-da və ya R konsolunda icra edin</span>
+
+<span class="kw">install.packages</span>(<span class="fn">c</span>(
+  <span class="str">"shiny"</span>, <span class="str">"bs4Dash"</span>, <span class="str">"DBI"</span>, <span class="str">"RPostgres"</span>, <span class="str">"pool"</span>,
+  <span class="str">"plotly"</span>, <span class="str">"leaflet"</span>, <span class="str">"DT"</span>,
+  <span class="str">"dplyr"</span>, <span class="str">"tidyr"</span>, <span class="str">"lubridate"</span>, <span class="str">"ggplot2"</span>,
+  <span class="str">"httr2"</span>, <span class="str">"jsonlite"</span>,
+  <span class="str">"shinyjs"</span>, <span class="str">"waiter"</span>, <span class="str">"fontawesome"</span>
+))
+
+<span class="cmt"># Yoxlayaq</span>
+<span class="kw">library</span>(shiny); <span class="kw">library</span>(bs4Dash); <span class="kw">library</span>(pool)
+<span class="kw">packageVersion</span>(<span class="str">"shiny"</span>)
+<span class="kw">packageVersion</span>(<span class="str">"bs4Dash"</span>)</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content"><span class="out-success">[1] '1.9.1'</span>
+<span class="out-success">[1] '2.3.3'</span></pre>
+  </div>
+
+  <div class="callout tip">
+    <span class="callout-icon">💡</span>
+    <div class="callout-content">
+      <div class="callout-title">Siz bs4Dash-i əvvəl istifadə etmiş olmaya bilərsiniz</div>
+      <div class="callout-body">
+        <p>Köhnə <code class="inline">shinydashboard</code>-dan fərqli olaraq, <strong>bs4Dash</strong> Bootstrap 4/5 əsaslıdır, modern görünüşə malikdir, dark mode dəstəyi var və daha çox komponent təklif edir. RinteRface komandası tərəfindən fəal inkişaf etdirilir.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b3">
+  <h2><span class="num">3</span> Layihə strukturu</h2>
+  <p class="lead">Dərs 1-də layihə kökündə <code class="inline">shiny/</code> qovluğu vardı. İndi onu dolduracağıq.</p>
+
+  <div class="file-tree">
+<span class="folder">Claude_Modei_Təmir_tikinti/</span>
+├── <span class="folder">backend/</span>        <span class="comment"># Dərs 3</span>
+├── <span class="folder">frontend/</span>       <span class="comment"># Dərs 4</span>
+└── <span class="folder">shiny/</span>          <span class="comment"># Dərs 5 — indi buradayıq</span>
+    ├── <span class="file">global.R</span>         <span class="comment"># bağlantı + sabitlər (hər dəfə yüklənir)</span>
+    ├── <span class="file">ui.R</span>             <span class="comment"># user interface</span>
+    ├── <span class="file">server.R</span>         <span class="comment"># server logic</span>
+    ├── <span class="file">app.R</span>            <span class="comment"># alternativ: hər şey bir faylda</span>
+    ├── <span class="file">.Renviron</span>        <span class="comment"># mühit dəyişənləri</span>
+    ├── <span class="folder">modules/</span>         <span class="comment"># Shiny modullar</span>
+    │   ├── <span class="file">mod_kpi.R</span>
+    │   ├── <span class="file">mod_regional.R</span>
+    │   ├── <span class="file">mod_budget.R</span>
+    │   ├── <span class="file">mod_timeline.R</span>
+    │   ├── <span class="file">mod_contractor.R</span>
+    │   └── <span class="file">mod_ai.R</span>
+    ├── <span class="folder">R/</span>              <span class="comment"># köməkçi funksiyalar</span>
+    │   ├── <span class="file">db_helpers.R</span>
+    │   ├── <span class="file">chart_themes.R</span>
+    │   └── <span class="file">claude_api.R</span>
+    └── <span class="folder">www/</span>            <span class="comment"># statik faylar (CSS, logo)</span>
+        ├── <span class="file">custom.css</span>
+        └── <span class="file">logo.png</span>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — qovluqları yaradırıq</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="kw">cd</span> ~/Desktop/Claude_Modei_Təmir_tikinti/shiny
+<span class="kw">mkdir</span> -p modules R www
+<span class="kw">ls</span> -la</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">drwxr-xr-x  5 royatalibova  staff  160  modules/
+drwxr-xr-x  2 royatalibova  staff   64  R/
+drwxr-xr-x  2 royatalibova  staff   64  www/</pre>
+  </div>
+</section>
+
+<section id="b4">
+  <h2><span class="num">4</span> global.R — bağlantı və sabitlər</h2>
+  <p class="lead">global.R — bütün sessiyalara ortaq olan məkandır. Burada DB pool-u yaradırıq və sabit obyektləri təyin edirik.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title env">.Renviron — gizli dəyişənlər</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; .Renviron &lt;&lt; <span class="str">'EOF'</span>
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=ttis_db
+DB_USER=royatalibova
+DB_PASSWORD=
+ANTHROPIC_API_KEY=sk-ant-api03-...
+ANTHROPIC_MODEL=claude-sonnet-4-6
+<span class="str">EOF</span>
+
+echo <span class="str">"✅ .Renviron yaradıldı"</span>
+<span class="cmt"># Diqqət: .Renviron root layihənin .gitignore-unda olmalıdır!</span></code></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title r">shiny/global.R</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; global.R &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt"># ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt"># global.R — TTİS Analitika Mərkəzi</span>
+<span class="cmt"># Bütün sessiyalara ortaq obyektlər və kitabxanalar</span>
+<span class="cmt"># ═══════════════════════════════════════════════════════════════</span>
+
+<span class="cmt"># ═══ Kitabxanalar ═══</span>
+<span class="kw">library</span>(shiny)
+<span class="kw">library</span>(bs4Dash)
+<span class="kw">library</span>(DBI)
+<span class="kw">library</span>(RPostgres)
+<span class="kw">library</span>(pool)
+<span class="kw">library</span>(dplyr)
+<span class="kw">library</span>(tidyr)
+<span class="kw">library</span>(lubridate)
+<span class="kw">library</span>(plotly)
+<span class="kw">library</span>(leaflet)
+<span class="kw">library</span>(DT)
+<span class="kw">library</span>(ggplot2)
+<span class="kw">library</span>(httr2)
+<span class="kw">library</span>(jsonlite)
+<span class="kw">library</span>(shinyjs)
+<span class="kw">library</span>(waiter)
+
+<span class="cmt"># ═══ Sabitlər ═══</span>
+APP_TITLE <span class="kw">&lt;-</span> <span class="str">"TTİS Analitika Mərkəzi"</span>
+APP_VERSION <span class="kw">&lt;-</span> <span class="str">"0.1.0"</span>
+APP_AUTHOR <span class="kw">&lt;-</span> <span class="str">"Talıbov Tariyel — ARTI"</span>
+
+<span class="cmt"># Azərbaycan regionlarının koordinatları (seed məlumatı üçün)</span>
+REGION_COORDS <span class="kw">&lt;-</span> <span class="fn">data.frame</span>(
+  code = <span class="fn">c</span>(<span class="str">"BA"</span>,<span class="str">"GA"</span>,<span class="str">"SM"</span>,<span class="str">"ML"</span>,<span class="str">"SH"</span>,<span class="str">"LA"</span>,<span class="str">"NA"</span>,<span class="str">"QB"</span>,<span class="str">"QX"</span>,<span class="str">"QZ"</span>),
+  lat = <span class="fn">c</span>(<span class="num">40.4093</span>,<span class="num">40.6828</span>,<span class="num">40.5897</span>,<span class="num">40.7705</span>,<span class="num">41.1975</span>,<span class="num">38.7547</span>,<span class="num">39.2009</span>,<span class="num">41.3613</span>,<span class="num">41.4206</span>,<span class="num">40.9816</span>),
+  lng = <span class="fn">c</span>(<span class="num">49.8671</span>,<span class="num">46.3606</span>,<span class="num">49.6686</span>,<span class="num">47.0497</span>,<span class="num">47.1707</span>,<span class="num">48.8475</span>,<span class="num">45.4123</span>,<span class="num">48.5123</span>,<span class="num">46.9314</span>,<span class="num">47.8449</span>)
+)
+
+<span class="cmt"># ═══ DB bağlantı pool-u ═══</span>
+<span class="cmt"># Pool 1 bağlantı deyil, hovuzdur - 10 paralel sorğuya qədər dəstəkləyir</span>
+pool <span class="kw">&lt;-</span> <span class="fn">dbPool</span>(
+  drv = RPostgres::<span class="fn">Postgres</span>(),
+  host = <span class="fn">Sys.getenv</span>(<span class="str">"DB_HOST"</span>, <span class="str">"localhost"</span>),
+  port = <span class="fn">as.integer</span>(<span class="fn">Sys.getenv</span>(<span class="str">"DB_PORT"</span>, <span class="num">5432</span>)),
+  dbname = <span class="fn">Sys.getenv</span>(<span class="str">"DB_NAME"</span>, <span class="str">"ttis_db"</span>),
+  user = <span class="fn">Sys.getenv</span>(<span class="str">"DB_USER"</span>, <span class="str">"royatalibova"</span>),
+  password = <span class="fn">Sys.getenv</span>(<span class="str">"DB_PASSWORD"</span>, <span class="str">""</span>),
+  minSize = <span class="num">2</span>,
+  maxSize = <span class="num">10</span>
+)
+
+<span class="cmt"># Shiny bağlandıqda pool-u bağla</span>
+<span class="fn">onStop</span>(<span class="kw">function</span>() {
+  <span class="fn">poolClose</span>(pool)
+})
+
+<span class="cmt"># ═══ Köməkçi funksiyalar yüklə ═══</span>
+<span class="fn">source</span>(<span class="str">"R/db_helpers.R"</span>)
+<span class="fn">source</span>(<span class="str">"R/chart_themes.R"</span>)
+<span class="fn">source</span>(<span class="str">"R/claude_api.R"</span>)
+
+<span class="cmt"># ═══ Modullar yüklə ═══</span>
+<span class="fn">source</span>(<span class="str">"modules/mod_kpi.R"</span>)
+<span class="fn">source</span>(<span class="str">"modules/mod_regional.R"</span>)
+<span class="fn">source</span>(<span class="str">"modules/mod_budget.R"</span>)
+<span class="fn">source</span>(<span class="str">"modules/mod_timeline.R"</span>)
+<span class="fn">source</span>(<span class="str">"modules/mod_contractor.R"</span>)
+<span class="fn">source</span>(<span class="str">"modules/mod_ai.R"</span>)
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <div class="callout warning">
+    <span class="callout-icon">!</span>
+    <div class="callout-content">
+      <div class="callout-title">Pool niyə bir bağlantıdan daha yaxşıdır?</div>
+      <div class="callout-body">
+        <p>Tək bağlantı — 1 sorğu eyni anda. Pool — 10 paralel sorğu. Çoxlu istifadəçi eyni vaxtda açsa, pool-suz Shiny gözləməyə başlayır. Əvvəlki layihələrinizdə tək <code class="inline">dbConnect</code> istifadə etmisinizsə, pool-a keçid <strong>böyük performans artımı</strong> verəcək.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b5">
+  <h2><span class="num">5</span> PostgreSQL-ə qoşulma testi</h2>
+  <p class="lead">Kod yazmağa başlamadan əvvəl bağlantının işlədiyinə əmin olaq.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title r">R — bağlantı testi (konsolda icra)</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># R konsolunda və ya RStudio-da, shiny/ qovluğundaykən:</span>
+<span class="fn">setwd</span>(<span class="str">"~/Desktop/Claude_Modei_Təmir_tikinti/shiny"</span>)
+<span class="fn">source</span>(<span class="str">"global.R"</span>)
+
+<span class="cmt"># Bağlantını yoxla</span>
+<span class="fn">dbGetQuery</span>(pool, <span class="str">"SELECT version()"</span>)
+
+<span class="cmt"># Schema-ları gör</span>
+<span class="fn">dbGetQuery</span>(pool, <span class="str">"SELECT schema_name FROM information_schema.schemata 
+                    WHERE schema_name IN ('core','construction','reporting')"</span>)
+
+<span class="cmt"># Reporting view-lardan bir sorğu</span>
+<span class="fn">dbGetQuery</span>(pool, <span class="str">"SELECT * FROM reporting.v_project_summary LIMIT 3"</span>)</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">                                                  version
+1 PostgreSQL 17.2 on x86_64-apple-darwin23.6.0, compiled by Apple clang version 15...
+
+   schema_name
+1 construction
+2         core
+3    reporting
+
+  id project_code                      project_name      status progress region
+1  1 PRJ-2026-001 Bakı 45 saylı məktəbin əsaslı təmiri in_progress    35   Bakı</pre>
+  </div>
+
+  <div class="callout success">
+    <span class="callout-icon">✓</span>
+    <div class="callout-content">
+      <div class="callout-title">Bağlantı uğurludur!</div>
+      <div class="callout-body"><p>Shiny-dən PostgreSQL-ə səlis yol var. İndi köməkçi funksiyalara keçək.</p></div>
+    </div>
+  </div>
+
+  <h3>5.1. Köməkçi funksiyalar — db_helpers.R</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title r">shiny/R/db_helpers.R</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; R/db_helpers.R &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt"># ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt"># R/db_helpers.R — Verilənlər bazası ilə iş funksiyaları</span>
+<span class="cmt"># ═══════════════════════════════════════════════════════════════</span>
+
+<span class="cmt"># Layihə xülasəsini al</span>
+get_project_summary <span class="kw">&lt;-</span> <span class="kw">function</span>(pool) {
+  <span class="fn">dbGetQuery</span>(pool, <span class="str">"SELECT * FROM reporting.v_project_summary"</span>)
+}
+
+<span class="cmt"># Regional aktivlik</span>
+get_regional_activity <span class="kw">&lt;-</span> <span class="kw">function</span>(pool) {
+  data <span class="kw">&lt;-</span> <span class="fn">dbGetQuery</span>(pool, <span class="str">"SELECT * FROM reporting.v_regional_activity"</span>)
+  <span class="cmt"># Koordinatlar əlavə et (joinlə)</span>
+  data <span class="kw">%&gt;%</span> 
+    <span class="fn">left_join</span>(REGION_COORDS, by = <span class="fn">c</span>(<span class="str">"region_name"</span> = <span class="str">"code"</span>))
+}
+
+<span class="cmt"># Büdcə sapması</span>
+get_budget_variance <span class="kw">&lt;-</span> <span class="kw">function</span>(pool, project_id = <span class="kw">NULL</span>) {
+  sql <span class="kw">&lt;-</span> <span class="str">"SELECT * FROM reporting.v_budget_variance"</span>
+  <span class="kw">if</span> (!<span class="fn">is.null</span>(project_id)) {
+    sql <span class="kw">&lt;-</span> <span class="fn">paste0</span>(sql, <span class="str">" WHERE project_id = $1"</span>)
+    <span class="kw">return</span>(<span class="fn">dbGetQuery</span>(pool, sql, params = <span class="fn">list</span>(project_id)))
+  }
+  <span class="fn">dbGetQuery</span>(pool, sql)
+}
+
+<span class="cmt"># Podratçı performansı</span>
+get_contractor_performance <span class="kw">&lt;-</span> <span class="kw">function</span>(pool) {
+  <span class="fn">dbGetQuery</span>(pool, <span class="str">"SELECT * FROM reporting.v_contractor_performance"</span>)
+}
+
+<span class="cmt"># Aylıq progress</span>
+get_monthly_progress <span class="kw">&lt;-</span> <span class="kw">function</span>(pool) {
+  <span class="fn">dbGetQuery</span>(pool, <span class="str">"SELECT * FROM reporting.v_monthly_progress"</span>)
+}
+
+<span class="cmt"># KPI aqreqatları</span>
+get_kpi_stats <span class="kw">&lt;-</span> <span class="kw">function</span>(pool) {
+  <span class="fn">dbGetQuery</span>(pool, <span class="str">"
+    SELECT
+      COUNT(*) AS total_projects,
+      COUNT(*) FILTER (WHERE status = 'in_progress') AS active_projects,
+      COUNT(*) FILTER (WHERE status = 'completed') AS completed,
+      COUNT(*) FILTER (WHERE deadline_status = 'overdue') AS overdue,
+      COALESCE(SUM(total_budget_planned), 0) AS total_budget,
+      COALESCE(AVG(progress_percent), 0)::int AS avg_progress
+    FROM reporting.v_project_summary
+  "</span>)
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+</section>
+
+<section id="b6">
+  <h2><span class="num">6</span> ui.R — bs4Dash arxitekturası</h2>
+  <p class="lead">bs4Dash modern, Bootstrap 5 əsaslı dashboard layoutudur. Dark mode, control-bar və nəfis komponentləri var.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title r">shiny/ui.R</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; ui.R &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt"># ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt"># ui.R — bs4Dash əsaslı UI</span>
+<span class="cmt"># ═══════════════════════════════════════════════════════════════</span>
+
+ui <span class="kw">&lt;-</span> <span class="fn">bs4DashPage</span>(
+  title = APP_TITLE,
+  dark = <span class="kw">FALSE</span>,
+  help = <span class="kw">NULL</span>,
+  fullscreen = <span class="kw">TRUE</span>,
+  scrollToTop = <span class="kw">TRUE</span>,
+
+  <span class="cmt"># ═══ Header ═══</span>
+  header = <span class="fn">bs4DashNavbar</span>(
+    title = <span class="fn">bs4DashBrand</span>(
+      title = <span class="str">"TTİS Analitika"</span>,
+      color = <span class="str">"primary"</span>,
+      href = <span class="str">"#"</span>,
+      image = <span class="str">"https://upload.wikimedia.org/wikipedia/commons/d/dd/R_logo.svg"</span>
+    ),
+    skin = <span class="str">"light"</span>,
+    status = <span class="str">"white"</span>,
+    border = <span class="kw">TRUE</span>,
+    sidebarIcon = <span class="fn">icon</span>(<span class="str">"bars"</span>),
+    controlbarIcon = <span class="fn">icon</span>(<span class="str">"gears"</span>),
+    <span class="fn">div</span>(
+      <span class="fn">tags$strong</span>(APP_TITLE),
+      <span class="fn">tags$span</span>(<span class="fn">paste0</span>(<span class="str">" · v"</span>, APP_VERSION), style = <span class="str">"color:#64748b"</span>)
+    )
+  ),
+
+  <span class="cmt"># ═══ Sidebar ═══</span>
+  sidebar = <span class="fn">bs4DashSidebar</span>(
+    skin = <span class="str">"light"</span>,
+    status = <span class="str">"primary"</span>,
+    elevation = <span class="num">3</span>,
+    <span class="fn">bs4SidebarMenu</span>(
+      id = <span class="str">"sidebar"</span>,
+      <span class="fn">bs4SidebarMenuItem</span>(<span class="str">"Ümumi baxış"</span>, tabName = <span class="str">"overview"</span>, icon = <span class="fn">icon</span>(<span class="str">"gauge-high"</span>)),
+      <span class="fn">bs4SidebarMenuItem</span>(<span class="str">"Regional analitika"</span>, tabName = <span class="str">"regional"</span>, icon = <span class="fn">icon</span>(<span class="str">"map"</span>)),
+      <span class="fn">bs4SidebarMenuItem</span>(<span class="str">"Büdcə təhlili"</span>, tabName = <span class="str">"budget"</span>, icon = <span class="fn">icon</span>(<span class="str">"sack-dollar"</span>)),
+      <span class="fn">bs4SidebarMenuItem</span>(<span class="str">"Taym-layn"</span>, tabName = <span class="str">"timeline"</span>, icon = <span class="fn">icon</span>(<span class="str">"timeline"</span>)),
+      <span class="fn">bs4SidebarMenuItem</span>(<span class="str">"Podratçılar"</span>, tabName = <span class="str">"contractor"</span>, icon = <span class="fn">icon</span>(<span class="str">"handshake"</span>)),
+      <span class="fn">bs4SidebarMenuItem</span>(<span class="str">"AI insights"</span>, tabName = <span class="str">"ai"</span>, icon = <span class="fn">icon</span>(<span class="str">"wand-magic-sparkles"</span>))
+    )
+  ),
+
+  <span class="cmt"># ═══ Body ═══</span>
+  body = <span class="fn">bs4DashBody</span>(
+    <span class="fn">useShinyjs</span>(),
+    <span class="fn">useWaiter</span>(),
+    <span class="fn">tags$link</span>(rel = <span class="str">"stylesheet"</span>, type = <span class="str">"text/css"</span>, href = <span class="str">"custom.css"</span>),
+
+    <span class="fn">bs4TabItems</span>(
+      <span class="fn">bs4TabItem</span>(tabName = <span class="str">"overview"</span>,   <span class="fn">mod_kpi_ui</span>(<span class="str">"kpi"</span>)),
+      <span class="fn">bs4TabItem</span>(tabName = <span class="str">"regional"</span>,   <span class="fn">mod_regional_ui</span>(<span class="str">"regional"</span>)),
+      <span class="fn">bs4TabItem</span>(tabName = <span class="str">"budget"</span>,     <span class="fn">mod_budget_ui</span>(<span class="str">"budget"</span>)),
+      <span class="fn">bs4TabItem</span>(tabName = <span class="str">"timeline"</span>,   <span class="fn">mod_timeline_ui</span>(<span class="str">"timeline"</span>)),
+      <span class="fn">bs4TabItem</span>(tabName = <span class="str">"contractor"</span>, <span class="fn">mod_contractor_ui</span>(<span class="str">"contractor"</span>)),
+      <span class="fn">bs4TabItem</span>(tabName = <span class="str">"ai"</span>,         <span class="fn">mod_ai_ui</span>(<span class="str">"ai"</span>))
+    )
+  ),
+
+  <span class="cmt"># ═══ Footer ═══</span>
+  footer = <span class="fn">bs4DashFooter</span>(
+    left = <span class="fn">paste</span>(<span class="str">"© 2026 ARTI —"</span>, APP_AUTHOR),
+    right = <span class="fn">paste</span>(<span class="str">"R"</span>, <span class="fn">getRversion</span>())
+  )
+)
+<span class="str">EOF</span></code></pre>
+  </div>
+</section>
+
+<section id="b7">
+  <h2><span class="num">7</span> server.R — modullərin yüklənməsi</h2>
+  <p class="lead">Server fayl olduqca sadədir — hər modula pool ötürmək kifayətdir.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title r">shiny/server.R</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; server.R &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt"># ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt"># server.R — bütün modulları başladır</span>
+<span class="cmt"># ═══════════════════════════════════════════════════════════════</span>
+
+server <span class="kw">&lt;-</span> <span class="kw">function</span>(input, output, session) {
+
+  <span class="cmt"># Hər modul öz namespace-i ilə çağırılır</span>
+  <span class="fn">mod_kpi_server</span>(<span class="str">"kpi"</span>, pool)
+  <span class="fn">mod_regional_server</span>(<span class="str">"regional"</span>, pool)
+  <span class="fn">mod_budget_server</span>(<span class="str">"budget"</span>, pool)
+  <span class="fn">mod_timeline_server</span>(<span class="str">"timeline"</span>, pool)
+  <span class="fn">mod_contractor_server</span>(<span class="str">"contractor"</span>, pool)
+  <span class="fn">mod_ai_server</span>(<span class="str">"ai"</span>, pool)
+
+  <span class="cmt"># Log: istifadəçi session başladı</span>
+  <span class="fn">cat</span>(<span class="str">"[INFO] Yeni sessiya:"</span>, session$token, <span class="str">"\n"</span>)
+
+  <span class="fn">session$onSessionEnded</span>(<span class="kw">function</span>() {
+    <span class="fn">cat</span>(<span class="str">"[INFO] Sessiya bağlandı\n"</span>)
+  })
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+</section>
+
+<section id="b8">
+  <h2><span class="num">8</span> Modul 1: KPI kartları</h2>
+  <p class="lead">İlk tab — rəhbərliyin "bir baxışda" görmək istədiyi mühüm rəqəmlər.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title r">shiny/modules/mod_kpi.R</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; modules/mod_kpi.R &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt"># ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt"># mod_kpi.R — Ümumi baxış KPI kartları</span>
+<span class="cmt"># ═══════════════════════════════════════════════════════════════</span>
+
+mod_kpi_ui <span class="kw">&lt;-</span> <span class="kw">function</span>(id) {
+  ns <span class="kw">&lt;-</span> <span class="fn">NS</span>(id)
+  <span class="fn">tagList</span>(
+    <span class="fn">fluidRow</span>(
+      <span class="fn">bs4ValueBoxOutput</span>(<span class="fn">ns</span>(<span class="str">"total"</span>), width = <span class="num">3</span>),
+      <span class="fn">bs4ValueBoxOutput</span>(<span class="fn">ns</span>(<span class="str">"active"</span>), width = <span class="num">3</span>),
+      <span class="fn">bs4ValueBoxOutput</span>(<span class="fn">ns</span>(<span class="str">"budget"</span>), width = <span class="num">3</span>),
+      <span class="fn">bs4ValueBoxOutput</span>(<span class="fn">ns</span>(<span class="str">"overdue"</span>), width = <span class="num">3</span>)
+    ),
+    <span class="fn">fluidRow</span>(
+      <span class="fn">bs4Card</span>(
+        title = <span class="str">"Status üzrə paylanma"</span>, width = <span class="num">6</span>, maximizable = <span class="kw">TRUE</span>,
+        <span class="fn">plotlyOutput</span>(<span class="fn">ns</span>(<span class="str">"status_pie"</span>), height = <span class="str">"350px"</span>)
+      ),
+      <span class="fn">bs4Card</span>(
+        title = <span class="str">"Obyekt növü üzrə"</span>, width = <span class="num">6</span>, maximizable = <span class="kw">TRUE</span>,
+        <span class="fn">plotlyOutput</span>(<span class="fn">ns</span>(<span class="str">"type_bar"</span>), height = <span class="str">"350px"</span>)
+      )
+    ),
+    <span class="fn">fluidRow</span>(
+      <span class="fn">bs4Card</span>(
+        title = <span class="str">"Son layihələr"</span>, width = <span class="num">12</span>,
+        <span class="fn">DTOutput</span>(<span class="fn">ns</span>(<span class="str">"projects_table"</span>))
+      )
+    )
+  )
+}
+
+mod_kpi_server <span class="kw">&lt;-</span> <span class="kw">function</span>(id, pool) {
+  <span class="fn">moduleServer</span>(id, <span class="kw">function</span>(input, output, session) {
+
+    <span class="cmt"># ═══ Reactive data ═══</span>
+    kpi <span class="kw">&lt;-</span> <span class="fn">reactive</span>({
+      <span class="fn">get_kpi_stats</span>(pool)
+    })
+
+    projects <span class="kw">&lt;-</span> <span class="fn">reactive</span>({
+      <span class="fn">get_project_summary</span>(pool)
+    })
+
+    <span class="cmt"># ═══ Value boxes ═══</span>
+    output$total <span class="kw">&lt;-</span> <span class="fn">renderbs4ValueBox</span>({
+      <span class="fn">bs4ValueBox</span>(
+        value = kpi()$total_projects,
+        subtitle = <span class="str">"Ümumi layihə"</span>,
+        icon = <span class="fn">icon</span>(<span class="str">"folder-tree"</span>),
+        color = <span class="str">"primary"</span>,
+        footer = <span class="str">"Bütün statuslar"</span>
+      )
+    })
+
+    output$active <span class="kw">&lt;-</span> <span class="fn">renderbs4ValueBox</span>({
+      <span class="fn">bs4ValueBox</span>(
+        value = kpi()$active_projects,
+        subtitle = <span class="str">"Aktiv layihə"</span>,
+        icon = <span class="fn">icon</span>(<span class="str">"person-digging"</span>),
+        color = <span class="str">"success"</span>,
+        footer = <span class="str">"in_progress statusunda"</span>
+      )
+    })
+
+    output$budget <span class="kw">&lt;-</span> <span class="fn">renderbs4ValueBox</span>({
+      <span class="fn">bs4ValueBox</span>(
+        value = <span class="fn">paste0</span>(<span class="fn">format</span>(<span class="fn">round</span>(kpi()$total_budget / <span class="num">1e6</span>, <span class="num">1</span>)), <span class="str">"M AZN"</span>),
+        subtitle = <span class="str">"Planlı büdcə"</span>,
+        icon = <span class="fn">icon</span>(<span class="str">"sack-dollar"</span>),
+        color = <span class="str">"warning"</span>,
+        footer = <span class="fn">paste</span>(<span class="str">"Orta progress:"</span>, kpi()$avg_progress, <span class="str">"%"</span>)
+      )
+    })
+
+    output$overdue <span class="kw">&lt;-</span> <span class="fn">renderbs4ValueBox</span>({
+      <span class="fn">bs4ValueBox</span>(
+        value = kpi()$overdue,
+        subtitle = <span class="str">"Gecikən"</span>,
+        icon = <span class="fn">icon</span>(<span class="str">"triangle-exclamation"</span>),
+        color = <span class="kw">if</span> (kpi()$overdue &gt; <span class="num">0</span>) <span class="str">"danger"</span> <span class="kw">else</span> <span class="str">"success"</span>,
+        footer = <span class="str">"son bitmə tarixini keçənlər"</span>
+      )
+    })
+
+    <span class="cmt"># ═══ Status pie ═══</span>
+    output$status_pie <span class="kw">&lt;-</span> <span class="fn">renderPlotly</span>({
+      d <span class="kw">&lt;-</span> projects() <span class="kw">%&gt;%</span>
+        <span class="fn">count</span>(status) <span class="kw">%&gt;%</span>
+        <span class="fn">mutate</span>(label = <span class="fn">recode</span>(status,
+          <span class="str">"in_progress"</span> = <span class="str">"İcrada"</span>,
+          <span class="str">"completed"</span> = <span class="str">"Tamamlanıb"</span>,
+          <span class="str">"planned"</span> = <span class="str">"Planlaşdırılıb"</span>,
+          <span class="str">"cancelled"</span> = <span class="str">"Ləğv"</span>,
+          <span class="str">"suspended"</span> = <span class="str">"Dayandırılıb"</span>
+        ))
+
+      <span class="fn">plot_ly</span>(d, labels = ~label, values = ~n, type = <span class="str">"pie"</span>,
+              marker = <span class="fn">list</span>(colors = <span class="fn">c</span>(<span class="str">"#f59e0b"</span>,<span class="str">"#10b981"</span>,<span class="str">"#64748b"</span>,<span class="str">"#ef4444"</span>,<span class="str">"#d97706"</span>))) <span class="kw">%&gt;%</span>
+        <span class="fn">layout</span>(showlegend = <span class="kw">TRUE</span>, margin = <span class="fn">list</span>(l = <span class="num">20</span>, r = <span class="num">20</span>, t = <span class="num">10</span>, b = <span class="num">10</span>))
+    })
+
+    <span class="cmt"># ═══ Obyekt tipi bar ═══</span>
+    output$type_bar <span class="kw">&lt;-</span> <span class="fn">renderPlotly</span>({
+      d <span class="kw">&lt;-</span> projects() <span class="kw">%&gt;%</span>
+        <span class="fn">count</span>(object_type) <span class="kw">%&gt;%</span>
+        <span class="fn">arrange</span>(<span class="fn">desc</span>(n))
+
+      <span class="fn">plot_ly</span>(d, x = ~object_type, y = ~n, type = <span class="str">"bar"</span>,
+              marker = <span class="fn">list</span>(color = <span class="str">"#7c3aed"</span>)) <span class="kw">%&gt;%</span>
+        <span class="fn">layout</span>(xaxis = <span class="fn">list</span>(title = <span class="str">""</span>), yaxis = <span class="fn">list</span>(title = <span class="str">"Layihə sayı"</span>))
+    })
+
+    <span class="cmt"># ═══ Cədvəl ═══</span>
+    output$projects_table <span class="kw">&lt;-</span> <span class="fn">renderDT</span>({
+      d <span class="kw">&lt;-</span> projects() <span class="kw">%&gt;%</span>
+        <span class="fn">select</span>(project_code, project_name, region, status, progress_percent, total_budget_planned)
+
+      <span class="fn">datatable</span>(d,
+        options = <span class="fn">list</span>(pageLength = <span class="num">10</span>, scrollX = <span class="kw">TRUE</span>),
+        rownames = <span class="kw">FALSE</span>,
+        colnames = <span class="fn">c</span>(<span class="str">"Kod"</span>,<span class="str">"Layihə"</span>,<span class="str">"Region"</span>,<span class="str">"Status"</span>,<span class="str">"Progress %"</span>,<span class="str">"Büdcə"</span>)
+      ) <span class="kw">%&gt;%</span>
+        <span class="fn">formatCurrency</span>(<span class="str">"total_budget_planned"</span>, currency = <span class="str">" AZN"</span>, before = <span class="kw">FALSE</span>, digits = <span class="num">0</span>) <span class="kw">%&gt;%</span>
+        <span class="fn">formatStyle</span>(<span class="str">"progress_percent"</span>,
+          background = <span class="fn">styleColorBar</span>(<span class="fn">c</span>(<span class="num">0</span>,<span class="num">100</span>), <span class="str">"#c4b5fd"</span>),
+          backgroundSize = <span class="str">"98% 88%"</span>,
+          backgroundRepeat = <span class="str">"no-repeat"</span>,
+          backgroundPosition = <span class="str">"center"</span>)
+    })
+  })
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <div class="callout tip">
+    <span class="callout-icon">💡</span>
+    <div class="callout-content">
+      <div class="callout-title">Modular Shiny-in gücü</div>
+      <div class="callout-body">
+        <p>Hər modulun öz namespace-i (<code class="inline">ns()</code>) var. Bu o deməkdir ki, həmin modulu 10 dəfə də çağırsanız, ID münaqişəsi olmayacaq. <strong>moduleServer</strong> 2020-ci ildən sonrakı Shiny-də "gold standard"dır.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b9">
+  <h2><span class="num">9</span> Modul 2: Regional xəritə (Leaflet)</h2>
+  <p class="lead">77 rayon üzrə layihələrin coğrafi paylanmasını interaktiv xəritədə göstərək.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title r">shiny/modules/mod_regional.R</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; modules/mod_regional.R &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt"># ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt"># mod_regional.R — Azərbaycan xəritəsi ilə regional analitika</span>
+<span class="cmt"># ═══════════════════════════════════════════════════════════════</span>
+
+mod_regional_ui <span class="kw">&lt;-</span> <span class="kw">function</span>(id) {
+  ns <span class="kw">&lt;-</span> <span class="fn">NS</span>(id)
+  <span class="fn">tagList</span>(
+    <span class="fn">fluidRow</span>(
+      <span class="fn">bs4Card</span>(
+        title = <span class="str">"Azərbaycan xəritəsində layihələr"</span>,
+        width = <span class="num">8</span>, maximizable = <span class="kw">TRUE</span>, elevation = <span class="num">3</span>,
+        <span class="fn">leafletOutput</span>(<span class="fn">ns</span>(<span class="str">"map"</span>), height = <span class="str">"560px"</span>)
+      ),
+      <span class="fn">bs4Card</span>(
+        title = <span class="str">"Region cədvəli"</span>, width = <span class="num">4</span>, maximizable = <span class="kw">TRUE</span>,
+        <span class="fn">DTOutput</span>(<span class="fn">ns</span>(<span class="str">"region_table"</span>))
+      )
+    ),
+    <span class="fn">fluidRow</span>(
+      <span class="fn">bs4Card</span>(
+        title = <span class="str">"Region üzrə büdcə müqayisəsi"</span>, width = <span class="num">12</span>, maximizable = <span class="kw">TRUE</span>,
+        <span class="fn">plotlyOutput</span>(<span class="fn">ns</span>(<span class="str">"region_bar"</span>), height = <span class="str">"400px"</span>)
+      )
+    )
+  )
+}
+
+mod_regional_server <span class="kw">&lt;-</span> <span class="kw">function</span>(id, pool) {
+  <span class="fn">moduleServer</span>(id, <span class="kw">function</span>(input, output, session) {
+
+    regions <span class="kw">&lt;-</span> <span class="fn">reactive</span>({
+      <span class="fn">get_regional_activity</span>(pool)
+    })
+
+    <span class="cmt"># ═══ Xəritə ═══</span>
+    output$map <span class="kw">&lt;-</span> <span class="fn">renderLeaflet</span>({
+      d <span class="kw">&lt;-</span> regions() <span class="kw">%&gt;%</span> <span class="fn">filter</span>(!<span class="fn">is.na</span>(lat))
+
+      pal <span class="kw">&lt;-</span> <span class="fn">colorNumeric</span>(<span class="str">"Purples"</span>, domain = d$total_projects)
+
+      <span class="fn">leaflet</span>(d) <span class="kw">%&gt;%</span>
+        <span class="fn">addProviderTiles</span>(providers$CartoDB.Positron) <span class="kw">%&gt;%</span>
+        <span class="fn">setView</span>(lng = <span class="num">47.5769</span>, lat = <span class="num">40.1431</span>, zoom = <span class="num">7</span>) <span class="kw">%&gt;%</span>
+        <span class="fn">addCircleMarkers</span>(
+          lng = ~lng, lat = ~lat,
+          radius = ~<span class="fn">sqrt</span>(total_projects) * <span class="num">6</span> + <span class="num">4</span>,
+          color = ~<span class="fn">pal</span>(total_projects),
+          fillOpacity = <span class="num">0.75</span>,
+          stroke = <span class="kw">TRUE</span>, weight = <span class="num">2</span>, opacity = <span class="num">0.9</span>,
+          popup = ~<span class="fn">paste0</span>(
+            <span class="str">"&lt;h4&gt;"</span>, region_name, <span class="str">"&lt;/h4&gt;"</span>,
+            <span class="str">"&lt;b&gt;Ümumi layihə:&lt;/b&gt; "</span>, total_projects, <span class="str">"&lt;br&gt;"</span>,
+            <span class="str">"&lt;b&gt;Aktiv:&lt;/b&gt; "</span>, active_projects, <span class="str">"&lt;br&gt;"</span>,
+            <span class="str">"&lt;b&gt;Tamamlanmış:&lt;/b&gt; "</span>, completed_projects, <span class="str">"&lt;br&gt;"</span>,
+            <span class="str">"&lt;b&gt;Büdcə:&lt;/b&gt; "</span>, <span class="fn">format</span>(total_budget, big.mark = <span class="str">","</span>), <span class="str">" AZN&lt;br&gt;"</span>,
+            <span class="str">"&lt;b&gt;Orta progress:&lt;/b&gt; "</span>, avg_progress_percent, <span class="str">"%"</span>
+          ),
+          label = ~region_name
+        ) <span class="kw">%&gt;%</span>
+        <span class="fn">addLegend</span>(
+          pal = pal, values = ~total_projects,
+          title = <span class="str">"Layihə sayı"</span>, position = <span class="str">"bottomright"</span>
+        )
+    })
+
+    <span class="cmt"># ═══ Region cədvəli ═══</span>
+    output$region_table <span class="kw">&lt;-</span> <span class="fn">renderDT</span>({
+      d <span class="kw">&lt;-</span> regions() <span class="kw">%&gt;%</span>
+        <span class="fn">select</span>(region_name, total_projects, active_projects, total_budget) <span class="kw">%&gt;%</span>
+        <span class="fn">arrange</span>(<span class="fn">desc</span>(total_projects))
+
+      <span class="fn">datatable</span>(d,
+        options = <span class="fn">list</span>(pageLength = <span class="num">12</span>, dom = <span class="str">'tp'</span>),
+        rownames = <span class="kw">FALSE</span>,
+        colnames = <span class="fn">c</span>(<span class="str">"Region"</span>, <span class="str">"Ümumi"</span>, <span class="str">"Aktiv"</span>, <span class="str">"Büdcə"</span>),
+        selection = <span class="str">"single"</span>
+      ) <span class="kw">%&gt;%</span>
+        <span class="fn">formatCurrency</span>(<span class="str">"total_budget"</span>, currency = <span class="str">""</span>, digits = <span class="num">0</span>)
+    })
+
+    <span class="cmt"># ═══ Region büdcə bar ═══</span>
+    output$region_bar <span class="kw">&lt;-</span> <span class="fn">renderPlotly</span>({
+      d <span class="kw">&lt;-</span> regions() <span class="kw">%&gt;%</span>
+        <span class="fn">arrange</span>(<span class="fn">desc</span>(total_budget)) <span class="kw">%&gt;%</span>
+        <span class="fn">head</span>(<span class="num">15</span>)
+
+      <span class="fn">plot_ly</span>(d, x = ~<span class="fn">reorder</span>(region_name, total_budget), y = ~total_budget,
+              type = <span class="str">"bar"</span>, marker = <span class="fn">list</span>(color = <span class="str">"#7c3aed"</span>)) <span class="kw">%&gt;%</span>
+        <span class="fn">layout</span>(xaxis = <span class="fn">list</span>(title = <span class="str">""</span>, tickangle = -<span class="num">45</span>),
+               yaxis = <span class="fn">list</span>(title = <span class="str">"Büdcə (AZN)"</span>))
+    })
+  })
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+</section>
+
+<section id="b10">
+  <h2><span class="num">10</span> Modul 3: Büdcə təhlili (Plotly)</h2>
+  <p class="lead">Plan vs real xərclər, kateqoriya üzrə paylanma, sapma trendləri.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title r">shiny/modules/mod_budget.R</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; modules/mod_budget.R &lt;&lt; <span class="str">'EOF'</span>
+mod_budget_ui <span class="kw">&lt;-</span> <span class="kw">function</span>(id) {
+  ns <span class="kw">&lt;-</span> <span class="fn">NS</span>(id)
+  <span class="fn">tagList</span>(
+    <span class="fn">fluidRow</span>(
+      <span class="fn">bs4Card</span>(
+        title = <span class="str">"Layihə seçin"</span>, width = <span class="num">12</span>, collapsible = <span class="kw">FALSE</span>,
+        <span class="fn">selectInput</span>(<span class="fn">ns</span>(<span class="str">"project"</span>), <span class="kw">NULL</span>, choices = <span class="kw">NULL</span>, width = <span class="str">"100%"</span>)
+      )
+    ),
+    <span class="fn">fluidRow</span>(
+      <span class="fn">bs4Card</span>(
+        title = <span class="str">"Plan vs Real xərclər"</span>, width = <span class="num">7</span>, maximizable = <span class="kw">TRUE</span>,
+        <span class="fn">plotlyOutput</span>(<span class="fn">ns</span>(<span class="str">"plan_vs_actual"</span>), height = <span class="str">"450px"</span>)
+      ),
+      <span class="fn">bs4Card</span>(
+        title = <span class="str">"Kateqoriya paylanması"</span>, width = <span class="num">5</span>, maximizable = <span class="kw">TRUE</span>,
+        <span class="fn">plotlyOutput</span>(<span class="fn">ns</span>(<span class="str">"category_pie"</span>), height = <span class="str">"450px"</span>)
+      )
+    ),
+    <span class="fn">fluidRow</span>(
+      <span class="fn">bs4Card</span>(
+        title = <span class="str">"Detal: smeta maddələri"</span>, width = <span class="num">12</span>,
+        <span class="fn">DTOutput</span>(<span class="fn">ns</span>(<span class="str">"variance_table"</span>))
+      )
+    )
+  )
+}
+
+mod_budget_server <span class="kw">&lt;-</span> <span class="kw">function</span>(id, pool) {
+  <span class="fn">moduleServer</span>(id, <span class="kw">function</span>(input, output, session) {
+    ns <span class="kw">&lt;-</span> session$ns
+
+    <span class="cmt"># Layihə siyahısını dinamik yüklə</span>
+    projects <span class="kw">&lt;-</span> <span class="fn">reactive</span>({
+      <span class="fn">get_project_summary</span>(pool)
+    })
+
+    <span class="fn">observe</span>({
+      p <span class="kw">&lt;-</span> projects()
+      choices <span class="kw">&lt;-</span> <span class="fn">setNames</span>(p$id, <span class="fn">paste</span>(p$project_code, <span class="str">"·"</span>, p$project_name))
+      <span class="fn">updateSelectInput</span>(session, <span class="str">"project"</span>, choices = choices)
+    })
+
+    variance <span class="kw">&lt;-</span> <span class="fn">reactive</span>({
+      <span class="fn">req</span>(input$project)
+      <span class="fn">get_budget_variance</span>(pool, project_id = <span class="fn">as.integer</span>(input$project))
+    })
+
+    <span class="cmt"># ═══ Plan vs Real ═══</span>
+    output$plan_vs_actual <span class="kw">&lt;-</span> <span class="fn">renderPlotly</span>({
+      d <span class="kw">&lt;-</span> variance()
+      <span class="kw">if</span> (<span class="fn">nrow</span>(d) == <span class="num">0</span>) <span class="kw">return</span>(<span class="fn">plotly_empty</span>())
+
+      <span class="fn">plot_ly</span>(d, x = ~item) <span class="kw">%&gt;%</span>
+        <span class="fn">add_trace</span>(y = ~total_planned, name = <span class="str">"Planlaşdırılıb"</span>,
+                  type = <span class="str">"bar"</span>, marker = <span class="fn">list</span>(color = <span class="str">"#a78bfa"</span>)) <span class="kw">%&gt;%</span>
+        <span class="fn">add_trace</span>(y = ~total_actual, name = <span class="str">"Real"</span>,
+                  type = <span class="str">"bar"</span>, marker = <span class="fn">list</span>(color = <span class="str">"#7c3aed"</span>)) <span class="kw">%&gt;%</span>
+        <span class="fn">layout</span>(barmode = <span class="str">"group"</span>,
+               xaxis = <span class="fn">list</span>(title = <span class="str">""</span>, tickangle = -<span class="num">30</span>),
+               yaxis = <span class="fn">list</span>(title = <span class="str">"Məbləğ (AZN)"</span>),
+               legend = <span class="fn">list</span>(orientation = <span class="str">"h"</span>, y = -<span class="num">0.3</span>))
+    })
+
+    <span class="cmt"># ═══ Kateqoriya paylanması ═══</span>
+    output$category_pie <span class="kw">&lt;-</span> <span class="fn">renderPlotly</span>({
+      d <span class="kw">&lt;-</span> variance() <span class="kw">%&gt;%</span>
+        <span class="fn">group_by</span>(category) <span class="kw">%&gt;%</span>
+        <span class="fn">summarise</span>(total = <span class="fn">sum</span>(total_planned, na.rm = <span class="kw">TRUE</span>))
+
+      <span class="fn">plot_ly</span>(d, labels = ~category, values = ~total, type = <span class="str">"pie"</span>,
+              hole = <span class="num">0.5</span>) <span class="kw">%&gt;%</span>
+        <span class="fn">layout</span>(showlegend = <span class="kw">TRUE</span>)
+    })
+
+    <span class="cmt"># ═══ Detal cədvəli ═══</span>
+    output$variance_table <span class="kw">&lt;-</span> <span class="fn">renderDT</span>({
+      d <span class="kw">&lt;-</span> variance() <span class="kw">%&gt;%</span>
+        <span class="fn">select</span>(category, item, quantity_planned, total_planned, total_actual, variance, variance_percent)
+
+      <span class="fn">datatable</span>(d, options = <span class="fn">list</span>(pageLength = <span class="num">10</span>, scrollX = <span class="kw">TRUE</span>),
+                rownames = <span class="kw">FALSE</span>,
+                colnames = <span class="fn">c</span>(<span class="str">"Kateqoriya"</span>,<span class="str">"Maddə"</span>,<span class="str">"Miqdar"</span>,<span class="str">"Planlı"</span>,<span class="str">"Real"</span>,<span class="str">"Sapma"</span>,<span class="str">"Sapma %"</span>)) <span class="kw">%&gt;%</span>
+        <span class="fn">formatCurrency</span>(<span class="fn">c</span>(<span class="str">"total_planned"</span>,<span class="str">"total_actual"</span>,<span class="str">"variance"</span>),
+                        currency = <span class="str">""</span>, digits = <span class="num">0</span>) <span class="kw">%&gt;%</span>
+        <span class="fn">formatStyle</span>(<span class="str">"variance_percent"</span>,
+          color = <span class="fn">styleInterval</span>(<span class="fn">c</span>(-<span class="num">5</span>, <span class="num">5</span>), <span class="fn">c</span>(<span class="str">"green"</span>, <span class="str">"black"</span>, <span class="str">"red"</span>)),
+          fontWeight = <span class="str">"bold"</span>)
+    })
+  })
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+</section>
+
+<section id="b11">
+  <h2><span class="num">11</span> Modul 4: Gantt və taym-layn</h2>
+  <p class="lead">Layihələrin vaxt müddəti boyunca görünüşü — klassik menecment aləti.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title r">shiny/modules/mod_timeline.R</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; modules/mod_timeline.R &lt;&lt; <span class="str">'EOF'</span>
+mod_timeline_ui <span class="kw">&lt;-</span> <span class="kw">function</span>(id) {
+  ns <span class="kw">&lt;-</span> <span class="fn">NS</span>(id)
+  <span class="fn">tagList</span>(
+    <span class="fn">fluidRow</span>(
+      <span class="fn">bs4Card</span>(
+        title = <span class="str">"Gantt diaqramı — bütün layihələr"</span>,
+        width = <span class="num">12</span>, maximizable = <span class="kw">TRUE</span>,
+        <span class="fn">plotlyOutput</span>(<span class="fn">ns</span>(<span class="str">"gantt"</span>), height = <span class="str">"500px"</span>)
+      )
+    ),
+    <span class="fn">fluidRow</span>(
+      <span class="fn">bs4Card</span>(
+        title = <span class="str">"Aylıq progress trendi"</span>, width = <span class="num">12</span>,
+        <span class="fn">plotlyOutput</span>(<span class="fn">ns</span>(<span class="str">"monthly"</span>), height = <span class="str">"350px"</span>)
+      )
+    )
+  )
+}
+
+mod_timeline_server <span class="kw">&lt;-</span> <span class="kw">function</span>(id, pool) {
+  <span class="fn">moduleServer</span>(id, <span class="kw">function</span>(input, output, session) {
+
+    projects <span class="kw">&lt;-</span> <span class="fn">reactive</span>(<span class="fn">get_project_summary</span>(pool))
+    monthly <span class="kw">&lt;-</span> <span class="fn">reactive</span>(<span class="fn">get_monthly_progress</span>(pool))
+
+    <span class="cmt"># ═══ Gantt ═══</span>
+    output$gantt <span class="kw">&lt;-</span> <span class="fn">renderPlotly</span>({
+      d <span class="kw">&lt;-</span> projects() <span class="kw">%&gt;%</span>
+        <span class="fn">filter</span>(!<span class="fn">is.na</span>(start_date_planned) &amp; !<span class="fn">is.na</span>(end_date_planned)) <span class="kw">%&gt;%</span>
+        <span class="fn">mutate</span>(
+          start = <span class="fn">as.Date</span>(start_date_planned),
+          end = <span class="fn">as.Date</span>(end_date_planned),
+          label = <span class="fn">paste0</span>(project_code, <span class="str">" · "</span>, <span class="fn">substr</span>(project_name, <span class="num">1</span>, <span class="num">40</span>))
+        )
+
+      fig <span class="kw">&lt;-</span> <span class="fn">plot_ly</span>()
+      <span class="kw">for</span> (i <span class="kw">in</span> <span class="num">1</span>:<span class="fn">nrow</span>(d)) {
+        fig <span class="kw">&lt;-</span> fig <span class="kw">%&gt;%</span> <span class="fn">add_trace</span>(
+          x = <span class="fn">c</span>(d$start[i], d$end[i]),
+          y = <span class="fn">c</span>(d$label[i], d$label[i]),
+          type = <span class="str">"scatter"</span>, mode = <span class="str">"lines"</span>,
+          line = <span class="fn">list</span>(
+            color = <span class="kw">switch</span>(d$status[i],
+              <span class="str">"in_progress"</span> = <span class="str">"#f59e0b"</span>,
+              <span class="str">"completed"</span> = <span class="str">"#10b981"</span>,
+              <span class="str">"planned"</span> = <span class="str">"#64748b"</span>,
+              <span class="str">"#ef4444"</span>
+            ),
+            width = <span class="num">18</span>
+          ),
+          showlegend = <span class="kw">FALSE</span>,
+          hovertext = <span class="fn">paste0</span>(d$label[i], <span class="str">"&lt;br&gt;Status: "</span>, d$status[i],
+                            <span class="str">"&lt;br&gt;Progress: "</span>, d$progress_percent[i], <span class="str">"%"</span>),
+          hoverinfo = <span class="str">"text"</span>
+        )
+      }
+      fig <span class="kw">%&gt;%</span> <span class="fn">layout</span>(
+        xaxis = <span class="fn">list</span>(title = <span class="str">""</span>, type = <span class="str">"date"</span>),
+        yaxis = <span class="fn">list</span>(title = <span class="str">""</span>, autorange = <span class="str">"reversed"</span>),
+        margin = <span class="fn">list</span>(l = <span class="num">220</span>)
+      )
+    })
+
+    <span class="cmt"># ═══ Aylıq trend ═══</span>
+    output$monthly <span class="kw">&lt;-</span> <span class="fn">renderPlotly</span>({
+      d <span class="kw">&lt;-</span> monthly()
+      <span class="kw">if</span> (<span class="fn">nrow</span>(d) == <span class="num">0</span>) <span class="kw">return</span>(<span class="fn">plotly_empty</span>())
+
+      <span class="fn">plot_ly</span>(d, x = ~month, y = ~avg_progress,
+              type = <span class="str">"scatter"</span>, mode = <span class="str">"lines+markers"</span>,
+              line = <span class="fn">list</span>(color = <span class="str">"#7c3aed"</span>, width = <span class="num">3</span>),
+              marker = <span class="fn">list</span>(color = <span class="str">"#5b21b6"</span>, size = <span class="num">10</span>)) <span class="kw">%&gt;%</span>
+        <span class="fn">layout</span>(xaxis = <span class="fn">list</span>(title = <span class="str">"Ay"</span>),
+               yaxis = <span class="fn">list</span>(title = <span class="str">"Orta progress %"</span>, range = <span class="fn">c</span>(<span class="num">0</span>, <span class="num">100</span>)))
+    })
+  })
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+</section>
+
+<section id="b12">
+  <h2><span class="num">12</span> Modul 5: Podratçı performansı</h2>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title r">shiny/modules/mod_contractor.R</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; modules/mod_contractor.R &lt;&lt; <span class="str">'EOF'</span>
+mod_contractor_ui <span class="kw">&lt;-</span> <span class="kw">function</span>(id) {
+  ns <span class="kw">&lt;-</span> <span class="fn">NS</span>(id)
+  <span class="fn">tagList</span>(
+    <span class="fn">fluidRow</span>(
+      <span class="fn">bs4Card</span>(
+        title = <span class="str">"Podratçı reytinqi"</span>, width = <span class="num">12</span>, maximizable = <span class="kw">TRUE</span>,
+        <span class="fn">DTOutput</span>(<span class="fn">ns</span>(<span class="str">"table"</span>))
+      )
+    ),
+    <span class="fn">fluidRow</span>(
+      <span class="fn">bs4Card</span>(
+        title = <span class="str">"Gəlir üzrə top 10"</span>, width = <span class="num">6</span>, maximizable = <span class="kw">TRUE</span>,
+        <span class="fn">plotlyOutput</span>(<span class="fn">ns</span>(<span class="str">"revenue_plot"</span>), height = <span class="str">"400px"</span>)
+      ),
+      <span class="fn">bs4Card</span>(
+        title = <span class="str">"Tamamlama nisbəti"</span>, width = <span class="num">6</span>, maximizable = <span class="kw">TRUE</span>,
+        <span class="fn">plotlyOutput</span>(<span class="fn">ns</span>(<span class="str">"completion_plot"</span>), height = <span class="str">"400px"</span>)
+      )
+    )
+  )
+}
+
+mod_contractor_server <span class="kw">&lt;-</span> <span class="kw">function</span>(id, pool) {
+  <span class="fn">moduleServer</span>(id, <span class="kw">function</span>(input, output, session) {
+
+    data <span class="kw">&lt;-</span> <span class="fn">reactive</span>({
+      <span class="fn">get_contractor_performance</span>(pool)
+    })
+
+    output$table <span class="kw">&lt;-</span> <span class="fn">renderDT</span>({
+      <span class="fn">datatable</span>(data(),
+        options = <span class="fn">list</span>(pageLength = <span class="num">10</span>, scrollX = <span class="kw">TRUE</span>),
+        rownames = <span class="kw">FALSE</span>) <span class="kw">%&gt;%</span>
+        <span class="fn">formatCurrency</span>(<span class="fn">c</span>(<span class="str">"total_revenue"</span>, <span class="str">"total_paid"</span>), currency = <span class="str">""</span>, digits = <span class="num">0</span>)
+    })
+
+    output$revenue_plot <span class="kw">&lt;-</span> <span class="fn">renderPlotly</span>({
+      d <span class="kw">&lt;-</span> data() <span class="kw">%&gt;%</span>
+        <span class="fn">arrange</span>(<span class="fn">desc</span>(total_revenue)) <span class="kw">%&gt;%</span> <span class="fn">head</span>(<span class="num">10</span>)
+
+      <span class="fn">plot_ly</span>(d, x = ~total_revenue, y = ~<span class="fn">reorder</span>(contractor_name, total_revenue),
+              type = <span class="str">"bar"</span>, orientation = <span class="str">"h"</span>,
+              marker = <span class="fn">list</span>(color = <span class="str">"#7c3aed"</span>)) <span class="kw">%&gt;%</span>
+        <span class="fn">layout</span>(xaxis = <span class="fn">list</span>(title = <span class="str">"Ümumi gəlir (AZN)"</span>),
+               yaxis = <span class="fn">list</span>(title = <span class="str">""</span>))
+    })
+
+    output$completion_plot <span class="kw">&lt;-</span> <span class="fn">renderPlotly</span>({
+      d <span class="kw">&lt;-</span> data() <span class="kw">%&gt;%</span>
+        <span class="fn">mutate</span>(completion_rate = <span class="fn">ifelse</span>(contract_count &gt; <span class="num">0</span>,
+                                      completed_contracts / contract_count * <span class="num">100</span>, <span class="num">0</span>))
+
+      <span class="fn">plot_ly</span>(d, x = ~contractor_name, y = ~completion_rate,
+              type = <span class="str">"bar"</span>, marker = <span class="fn">list</span>(color = <span class="str">"#10b981"</span>)) <span class="kw">%&gt;%</span>
+        <span class="fn">layout</span>(xaxis = <span class="fn">list</span>(title = <span class="str">""</span>, tickangle = -<span class="num">45</span>),
+               yaxis = <span class="fn">list</span>(title = <span class="str">"Tamamlanma %"</span>, range = <span class="fn">c</span>(<span class="num">0</span>, <span class="num">100</span>)))
+    })
+  })
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+</section>
+
+<section id="b13">
+  <h2><span class="num">13</span> Modul 6: Claude AI insights</h2>
+  <p class="lead">Ən maraqlı modul — Shiny-dən birbaşa Claude API-yə müraciət edib, statistik təhlil və tövsiyələr generasiya edəcəyik.</p>
+
+  <h3>13.1. Claude API wrapper</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title r">shiny/R/claude_api.R</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; R/claude_api.R &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt"># ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt"># R/claude_api.R — Claude API wrapper</span>
+<span class="cmt"># ═══════════════════════════════════════════════════════════════</span>
+
+ask_claude <span class="kw">&lt;-</span> <span class="kw">function</span>(system_prompt, user_prompt, max_tokens = <span class="num">2048</span>) {
+  api_key <span class="kw">&lt;-</span> <span class="fn">Sys.getenv</span>(<span class="str">"ANTHROPIC_API_KEY"</span>)
+  model <span class="kw">&lt;-</span> <span class="fn">Sys.getenv</span>(<span class="str">"ANTHROPIC_MODEL"</span>, <span class="str">"claude-sonnet-4-6"</span>)
+
+  <span class="kw">if</span> (api_key == <span class="str">""</span>) {
+    <span class="kw">stop</span>(<span class="str">"ANTHROPIC_API_KEY .Renviron-da təyin edilməyib"</span>)
+  }
+
+  req <span class="kw">&lt;-</span> httr2::<span class="fn">request</span>(<span class="str">"https://api.anthropic.com/v1/messages"</span>) <span class="kw">%&gt;%</span>
+    httr2::<span class="fn">req_headers</span>(
+      <span class="str">"x-api-key"</span> = api_key,
+      <span class="str">"anthropic-version"</span> = <span class="str">"2023-06-01"</span>,
+      <span class="str">"content-type"</span> = <span class="str">"application/json"</span>
+    ) <span class="kw">%&gt;%</span>
+    httr2::<span class="fn">req_body_json</span>(<span class="fn">list</span>(
+      model = model,
+      max_tokens = max_tokens,
+      system = system_prompt,
+      messages = <span class="fn">list</span>(<span class="fn">list</span>(role = <span class="str">"user"</span>, content = user_prompt))
+    )) <span class="kw">%&gt;%</span>
+    httr2::<span class="fn">req_timeout</span>(<span class="num">60</span>)
+
+  resp <span class="kw">&lt;-</span> httr2::<span class="fn">req_perform</span>(req)
+
+  <span class="kw">if</span> (httr2::<span class="fn">resp_status</span>(resp) != <span class="num">200</span>) {
+    <span class="kw">stop</span>(<span class="str">"Claude API xətası: "</span>, httr2::<span class="fn">resp_status</span>(resp))
+  }
+
+  body <span class="kw">&lt;-</span> httr2::<span class="fn">resp_body_json</span>(resp)
+  body$content[[<span class="num">1</span>]]$text
+}
+
+<span class="cmt"># TTİS statistikasını təhlil edir</span>
+analyze_ttis_stats <span class="kw">&lt;-</span> <span class="kw">function</span>(stats) {
+  system_prompt <span class="kw">&lt;-</span> <span class="str">"Sən Azərbaycan Respublikasının təhsil obyektləri üçün 
+təmir-tikinti idarəetməsində təcrübəli BI analitik və idarəçisən.
+Məlumatları təhlil et və Azərbaycan dilində 4 hissədə cavab ver:
+1. KRİTİK MƏSƏLƏLƏR
+2. MÜSBƏT TENDENSİYALAR  
+3. STATİSTİK ANOMALİYALAR
+4. TÖVSİYƏLƏR"</span>
+
+  user_prompt <span class="kw">&lt;-</span> <span class="fn">paste</span>(
+    <span class="str">"Aşağıdakı TTİS statistikasını təhlil et:\n\n"</span>,
+    jsonlite::<span class="fn">toJSON</span>(stats, auto_unbox = <span class="kw">TRUE</span>, pretty = <span class="kw">TRUE</span>)
+  )
+
+  <span class="fn">ask_claude</span>(system_prompt, user_prompt, max_tokens = <span class="num">3000</span>)
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <h3>13.2. AI modulu</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title r">shiny/modules/mod_ai.R</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; modules/mod_ai.R &lt;&lt; <span class="str">'EOF'</span>
+mod_ai_ui <span class="kw">&lt;-</span> <span class="kw">function</span>(id) {
+  ns <span class="kw">&lt;-</span> <span class="fn">NS</span>(id)
+  <span class="fn">tagList</span>(
+    <span class="fn">fluidRow</span>(
+      <span class="fn">bs4Card</span>(
+        title = <span class="fn">tagList</span>(<span class="fn">icon</span>(<span class="str">"wand-magic-sparkles"</span>), <span class="str">" Claude AI Avtomatik Təhlil"</span>),
+        width = <span class="num">12</span>, elevation = <span class="num">3</span>, collapsible = <span class="kw">FALSE</span>,
+        <span class="fn">div</span>(style = <span class="str">"display:flex; gap:1rem; margin-bottom:1rem;"</span>,
+          <span class="fn">actionButton</span>(<span class="fn">ns</span>(<span class="str">"generate"</span>), <span class="str">"Təhlil generasiya et"</span>,
+                       icon = <span class="fn">icon</span>(<span class="str">"play"</span>), class = <span class="str">"btn-primary btn-lg"</span>),
+          <span class="fn">tags$small</span>(style = <span class="str">"color:#64748b; align-self:center;"</span>,
+            <span class="str">"Claude API 10-30 saniyə ərzində statistik təhlil hazırlayacaq"</span>)
+        ),
+        <span class="fn">uiOutput</span>(<span class="fn">ns</span>(<span class="str">"status"</span>)),
+        <span class="fn">verbatimTextOutput</span>(<span class="fn">ns</span>(<span class="str">"analysis"</span>), placeholder = <span class="kw">TRUE</span>)
+      )
+    )
+  )
+}
+
+mod_ai_server <span class="kw">&lt;-</span> <span class="kw">function</span>(id, pool) {
+  <span class="fn">moduleServer</span>(id, <span class="kw">function</span>(input, output, session) {
+
+    waitress <span class="kw">&lt;-</span> waiter::<span class="fn">Waiter$new</span>(
+      html = waiter::<span class="fn">spin_fading_circles</span>(),
+      color = <span class="str">"rgba(124, 58, 237, 0.8)"</span>
+    )
+
+    analysis <span class="kw">&lt;-</span> <span class="fn">eventReactive</span>(input$generate, {
+      waitress$<span class="fn">show</span>()
+      <span class="fn">on.exit</span>(waitress$<span class="fn">hide</span>())
+
+      <span class="cmt"># Bazadan vacib statistikanı yığırıq</span>
+      stats <span class="kw">&lt;-</span> <span class="fn">list</span>(
+        kpi = <span class="fn">get_kpi_stats</span>(pool),
+        regions = <span class="fn">get_regional_activity</span>(pool) <span class="kw">%&gt;%</span> <span class="fn">head</span>(<span class="num">10</span>),
+        contractors = <span class="fn">get_contractor_performance</span>(pool) <span class="kw">%&gt;%</span> <span class="fn">head</span>(<span class="num">5</span>),
+        monthly = <span class="fn">get_monthly_progress</span>(pool)
+      )
+
+      <span class="cmt"># Claude-a göndər</span>
+      <span class="fn">tryCatch</span>({
+        <span class="fn">analyze_ttis_stats</span>(stats)
+      }, error = <span class="kw">function</span>(e) {
+        <span class="fn">paste</span>(<span class="str">"❌ Xəta:"</span>, e$message)
+      })
+    })
+
+    output$status <span class="kw">&lt;-</span> <span class="fn">renderUI</span>({
+      <span class="kw">if</span> (input$generate == <span class="num">0</span>) {
+        <span class="fn">div</span>(class = <span class="str">"alert alert-info"</span>,
+          <span class="fn">icon</span>(<span class="str">"info-circle"</span>),
+          <span class="str">" 'Təhlil generasiya et' düyməsini basaraq Claude-dan AI insights alın."</span>)
+      }
+    })
+
+    output$analysis <span class="kw">&lt;-</span> <span class="fn">renderText</span>({
+      <span class="fn">analysis</span>()
+    })
+  })
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <div class="callout tip">
+    <span class="callout-icon">💡</span>
+    <div class="callout-content">
+      <div class="callout-title">R-dən Claude — bu texnika Az_dili_standartlar və Riy_standartlar layihələrinizə tətbiq oluna bilər</div>
+      <div class="callout-body">
+        <p>Siz əvvəllər PIRLS 2026 və standart layihələrində Claude-u istifadə etmisiniz. Buradakı <code class="inline">ask_claude()</code> funksiyasını həmin layihələrə də köçürə bilərsiniz.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b14">
+  <h2><span class="num">14</span> Reactive poll — avtomatik refresh</h2>
+  <p class="lead">Baza dəyişdikdə dashboard avtomatik yenilənsə necə gözəl olar! <code class="inline">reactivePoll</code> buna kömək edir.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title r">Reactive poll nümunəsi — mod_kpi.R-a əlavə edilə bilər</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># Məsələn, 30 saniyədə bir bazanı yoxlayıb dəyişiklik varsa yenilə</span>
+
+projects <span class="kw">&lt;-</span> <span class="fn">reactivePoll</span>(
+  intervalMillis = <span class="num">30000</span>,   <span class="cmt"># 30 saniyə</span>
+  session = session,
+
+  <span class="cmt"># Bu funksiya yüngül sorğudur — sadəcə max updated_at qaytarır</span>
+  checkFunc = <span class="kw">function</span>() {
+    <span class="fn">dbGetQuery</span>(pool, <span class="str">"SELECT MAX(updated_at) AS ts FROM construction.projects"</span>)$ts
+  },
+
+  <span class="cmt"># Bu — tam sorğu, yalnız dəyişiklik aşkarlandıqda icra olunur</span>
+  valueFunc = <span class="kw">function</span>() {
+    <span class="fn">get_project_summary</span>(pool)
+  }
+)</code></pre>
+  </div>
+
+  <div class="callout info">
+    <span class="callout-icon">i</span>
+    <div class="callout-content">
+      <div class="callout-title">Niyə checkFunc var?</div>
+      <div class="callout-body">
+        <p>Hər 30 saniyədən bir <strong>bütün</strong> cədvəli sorğulasaq — server yüklənər. Əvəzində <code class="inline">checkFunc</code> çox yüngül sorğu edir (max tarix). Yalnız bu dəyişibsə — əsas <code class="inline">valueFunc</code> işə düşür. Bu, Node.js backend PostgreSQL-ə <code class="inline">UPDATE</code> edəndə Shiny-in avtomatik yenilənməsini təmin edir.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b15">
+  <h2><span class="num">15</span> Yerli test və işə salma</h2>
+  <p class="lead">Bütün modulları yazdıq. İndi Shiny-i işə salıb test edək.</p>
+
+  <div class="step-head"><span class="step-num">1</span><span class="step-title">RStudio-dan işə salma</span></div>
+  <p>RStudio-da <code class="inline">ui.R</code> və ya <code class="inline">server.R</code> açın, yuxarıda görünən <strong>"Run App"</strong> düyməsini basın.</p>
+
+  <div class="step-head"><span class="step-num">2</span><span class="step-title">R konsolundan</span></div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — R konsolundan işə salma</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="kw">cd</span> ~/Desktop/Claude_Modei_Təmir_tikinti/shiny
+
+<span class="cmt"># Porta 3838 ilə işə salırıq (Shiny-in default port-u)</span>
+Rscript -e <span class="str">'shiny::runApp(host = "0.0.0.0", port = 3838)'</span></code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">Loading required package: shiny
+
+<span class="out-success">Listening on http://0.0.0.0:3838</span>
+
+[INFO] Yeni sessiya: abc123def456...</pre>
+  </div>
+
+  <div class="step-head"><span class="step-num">3</span><span class="step-title">Brauzerdə açın</span></div>
+  <p><code class="inline">http://localhost:3838</code> — dashboard yüklənəcək:</p>
+
+  <div class="browser-mockup">
+    <div class="browser-bar">
+      <span class="browser-dot red"></span><span class="browser-dot yellow"></span><span class="browser-dot green"></span>
+      <div class="browser-url">http://localhost:3838/</div>
+    </div>
+    <div class="browser-content" style="padding:0; min-height:400px; display:flex;">
+      <div style="width:200px; background:#f8fafc; padding:1rem; border-right:1px solid #e2e8f0;">
+        <div style="color:#7c3aed; font-weight:800; font-size:1.2rem; margin-bottom:1rem;">TTİS Analitika</div>
+        <div style="padding:0.5rem 0.75rem; background:#ede9fe; color:#5b21b6; border-radius:6px; margin-bottom:0.25rem; font-size:0.85rem;">📊 Ümumi baxış</div>
+        <div style="padding:0.5rem 0.75rem; color:#64748b; font-size:0.85rem;">🗺️ Regional</div>
+        <div style="padding:0.5rem 0.75rem; color:#64748b; font-size:0.85rem;">💰 Büdcə</div>
+        <div style="padding:0.5rem 0.75rem; color:#64748b; font-size:0.85rem;">📅 Taym-layn</div>
+        <div style="padding:0.5rem 0.75rem; color:#64748b; font-size:0.85rem;">🤝 Podratçılar</div>
+        <div style="padding:0.5rem 0.75rem; color:#64748b; font-size:0.85rem;">✨ AI insights</div>
+      </div>
+      <div style="flex:1; padding:1.5rem; background:#f1f5f9;">
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0.75rem; margin-bottom:1rem;">
+          <div style="background:white; padding:1rem; border-radius:8px; border-left:4px solid #7c3aed;">
+            <div style="color:#64748b; font-size:0.7rem; text-transform:uppercase;">Ümumi layihə</div>
+            <div style="font-size:1.8rem; font-weight:700; color:#1e293b;">1</div>
+          </div>
+          <div style="background:white; padding:1rem; border-radius:8px; border-left:4px solid #10b981;">
+            <div style="color:#64748b; font-size:0.7rem; text-transform:uppercase;">Aktiv</div>
+            <div style="font-size:1.8rem; font-weight:700; color:#1e293b;">1</div>
+          </div>
+          <div style="background:white; padding:1rem; border-radius:8px; border-left:4px solid #f59e0b;">
+            <div style="color:#64748b; font-size:0.7rem; text-transform:uppercase;">Büdcə</div>
+            <div style="font-size:1.5rem; font-weight:700; color:#1e293b;">485K AZN</div>
+          </div>
+          <div style="background:white; padding:1rem; border-radius:8px; border-left:4px solid #10b981;">
+            <div style="color:#64748b; font-size:0.7rem; text-transform:uppercase;">Gecikən</div>
+            <div style="font-size:1.8rem; font-weight:700; color:#1e293b;">0</div>
+          </div>
+        </div>
+        <div style="background:white; padding:1rem; border-radius:8px; font-size:0.85rem;">
+          <div style="font-weight:600; margin-bottom:0.5rem; color:#5b21b6;">Status üzrə paylanma</div>
+          <div style="background:#f1f5f9; border-radius:6px; height:140px; display:flex; align-items:center; justify-content:center; color:#94a3b8;">
+            [Plotly pie chart]
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout success">
+    <span class="callout-icon">✓</span>
+    <div class="callout-content">
+      <div class="callout-title">R Shiny dashboard işləyir!</div>
+      <div class="callout-body"><p>Backend (3001) + React (5173) + Shiny (3838) — üçü də paralel işləyir. Hər biri eyni PostgreSQL bazasından oxuyur.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="b16">
+  <h2><span class="num">16</span> ShinyApps.io-ya deployment</h2>
+  <p class="lead">Pulsuz plan ilə 5 tətbiq və ayda 25 saat runtime. Siz artıq ShinyApps.io-ya ARTI-2026 platformasını deploy etmisiniz, eyni prosesdir.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title r">R — rsconnect konfiqurasiyası</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># Əgər rsconnect yoxdursa</span>
+<span class="fn">install.packages</span>(<span class="str">"rsconnect"</span>)
+
+<span class="cmt"># Hesab məlumatlarını təyin edin (bir dəfə)</span>
+rsconnect::<span class="fn">setAccountInfo</span>(
+  name = <span class="str">"tariyel"</span>,
+  token = <span class="str">"SIZIN_TOKEN"</span>,
+  secret = <span class="str">"SIZIN_SECRET"</span>
+)
+
+<span class="cmt"># Deploy et</span>
+rsconnect::<span class="fn">deployApp</span>(
+  appDir = <span class="str">"~/Desktop/Claude_Modei_Təmir_tikinti/shiny"</span>,
+  appName = <span class="str">"ttis-analytics"</span>,
+  appTitle = <span class="str">"TTİS Analitika Mərkəzi"</span>
+)</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış (qısaldılmış)</div>
+<pre class="output-content"><span class="out-info">Preparing to deploy application...</span>DONE
+<span class="out-info">Uploading bundle for application...</span>DONE
+<span class="out-info">Deploying bundle: ...</span>
+<span class="out-info">Building image: ...</span>
+<span class="out-info">Launching application: ...</span>
+<span class="out-success">Application successfully deployed to:</span>
+<span class="out-success">https://tariyel.shinyapps.io/ttis-analytics/</span></pre>
+  </div>
+
+  <div class="callout danger">
+    <span class="callout-icon">!</span>
+    <div class="callout-content">
+      <div class="callout-title">PostgreSQL bağlantısı ShinyApps.io-dan necə olacaq?</div>
+      <div class="callout-body">
+        <p>ShinyApps.io sizin <code class="inline">localhost:5432</code>-yə qoşula bilməz. Üç variantınız var:</p>
+        <ul>
+          <li><strong>DigitalOcean</strong>-da managed PostgreSQL açın (siz buna artıq məlumsunuz)</li>
+          <li><strong>Supabase</strong>-də pulsuz PostgreSQL (10 GB)</li>
+          <li><strong>Multipass VM</strong>-də özünüz deploy edin (növbəti bölmə)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b17">
+  <h2><span class="num">17</span> Multipass VM-də deploy</h2>
+  <p class="lead">Sizin Multipass VM-niz var (Tailscale IP: <code class="inline">100.116.171.28</code>, user <code class="inline">tariyel</code>). Shiny Server orada da qura bilərik.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — Multipass VM-də Shiny Server</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># Mac-dan VM-ə SSH</span>
+ssh tariyel@<span class="num">100.116.171.28</span>
+
+<span class="cmt"># R qraşdırılmayıbsa (bir dəfə)</span>
+sudo apt update &amp;&amp; sudo apt install -y r-base r-base-dev \
+  libpq-dev libssl-dev libcurl4-openssl-dev libxml2-dev
+
+<span class="cmt"># Shiny Server quraşdır</span>
+sudo apt install -y gdebi-core
+wget https://download3.rstudio.org/ubuntu-22.04/x86_64/shiny-server-1.5.22.1017-amd64.deb
+sudo gdebi shiny-server-1.5.22.1017-amd64.deb
+
+<span class="cmt"># Layihəni VM-ə kopyala (Mac-dan)</span>
+<span class="cmt"># (yeni Terminal tabında)</span>
+scp -r ~/Desktop/Claude_Modei_Təmir_tikinti/shiny \
+  tariyel@<span class="num">100.116.171.28</span>:/srv/shiny-server/ttis
+
+<span class="cmt"># VM-də yenidən</span>
+ssh tariyel@<span class="num">100.116.171.28</span>
+
+<span class="cmt"># Paketləri VM-də quraşdır</span>
+sudo su - -c <span class="str">'R -e "install.packages(c(\"shiny\",\"bs4Dash\",\"DBI\",\"RPostgres\",\"pool\",\"plotly\",\"leaflet\",\"DT\",\"dplyr\",\"tidyr\",\"lubridate\",\"ggplot2\",\"httr2\",\"jsonlite\",\"shinyjs\",\"waiter\"))"'</span>
+
+<span class="cmt"># İcazələri düzəlt</span>
+sudo chown -R shiny:shiny /srv/shiny-server/ttis
+
+<span class="cmt"># Shiny Server restart</span>
+sudo systemctl restart shiny-server
+sudo systemctl status shiny-server</code></pre>
+  </div>
+
+  <p>İndi brauzerdə: <code class="inline">http://100.116.171.28:3838/ttis/</code> — Tailscale şəbəkəsi üzərindən Shiny dashboard-unuz.</p>
+
+  <div class="callout tip">
+    <span class="callout-icon">💡</span>
+    <div class="callout-content">
+      <div class="callout-title">Niyə Multipass daha yaxşıdır?</div>
+      <div class="callout-body">
+        <p>Shiny VM PostgreSQL-lə <strong>eyni şəbəkədədir</strong> — 1ms latency. ShinyApps.io-dan DigitalOcean DB-ə müraciət 50-100ms çəkir. Böyük sorğular üçün bu böyük fərq edir.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b18">
+  <h2><span class="num">18</span> Node.js backend ilə inteqrasiya</h2>
+  <p class="lead">Shiny həm birbaşa DB-yə, həm də Node.js backend-ə müraciət edə bilər. Bəzi funksiyalar üçün ikincisi yaxşıdır (məsələn, yazma əməliyyatları auth-dan keçsin).</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title r">R/backend_api.R — Node.js backend wrapper</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; R/backend_api.R &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt"># ═══════════════════════════════════════════════════════════════</span>
+<span class="cmt"># R/backend_api.R — Node.js TTİS backend wrapper</span>
+<span class="cmt"># ═══════════════════════════════════════════════════════════════</span>
+
+BACKEND_URL <span class="kw">&lt;-</span> <span class="fn">Sys.getenv</span>(<span class="str">"BACKEND_URL"</span>, <span class="str">"http://localhost:3001/api/v1"</span>)
+
+<span class="cmt"># Login et və tokeni qaytar</span>
+backend_login <span class="kw">&lt;-</span> <span class="kw">function</span>(email, password) {
+  resp <span class="kw">&lt;-</span> httr2::<span class="fn">request</span>(<span class="fn">paste0</span>(BACKEND_URL, <span class="str">"/auth/login"</span>)) <span class="kw">%&gt;%</span>
+    httr2::<span class="fn">req_body_json</span>(<span class="fn">list</span>(email = email, password = password)) <span class="kw">%&gt;%</span>
+    httr2::<span class="fn">req_perform</span>()
+  httr2::<span class="fn">resp_body_json</span>(resp)$token
+}
+
+<span class="cmt"># Layihə siyahısı — token ilə</span>
+backend_projects <span class="kw">&lt;-</span> <span class="kw">function</span>(token) {
+  resp <span class="kw">&lt;-</span> httr2::<span class="fn">request</span>(<span class="fn">paste0</span>(BACKEND_URL, <span class="str">"/construction/projects"</span>)) <span class="kw">%&gt;%</span>
+    httr2::<span class="fn">req_headers</span>(Authorization = <span class="fn">paste</span>(<span class="str">"Bearer"</span>, token)) <span class="kw">%&gt;%</span>
+    httr2::<span class="fn">req_perform</span>()
+  httr2::<span class="fn">resp_body_json</span>(resp)$data
+}
+
+<span class="cmt"># AI analiz üçün backend-ə sorğu (backend Claude-a göndərir)</span>
+backend_analyze <span class="kw">&lt;-</span> <span class="kw">function</span>(token, project_id) {
+  resp <span class="kw">&lt;-</span> httr2::<span class="fn">request</span>(<span class="fn">paste0</span>(BACKEND_URL, <span class="str">"/construction/projects/"</span>, project_id, <span class="str">"/analyze"</span>)) <span class="kw">%&gt;%</span>
+    httr2::<span class="fn">req_method</span>(<span class="str">"POST"</span>) <span class="kw">%&gt;%</span>
+    httr2::<span class="fn">req_headers</span>(Authorization = <span class="fn">paste</span>(<span class="str">"Bearer"</span>, token)) <span class="kw">%&gt;%</span>
+    httr2::<span class="fn">req_perform</span>()
+  httr2::<span class="fn">resp_body_json</span>(resp)$analysis
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <div class="callout info">
+    <span class="callout-icon">i</span>
+    <div class="callout-content">
+      <div class="callout-title">Nə vaxt birbaşa DB, nə vaxt backend?</div>
+      <div class="callout-body">
+        <ul>
+          <li><strong>Oxuma, aqreqat, view-lar</strong> — birbaşa DB (daha sürətli, daha az hop)</li>
+          <li><strong>Yazma əməliyyatları</strong> — backend (auth + validate + trigger-lər işləsin)</li>
+          <li><strong>AI təhlil</strong> — backend (API açarı orada, cache orada)</li>
+          <li><strong>İstifadəçi idarəsi</strong> — backend (JWT və bcrypt orada)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b19">
+  <h2><span class="num">19</span> Xülasə və növbəti dərs</h2>
+
+  <div class="summary-box">
+    <h3>📝 Bu Dərsdə Öyrəndiklərimiz</h3>
+    <ul>
+      <li>✅ React və Shiny-in rolunu düzgün ayırd etmək</li>
+      <li>✅ DBI + pool ilə PostgreSQL Pool bağlantısı</li>
+      <li>✅ bs4Dash ilə modern enterprise UI</li>
+      <li>✅ Modular Shiny (moduleServer) memarlığı</li>
+      <li>✅ KPI value box-lar və Plotly qrafikləri</li>
+      <li>✅ Leaflet ilə Azərbaycan xəritəsi və markerlər</li>
+      <li>✅ DT paketi ilə dinamik cədvəllər və filtrlər</li>
+      <li>✅ Gantt diaqramı Plotly-də</li>
+      <li>✅ Podratçı performans analitikası</li>
+      <li>✅ Claude API-nin R-dən birbaşa çağırışı (httr2)</li>
+      <li>✅ reactivePoll — avtomatik refresh mexanizmi</li>
+      <li>✅ .Renviron ilə gizli məlumatların saxlanması</li>
+      <li>✅ ShinyApps.io deploy prosesi</li>
+      <li>✅ Multipass VM-də Shiny Server quraşdırma</li>
+      <li>✅ Node.js backend ilə hibrid yanaşma</li>
+    </ul>
+  </div>
+
+  <h3>19.1. Yaradılan fayllar</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — yekun struktur</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="kw">find</span> ~/Desktop/Claude_Modei_Təmir_tikinti/shiny -type f -name <span class="str">"*.R"</span> -o -name <span class="str">"*.Renviron"</span> | <span class="kw">sort</span></code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">.Renviron
+R/backend_api.R
+R/chart_themes.R
+R/claude_api.R
+R/db_helpers.R
+global.R
+modules/mod_ai.R
+modules/mod_budget.R
+modules/mod_contractor.R
+modules/mod_kpi.R
+modules/mod_regional.R
+modules/mod_timeline.R
+server.R
+ui.R</pre>
+  </div>
+
+  <h3>19.2. Git commit</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — commit</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="kw">cd</span> ~/Desktop/Claude_Modei_Təmir_tikinti
+<span class="kw">git</span> add shiny/
+<span class="kw">git</span> status
+<span class="kw">git</span> commit -m <span class="str">"feat(shiny): TTİS analytics dashboard with bs4Dash, Leaflet, Plotly and Claude AI"</span></code></pre>
+  </div>
+
+  <h3>19.3. Növbəti dərsdə</h3>
+  <div class="callout info">
+    <span class="callout-icon">→</span>
+    <div class="callout-content">
+      <div class="callout-title">Dərs 6: Deployment — PM2, Tailscale, Docker, Multipass VM</div>
+      <div class="callout-body">
+        <p>Sonuncu dərsdə:</p>
+        <ul>
+          <li>PM2 ecosystem.config.js — backend-in prodakşn-ə daşınması</li>
+          <li>Sizin Multipass VM tt-server (100.116.171.28) quraşdırması</li>
+          <li>Tailscale VPN ilə təhlükəsiz uzaqdan giriş</li>
+          <li>Nginx reverse proxy (3001, 5173, 3838 → 80/443)</li>
+          <li>Docker-compose ilə tam stack</li>
+          <li>SSL sertifikatlar (Let's Encrypt)</li>
+          <li>Environment strategy: dev/staging/prod</li>
+          <li>CI/CD GitHub Actions</li>
+          <li>Monitoring: PM2 logs, PostgreSQL logs</li>
+          <li>Final smoke test: Azərbaycanın 77 rayonundan istifadəçi simulyasiyası</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<nav class="lesson-nav">
+  <a href="#" class="lesson-nav-btn secondary">← Dərs 4: React</a>
+  <a href="#" class="lesson-nav-btn">Dərs 6: Deployment →</a>
+</nav>
+
+</div>
+
+<script>
+function copyCode(button) {
+  const codeBlock = button.closest('.code-block');
+  const code = codeBlock.querySelector('pre.code-content').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    const originalText = button.innerHTML;
+    button.innerHTML = '✓ Kopyalandı!';
+    button.classList.add('copied');
+    setTimeout(() => { button.innerHTML = originalText; button.classList.remove('copied'); }, 2000);
+  }).catch(() => {
+    const textarea = document.createElement('textarea');
+    textarea.value = code;
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      button.innerHTML = '✓ Kopyalandı!';
+      button.classList.add('copied');
+      setTimeout(() => { button.innerHTML = '📋 Kopyala'; button.classList.remove('copied'); }, 2000);
+    } catch(e) { alert('Kopyalama uğursuz oldu'); }
+    document.body.removeChild(textarea);
+  });
+}
+</script>
+
+</body>
+</html>

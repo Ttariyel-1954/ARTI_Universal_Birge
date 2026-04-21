@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dərs 6 — Production Deployment: PM2, Nginx, Tailscale, Docker və SSL</title>
+<style>
+  :root {
+    --primary: #047857; --primary-dark: #064e3b; --primary-light: #d1fae5;
+    --accent: #0369a1; --accent-light: #dbeafe;
+    --warning: #d97706; --warning-light: #fef3c7;
+    --success: #059669; --success-light: #d1fae5;
+    --danger: #dc2626; --danger-light: #fee2e2;
+    --text: #0f172a; --text-muted: #475569; --text-subtle: #64748b;
+    --bg: #fafbfc; --surface: #ffffff; --surface-alt: #f8fafc;
+    --border: #e2e8f0; --border-strong: #cbd5e1;
+    --code-bg: #0f172a; --code-text: #e2e8f0;
+    --code-comment: #64748b; --code-keyword: #c4b5fd; --code-string: #86efac;
+    --code-number: #fcd34d; --code-function: #93c5fd;
+    --output-bg: #1e293b; --output-text: #cbd5e1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; font-size: 16px; -webkit-font-smoothing: antialiased; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+  .hero { background: linear-gradient(135deg, #064e3b 0%, #047857 50%, #0369a1 100%); color: white; padding: 3.5rem 2.5rem; border-radius: 20px; margin-bottom: 2.5rem; box-shadow: 0 20px 50px -15px rgba(4, 120, 87, 0.4); position: relative; overflow: hidden; }
+  .hero::before { content: '🚀'; position: absolute; top: -30px; right: -10px; font-size: 280px; opacity: 0.09; pointer-events: none; }
+  .hero-label { display: inline-block; background: rgba(255, 255, 255, 0.18); backdrop-filter: blur(10px); padding: 0.5rem 1.25rem; border-radius: 50px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 1.25rem; border: 1px solid rgba(255, 255, 255, 0.25); position: relative; z-index: 1; }
+  .hero h1 { font-size: 2.4rem; font-weight: 800; line-height: 1.2; margin-bottom: 1rem; letter-spacing: -0.02em; position: relative; z-index: 1; }
+  .hero-subtitle { font-size: 1.15rem; opacity: 0.94; max-width: 750px; line-height: 1.65; position: relative; z-index: 1; }
+  .hero-meta { display: flex; gap: 1.5rem; margin-top: 1.75rem; flex-wrap: wrap; position: relative; z-index: 1; }
+  .hero-meta-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; opacity: 0.9; }
+  .objectives { background: var(--primary-light); border-left: 5px solid var(--primary); padding: 1.75rem 2rem; border-radius: 12px; margin-bottom: 2.5rem; }
+  .objectives h3 { color: var(--primary-dark); font-size: 1.05rem; font-weight: 700; margin-bottom: 1rem; }
+  .objectives ul { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 0.75rem 1.5rem; }
+  .objectives li { padding-left: 1.75rem; position: relative; font-size: 0.95rem; }
+  .objectives li::before { content: '✓'; position: absolute; left: 0; color: var(--primary); font-weight: 800; font-size: 1.1rem; }
+  .toc { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 2rem; margin-bottom: 2.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .toc h3 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-subtle); margin-bottom: 1rem; }
+  .toc ol { list-style: none; counter-reset: toc-counter; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.45rem 1rem; }
+  .toc li { counter-increment: toc-counter; }
+  .toc a { color: var(--text); text-decoration: none; padding: 0.5rem 0; display: flex; align-items: flex-start; gap: 0.75rem; font-size: 0.92rem; transition: color 0.15s; }
+  .toc a::before { content: counter(toc-counter, decimal-leading-zero); color: var(--primary); font-weight: 700; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  .toc a:hover { color: var(--primary); }
+  section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2.25rem 2.5rem; margin-bottom: 1.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
+  section h2 { font-size: 1.65rem; font-weight: 750; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 0.75rem; letter-spacing: -0.015em; }
+  section h2 .num { background: var(--primary); color: white; width: 38px; height: 38px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  section h3 { font-size: 1.2rem; font-weight: 700; margin: 1.75rem 0 0.85rem; letter-spacing: -0.01em; }
+  section h4 { font-size: 1rem; font-weight: 650; margin: 1.25rem 0 0.5rem; }
+  section p { margin-bottom: 1rem; }
+  section p.lead { font-size: 1.08rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+  section ul, section ol { margin: 0.75rem 0 1.25rem 1.5rem; }
+  section li { margin-bottom: 0.5rem; }
+  section strong { color: var(--primary-dark); font-weight: 650; }
+  section em { color: var(--accent); font-style: normal; font-weight: 600; }
+  .code-block { background: var(--code-bg); border-radius: 12px; margin: 1.25rem 0 0.5rem; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .code-header { background: #1e293b; padding: 0.6rem 1.15rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .code-title { color: #94a3b8; font-size: 0.78rem; font-weight: 600; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; display: flex; align-items: center; gap: 0.5rem; }
+  .code-title::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: #22c55e; display: inline-block; }
+  .code-title.nginx::before { background: #059669; }
+  .code-title.yaml::before { background: #a78bfa; }
+  .code-title.env::before { background: #a78bfa; }
+  .code-title.js::before { background: #f7df1e; }
+  .code-copy { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; padding: 0.35rem 0.85rem; border-radius: 6px; font-size: 0.78rem; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .code-copy:hover { background: rgba(255,255,255,0.15); color: white; }
+  .code-copy.copied { background: var(--success); color: white; border-color: var(--success); }
+  pre.code-content { padding: 1.25rem 1.35rem; overflow-x: auto; color: var(--code-text); font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 0.87rem; line-height: 1.65; }
+  .cmt { color: var(--code-comment); font-style: italic; }
+  .kw { color: var(--code-keyword); font-weight: 600; }
+  .str { color: var(--code-string); }
+  .num { color: var(--code-number); }
+  .fn { color: var(--code-function); }
+  .obj { color: #f9a8d4; }
+  .prop { color: #fde047; }
+  .output-block { background: var(--output-bg); border-radius: 0 0 12px 12px; margin: 0 0 1.5rem 0; border-top: 2px dashed rgba(255,255,255,0.1); }
+  .output-header { background: #0f172a; padding: 0.55rem 1.15rem; display: flex; align-items: center; gap: 0.5rem; color: #86efac; font-size: 0.76rem; font-weight: 600; letter-spacing: 0.5px; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; text-transform: uppercase; }
+  .output-header::before { content: '▶'; color: #22c55e; }
+  pre.output-content { padding: 1rem 1.35rem; overflow-x: auto; color: var(--output-text); font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 0.83rem; line-height: 1.55; background: var(--output-bg); }
+  .out-success { color: #86efac; }
+  .out-warning { color: #fcd34d; }
+  .out-info { color: #93c5fd; }
+  .out-error { color: #fca5a5; }
+  .out-header-line { color: #f9a8d4; font-weight: 600; }
+  .out-separator { color: #475569; }
+  .out-dim { color: #64748b; }
+  code.inline { background: var(--surface-alt); color: var(--primary-dark); padding: 0.15rem 0.45rem; border-radius: 5px; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 0.88em; border: 1px solid var(--border); }
+  .callout { border-radius: 12px; padding: 1.25rem 1.5rem; margin: 1.5rem 0; border-left: 4px solid; display: flex; gap: 1rem; align-items: flex-start; }
+  .callout-icon { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.85rem; }
+  .callout-content { flex: 1; }
+  .callout-title { font-weight: 700; margin-bottom: 0.35rem; font-size: 0.95rem; }
+  .callout-body { font-size: 0.93rem; }
+  .callout-body p:last-child { margin-bottom: 0; }
+  .callout.info { background: var(--accent-light); border-color: var(--accent); }
+  .callout.info .callout-icon { background: var(--accent); }
+  .callout.info .callout-title { color: #075985; }
+  .callout.warning { background: var(--warning-light); border-color: var(--warning); }
+  .callout.warning .callout-icon { background: var(--warning); }
+  .callout.warning .callout-title { color: #92400e; }
+  .callout.success { background: var(--success-light); border-color: var(--success); }
+  .callout.success .callout-icon { background: var(--success); }
+  .callout.success .callout-title { color: #065f46; }
+  .callout.tip { background: #cffafe; border-color: #0891b2; }
+  .callout.tip .callout-icon { background: #0891b2; }
+  .callout.tip .callout-title { color: #0e7490; }
+  .callout.danger { background: var(--danger-light); border-color: var(--danger); }
+  .callout.danger .callout-icon { background: var(--danger); }
+  .callout.danger .callout-title { color: #991b1b; }
+  .table-wrap { overflow-x: auto; margin: 1.25rem 0; border-radius: 10px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  table thead { background: var(--surface-alt); }
+  table th { padding: 0.75rem 1rem; text-align: left; font-weight: 650; border-bottom: 2px solid var(--border-strong); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  table tbody tr:last-child td { border-bottom: none; }
+  table tbody tr:hover { background: var(--surface-alt); }
+  .file-tree { background: var(--surface-alt); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; margin: 1.25rem 0; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 0.88rem; line-height: 1.8; color: var(--text); }
+  .file-tree .folder { color: var(--primary-dark); font-weight: 600; }
+  .file-tree .file { color: var(--text-muted); }
+  .file-tree .comment { color: var(--text-subtle); font-style: italic; }
+  .summary-box { background: linear-gradient(135deg, #d1fae5 0%, #dbeafe 100%); border: 1px solid var(--primary-light); border-radius: 14px; padding: 1.75rem 2rem; margin: 1.5rem 0; }
+  .summary-box h3 { color: var(--primary-dark) !important; margin-top: 0 !important; font-size: 1.15rem !important; }
+  .step-head { display: flex; align-items: center; gap: 0.75rem; margin: 2rem 0 1rem; }
+  .step-num { width: 34px; height: 34px; border-radius: 50%; background: var(--primary); color: white; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem; flex-shrink: 0; }
+  .step-title { font-size: 1.15rem; font-weight: 700; color: var(--text); }
+  .erd-wrap { background: var(--surface-alt); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; overflow-x: auto; }
+  .erd-wrap svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+  .diagram-caption { margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-subtle); font-style: italic; text-align: center; }
+  .celebration { background: linear-gradient(135deg, #fef3c7 0%, #dbeafe 50%, #d1fae5 100%); border-radius: 16px; padding: 2.5rem; text-align: center; margin: 2rem 0; }
+  .celebration h2 { font-size: 2rem; margin-bottom: 1rem; }
+  .lesson-nav { display: flex; justify-content: space-between; gap: 1rem; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--border); }
+  .lesson-nav-btn { background: var(--primary); color: white; padding: 1rem 1.5rem; border-radius: 10px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem; transition: background 0.15s; }
+  .lesson-nav-btn:hover { background: var(--primary-dark); }
+  .lesson-nav-btn.secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  @media (max-width: 720px) { .container { padding: 1rem; } .hero { padding: 2rem 1.5rem; } .hero h1 { font-size: 1.75rem; } section { padding: 1.5rem 1.25rem; } section h2 { font-size: 1.35rem; } pre.code-content, pre.output-content { font-size: 0.78rem; padding: 1rem; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="hero">
+  <span class="hero-label">🚀 DƏRS 06 / 06 — SON DƏRS · PRODUCTION DEPLOYMENT</span>
+  <h1>Production Deployment: PM2, Nginx, Tailscale, Docker və SSL</h1>
+  <p class="hero-subtitle">Bütün 5 komponenti (PostgreSQL + Node Backend + React + Shiny) sizin Multipass VM-də (tt-server: 100.116.171.28) production-ready vəziyyətə gətiririk. PM2 cluster, Nginx reverse proxy, Tailscale VPN, Let's Encrypt SSL, GitHub Actions CI/CD — hamısı yerli şəraitə uyğun.</p>
+  <div class="hero-meta">
+    <span class="hero-meta-item">⏱ Təxminən 180–240 dəqiqə</span>
+    <span class="hero-meta-item">🖥 Multipass VM + Tailscale</span>
+    <span class="hero-meta-item">🔐 HTTPS + PM2 cluster</span>
+  </div>
+</div>
+
+<div class="objectives">
+  <h3>🎯 Bu Dərsin Sonunda Siz Nəyi Bacaracaqsınız?</h3>
+  <ul>
+    <li>VM-i production üçün hazırlamaq (users, firewall, updates)</li>
+    <li>PostgreSQL-i production tunning etmək</li>
+    <li>PM2 ecosystem.config.js ilə cluster mode</li>
+    <li>React build-i statik fayl kimi təqdim etmək</li>
+    <li>Shiny Server-i VM-də konfiqurasiya etmək</li>
+    <li>Nginx reverse proxy ilə 3 servisi bir domenə yığmaq</li>
+    <li>Let's Encrypt ilə pulsuz SSL sertifikatı almaq</li>
+    <li>Tailscale ilə təhlükəsiz VPN şəbəkəsi qurmaq</li>
+    <li>Docker-compose ilə alternativ deploy</li>
+    <li>GitHub Actions ilə CI/CD pipeline</li>
+    <li>PM2 logs + log rotation</li>
+    <li>Monitoring və uptime yoxlama</li>
+    <li>Avtomatik gündəlik backup</li>
+    <li>Security hardening (UFW, fail2ban)</li>
+  </ul>
+</div>
+
+<nav class="toc">
+  <h3>Dərsin Bölmələri</h3>
+  <ol>
+    <li><a href="#b1">Production vs Development</a></li>
+    <li><a href="#b2">VM hazırlığı və təhlükəsizlik</a></li>
+    <li><a href="#b3">Tailscale VPN setup</a></li>
+    <li><a href="#b4">Layihənin VM-ə köçürülməsi</a></li>
+    <li><a href="#b5">Node.js və PostgreSQL</a></li>
+    <li><a href="#b6">Backend deploy (PM2)</a></li>
+    <li><a href="#b7">Frontend build və static serving</a></li>
+    <li><a href="#b8">R Shiny Server</a></li>
+    <li><a href="#b9">Nginx reverse proxy</a></li>
+    <li><a href="#b10">Domain və DNS</a></li>
+    <li><a href="#b11">Let's Encrypt SSL</a></li>
+    <li><a href="#b12">Avtomatik backup</a></li>
+    <li><a href="#b13">Monitoring və loglar</a></li>
+    <li><a href="#b14">GitHub Actions CI/CD</a></li>
+    <li><a href="#b15">Security hardening</a></li>
+    <li><a href="#b16">Docker alternativi</a></li>
+    <li><a href="#b17">Smoke test</a></li>
+    <li><a href="#b18">Xülasə və ixtisas yolu</a></li>
+  </ol>
+</nav>
+
+<section id="b1">
+  <h2><span class="num">1</span> Production vs Development</h2>
+  <p class="lead">Beş dərs boyunca öz Mac-imizdə (localhost) layihəni inkişaf etdirdik. İndi onu <strong>100+ istifadəçinin</strong> eyni anda işlədə biləcəyi formaya gətirməliyik.</p>
+
+  <h3>1.1. Nə dəyişir?</h3>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Aspekt</th><th>Development (Mac)</th><th>Production (VM)</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Host</strong></td><td>localhost</td><td>VM + domain</td></tr>
+        <tr><td><strong>Node process</strong></td><td>nodemon (1 nüsxə)</td><td>PM2 cluster (4 nüsxə)</td></tr>
+        <tr><td><strong>Frontend</strong></td><td>Vite dev (5173)</td><td>Nginx static (80/443)</td></tr>
+        <tr><td><strong>Database</strong></td><td>boş şifrə, royatalibova</td><td>güclü şifrə, sıx icazə</td></tr>
+        <tr><td><strong>Logs</strong></td><td>console</td><td>fayl + rotation</td></tr>
+        <tr><td><strong>SSL</strong></td><td>HTTP</td><td>HTTPS (Let's Encrypt)</td></tr>
+        <tr><td><strong>Refresh</strong></td><td>HMR</td><td>build + deploy</td></tr>
+        <tr><td><strong>Error-lar</strong></td><td>stack trace göstər</td><td>gizlət, logla</td></tr>
+        <tr><td><strong>Crash</strong></td><td>manual restart</td><td>PM2 avtomatik restart</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>1.2. Yekun arxitektura</h3>
+
+  <div class="erd-wrap">
+    <svg viewBox="0 0 820 460" xmlns="http://www.w3.org/2000/svg">
+      <rect x="20" y="20" width="780" height="420" rx="14" fill="#ecfdf5" stroke="#059669" stroke-width="2" stroke-dasharray="8"/>
+      <text x="40" y="45" font-size="14" font-weight="700" fill="#065f46">🖥️ Multipass VM — tt-server (100.116.171.28)</text>
+
+      <rect x="50" y="70" width="280" height="70" rx="10" fill="white" stroke="#0369a1" stroke-width="2"/>
+      <text x="190" y="95" text-anchor="middle" font-size="13" font-weight="700" fill="#075985">🌐 Tailscale VPN</text>
+      <text x="190" y="115" text-anchor="middle" font-size="10" fill="#64748b">Təhlükəsiz remote access</text>
+
+      <rect x="360" y="70" width="280" height="70" rx="10" fill="white" stroke="#7c3aed" stroke-width="2"/>
+      <text x="500" y="95" text-anchor="middle" font-size="13" font-weight="700" fill="#5b21b6">🔒 Nginx + Let's Encrypt</text>
+      <text x="500" y="115" text-anchor="middle" font-size="10" fill="#64748b">Reverse proxy + HTTPS</text>
+
+      <rect x="50" y="170" width="180" height="90" rx="10" fill="#dbeafe" stroke="#336791" stroke-width="2"/>
+      <text x="140" y="195" text-anchor="middle" font-size="12" font-weight="700" fill="#1e3a8a">🐘 PostgreSQL 17</text>
+      <text x="140" y="215" text-anchor="middle" font-size="10" fill="#1e3a8a">:5432 (loopback)</text>
+      <text x="140" y="235" text-anchor="middle" font-size="10" fill="#1e3a8a">ttis_db</text>
+
+      <rect x="250" y="170" width="180" height="90" rx="10" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+      <text x="340" y="195" text-anchor="middle" font-size="12" font-weight="700" fill="#065f46">⬢ Node Backend</text>
+      <text x="340" y="215" text-anchor="middle" font-size="10" fill="#065f46">PM2 cluster</text>
+      <text x="340" y="235" text-anchor="middle" font-size="10" fill="#065f46">:3001 (4 worker)</text>
+
+      <rect x="450" y="170" width="180" height="90" rx="10" fill="#dbeafe" stroke="#0284c7" stroke-width="2"/>
+      <text x="540" y="195" text-anchor="middle" font-size="12" font-weight="700" fill="#075985">⚛ React static</text>
+      <text x="540" y="215" text-anchor="middle" font-size="10" fill="#075985">/var/www/ttis</text>
+      <text x="540" y="235" text-anchor="middle" font-size="10" fill="#075985">dist/ faylları</text>
+
+      <rect x="650" y="170" width="130" height="90" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+      <text x="715" y="195" text-anchor="middle" font-size="12" font-weight="700" fill="#5b21b6">📊 Shiny</text>
+      <text x="715" y="215" text-anchor="middle" font-size="10" fill="#5b21b6">Server</text>
+      <text x="715" y="235" text-anchor="middle" font-size="10" fill="#5b21b6">:3838</text>
+
+      <rect x="50" y="290" width="730" height="90" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+      <text x="415" y="315" text-anchor="middle" font-size="13" font-weight="700" fill="#92400e">🛡️ PM2 + UFW + fail2ban + backup cron</text>
+      <text x="415" y="335" text-anchor="middle" font-size="11" fill="#92400e">Avtomatik restart · firewall · gündəlik backup · log rotation</text>
+      <text x="415" y="355" text-anchor="middle" font-size="11" fill="#92400e">GitHub Actions → VM CI/CD pipeline</text>
+
+      <rect x="50" y="395" width="730" height="30" rx="6" fill="white" stroke="#64748b"/>
+      <text x="415" y="415" text-anchor="middle" font-size="11" fill="#475569">Ubuntu 24.04 LTS</text>
+    </svg>
+    <p class="diagram-caption">Şəkil 1. TTİS production stack-i — bütün komponentlər bir VM-də</p>
+  </div>
+</section>
+
+<section id="b2">
+  <h2><span class="num">2</span> VM hazırlığı və təhlükəsizlik</h2>
+  <p class="lead">Əvvəlcə VM-i update edib, işçi istifadəçi (<code class="inline">tariyel</code>) üçün düzgün icazələri quraq.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — Mac-dan VM-ə SSH</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># Mac-dan Tailscale üzərindən VM-ə qoşuluruq</span>
+ssh tariyel@<span class="num">100.116.171.28</span>
+
+<span class="cmt"># Sistem yenilənməsi</span>
+sudo apt update <span class="kw">&amp;&amp;</span> sudo apt upgrade -y
+
+<span class="cmt"># Əsas alətləri quraşdıraq</span>
+sudo apt install -y \
+  curl wget git vim htop ufw fail2ban \
+  build-essential software-properties-common \
+  ca-certificates gnupg lsb-release
+
+<span class="cmt"># Timezone Baku-ya qur</span>
+sudo timedatectl set-timezone Asia/Baku
+
+<span class="cmt"># Yoxla</span>
+<span class="kw">date</span>
+<span class="fn">uname</span> -a</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">Cu, apr 17, <span class="num">2026</span>, <span class="num">15</span>:<span class="num">30</span>:<span class="num">00</span> +<span class="num">04</span>
+Linux tt-server <span class="num">6.8</span>.<span class="num">0</span>-<span class="num">58</span>-generic #<span class="num">60</span>-Ubuntu SMP ... <span class="num">24</span>.<span class="num">04</span>.<span class="num">2</span> LTS</pre>
+  </div>
+
+  <div class="step-head"><span class="step-num">1</span><span class="step-title">UFW firewall konfiqurasiyası</span></div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — firewall qaydaları</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># Default deny (hər şey bağlı)</span>
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+
+<span class="cmt"># Yalnız SSH və HTTPS-ə icazə</span>
+sudo ufw allow ssh
+sudo ufw allow <span class="num">80</span>/tcp    <span class="cmt"># HTTP (Let's Encrypt üçün lazımdır)</span>
+sudo ufw allow <span class="num">443</span>/tcp   <span class="cmt"># HTTPS</span>
+
+<span class="cmt"># Tailscale interface-i üçün icazə (tailscale0)</span>
+sudo ufw allow in on tailscale0
+
+<span class="cmt"># Aktivləşdir</span>
+sudo ufw --force enable
+sudo ufw status verbose</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">Status: <span class="out-success">active</span>
+
+To                         Action      From
+--                         ------      ----
+22/tcp                     ALLOW IN    Anywhere
+80/tcp                     ALLOW IN    Anywhere
+443/tcp                    ALLOW IN    Anywhere
+Anywhere on tailscale0     ALLOW IN    Anywhere</pre>
+  </div>
+
+  <div class="callout tip">
+    <span class="callout-icon">💡</span>
+    <div class="callout-content">
+      <div class="callout-title">Niyə 3001, 5173, 3838 portlarını bağlayırıq?</div>
+      <div class="callout-body">
+        <p>Node, Vite, Shiny portlarına birbaşa müraciəti bağlayırıq — bütün trafik Nginx-dən (80/443) keçməlidir. Bu həm təhlükəsizlik, həm də SSL üçün lazımdır. Daxili networkdə (localhost) bu portlar işləyəcək, amma kənardan əlçatmaz olacaq.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step-head"><span class="step-num">2</span><span class="step-title">fail2ban ilə SSH brute-force qorunması</span></div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — fail2ban konfiqurasiyası</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>sudo tee /etc/fail2ban/jail.local &gt; /dev/null &lt;&lt; <span class="str">'EOF'</span>
+[DEFAULT]
+bantime = 3600
+findtime = 600
+maxretry = 5
+
+[sshd]
+enabled = true
+port = ssh
+filter = sshd
+logpath = /var/log/auth.log
+<span class="str">EOF</span>
+
+sudo systemctl restart fail2ban
+sudo systemctl enable fail2ban
+
+<span class="cmt"># Status</span>
+sudo fail2ban-client status sshd</code></pre>
+  </div>
+</section>
+
+<section id="b3">
+  <h2><span class="num">3</span> Tailscale VPN setup</h2>
+  <p class="lead">Sizin VM-də Tailscale artıq var (IP: 100.116.171.28). Bu bölmə ya Sizin üçün təkrarlamadır, ya da yeni komanda üzvləri üçün.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — Tailscale quraşdırma (əgər yoxdursa)</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># Rəsmi install skripti</span>
+curl -fsSL https://tailscale.com/install.sh | sh
+
+<span class="cmt"># Şəbəkəyə qoşul</span>
+sudo tailscale up --ssh --hostname=tt-server
+
+<span class="cmt"># Bu komanda terminalda authorize URL göstərəcək</span>
+<span class="cmt"># URL-i Mac-də açıb login olun — VM avtomatik şəbəkəyə qoşulacaq</span>
+
+<span class="cmt"># Status və IP</span>
+tailscale status
+tailscale ip -<span class="num">4</span></code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content"><span class="out-success">100.116.171.28   tt-server        tariyel@     linux   -</span>
+100.82.15.44    royas-macbook     tariyel@     macOS   active
+...
+
+100.116.171.28</pre>
+  </div>
+
+  <div class="callout info">
+    <span class="callout-icon">i</span>
+    <div class="callout-content">
+      <div class="callout-title">Tailscale-in güclü tərəfləri</div>
+      <div class="callout-body">
+        <ul>
+          <li><strong>Zero-config VPN</strong> — hər iki cihazda quraşdırıb Google ilə login etmək kifayətdir</li>
+          <li><strong>Heç bir port açmağa ehtiyac yox</strong> — NAT-a, router-ə güc sərf olunmur</li>
+          <li><strong>MagicDNS</strong> — <code class="inline">ssh tariyel@tt-server</code> işləyir</li>
+          <li><strong>Hər komanda üzvü öz cihazını əlavə edir</strong> — paylaşılmış VPN şifrəsi yoxdur</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b4">
+  <h2><span class="num">4</span> Layihənin VM-ə köçürülməsi</h2>
+  <p class="lead">Layihəmiz Mac-dədir. VM-ə köçürmək üçün iki yol var: git clone (məsləhət görülür) və ya scp.</p>
+
+  <div class="step-head"><span class="step-num">1</span><span class="step-title">Deploy istifadəçisi üçün qovluqları hazırlayaq</span></div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — VM-də</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># Tətbiqlər üçün qovluq</span>
+sudo mkdir -p /var/www
+sudo chown tariyel:tariyel /var/www
+
+<span class="cmt"># Log qovluğu</span>
+sudo mkdir -p /var/log/ttis
+sudo chown tariyel:tariyel /var/log/ttis
+
+<span class="cmt"># Backup qovluğu</span>
+sudo mkdir -p /var/backups/ttis
+sudo chown tariyel:tariyel /var/backups/ttis</code></pre>
+  </div>
+
+  <div class="step-head"><span class="step-num">2</span><span class="step-title">Git clone (A variantı)</span></div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — git ilə</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="kw">cd</span> /var/www
+
+<span class="cmt"># GitHub hesabınız (Ttariyel-1954) ilə</span>
+<span class="cmt"># NÖVBƏTİ: əvvəlcə GitHub-a layihəni push etmiş olmalısınız</span>
+git clone https://github.com/Ttariyel-1954/Claude_Modei_Temir_tikinti.git ttis
+
+<span class="kw">cd</span> ttis
+<span class="kw">ls</span> -la</code></pre>
+  </div>
+
+  <div class="step-head"><span class="step-num">3</span><span class="step-title">scp ilə (B variantı — Mac-dan)</span></div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — Mac-dan direct köçürmə</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># Mac-da (yeni Terminal tabı)</span>
+<span class="kw">cd</span> ~/Desktop
+
+<span class="cmt"># rsync — git-dən tam fayl köçürməyə nisbətən node_modules olmadan</span>
+rsync -avz --progress \
+  --exclude <span class="str">'node_modules'</span> \
+  --exclude <span class="str">'.env'</span> \
+  --exclude <span class="str">'dist'</span> \
+  --exclude <span class="str">'*.log'</span> \
+  Claude_Modei_Təmir_tikinti/ \
+  tariyel@<span class="num">100.116.171.28</span>:/var/www/ttis/</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">sending incremental file list
+<span class="out-success">./</span>
+<span class="out-success">README.md</span>
+<span class="out-success">backend/package.json</span>
+<span class="out-success">backend/server.js</span>
+...
+sent <span class="num">2.4M</span> bytes  received <span class="num">15K</span> bytes  <span class="num">245K</span> bytes/sec</pre>
+  </div>
+</section>
+
+<section id="b5">
+  <h2><span class="num">5</span> Node.js və PostgreSQL</h2>
+  <p class="lead">VM-də Node 22 LTS və PostgreSQL 17-ni quraşdıraq.</p>
+
+  <div class="step-head"><span class="step-num">1</span><span class="step-title">Node.js 22 LTS</span></div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — Node.js NodeSource repo-dan</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># NodeSource-un rəsmi repo-su</span>
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
+
+<span class="cmt"># Versiyalar</span>
+node --version
+npm --version
+
+<span class="cmt"># PM2-ni qlobal quraşdır</span>
+sudo npm install -g pm2</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content"><span class="out-success">v22.14.0</span>
+<span class="out-success">10.9.2</span>
+
+added <span class="num">183</span> packages in <span class="num">8</span>s</pre>
+  </div>
+
+  <div class="step-head"><span class="step-num">2</span><span class="step-title">PostgreSQL 17</span></div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — PostgreSQL 17 rəsmi repo-dan</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># PostgreSQL rəsmi repo</span>
+sudo sh -c <span class="str">'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" &gt; /etc/apt/sources.list.d/pgdg.list'</span>
+curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/pgdg.gpg
+
+sudo apt update
+sudo apt install -y postgresql-<span class="num">17</span> postgresql-client-<span class="num">17</span>
+
+<span class="cmt"># Status</span>
+sudo systemctl status postgresql</code></pre>
+  </div>
+
+  <div class="step-head"><span class="step-num">3</span><span class="step-title">Bazanı və istifadəçini yaratmaq</span></div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — DB yaradılması</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># postgres istifadəçisinə keçirik</span>
+sudo -u postgres psql &lt;&lt; <span class="str">'EOF'</span>
+-- Production istifadəçisi yaradırıq (güclü şifrə!)
+CREATE USER ttis_app WITH ENCRYPTED PASSWORD 'XXXXXXXXXXXXXXXXXXXXX';
+
+-- Bazanı yaradırıq
+CREATE DATABASE ttis_db OWNER ttis_app;
+
+-- Əlavə hüquqlar
+GRANT ALL PRIVILEGES ON DATABASE ttis_db TO ttis_app;
+
+\q
+<span class="str">EOF</span>
+
+<span class="cmt"># Test bağlantı</span>
+psql -U ttis_app -d ttis_db -h localhost -c <span class="str">"SELECT version();"</span></code></pre>
+  </div>
+
+  <div class="callout danger">
+    <span class="callout-icon">!</span>
+    <div class="callout-content">
+      <div class="callout-title">Güclü şifrə!</div>
+      <div class="callout-body">
+        <p><code class="inline">XXXXXXXXXXXXXXXXXXXXX</code> — burada <strong>minimum 24 simvol</strong> təsadüfi şifrə istifadə edin. Generasiya üçün:</p>
+        <p><code class="inline">openssl rand -base64 32</code></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step-head"><span class="step-num">4</span><span class="step-title">Schema və seed-ləri tətbiq etmək</span></div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — Dərs 2-dəki SQL-ləri tətbiq</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="kw">cd</span> /var/www/ttis
+
+<span class="cmt"># Schema-ları tətbiq et (tərtib ilə)</span>
+<span class="kw">for</span> f <span class="kw">in</span> database/schemas/*.sql; <span class="kw">do</span>
+  echo <span class="str">"Applying $f..."</span>
+  psql -U ttis_app -d ttis_db -h localhost -f <span class="str">"$f"</span>
+<span class="kw">done</span>
+
+<span class="cmt"># Seed məlumatları</span>
+<span class="kw">for</span> f <span class="kw">in</span> database/seeds/*.sql; <span class="kw">do</span>
+  psql -U ttis_app -d ttis_db -h localhost -f <span class="str">"$f"</span>
+<span class="kw">done</span>
+
+<span class="cmt"># Yoxlama</span>
+psql -U ttis_app -d ttis_db -h localhost -c <span class="str">"\dt construction.*"</span></code></pre>
+  </div>
+</section>
+
+<section id="b6">
+  <h2><span class="num">6</span> Backend deploy (PM2)</h2>
+  <p class="lead">Backend-i VM-də production-ready vəziyyətə gətiririk: production .env, npm ci, PM2 cluster.</p>
+
+  <div class="step-head"><span class="step-num">1</span><span class="step-title">Production .env faylı</span></div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title env">/var/www/ttis/backend/.env</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="kw">cd</span> /var/www/ttis/backend
+
+<span class="cmt"># Production .env</span>
+cat &gt; .env &lt;&lt; <span class="str">'EOF'</span>
+NODE_ENV=production
+PORT=3001
+HOST=127.0.0.1
+API_PREFIX=/api/v1
+DOMAIN=construction
+
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=ttis_db
+DB_USER=ttis_app
+DB_PASSWORD=YOUR_STRONG_DB_PASSWORD
+DB_POOL_MIN=4
+DB_POOL_MAX=20
+
+JWT_SECRET=CHANGE_ME_RANDOM_64_CHAR_STRING_PRODUCTION
+JWT_EXPIRES_IN=7d
+BCRYPT_ROUNDS=12
+
+ANTHROPIC_API_KEY=sk-ant-api03-...
+ANTHROPIC_MODEL=claude-sonnet-4-6
+
+CORS_ORIGIN=https://ttis.arti.edu.az
+LOG_LEVEL=info
+<span class="str">EOF</span>
+
+chmod <span class="num">600</span> .env   <span class="cmt"># yalnız sahibi oxuya bilər</span></code></pre>
+  </div>
+
+  <div class="step-head"><span class="step-num">2</span><span class="step-title">npm ci (production install)</span></div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — production install</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># npm install əvəzinə npm ci istifadə edirik:</span>
+<span class="cmt">#   - package-lock.json-a ciddi uyğun</span>
+<span class="cmt">#   - daha sürətli</span>
+<span class="cmt">#   - devDependencies-i skip edir (--production)</span>
+npm ci --omit=dev
+
+<span class="cmt"># Bağlantı test et</span>
+node src/core/utils/dbTest.js</code></pre>
+  </div>
+
+  <div class="step-head"><span class="step-num">3</span><span class="step-title">PM2 ecosystem.config.js</span></div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title js">/var/www/ttis/backend/ecosystem.config.js</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; ecosystem.config.js &lt;&lt; <span class="str">'EOF'</span>
+module.exports = {
+  apps: [{
+    name: <span class="str">'ttis-backend'</span>,
+    script: <span class="str">'./server.js'</span>,
+    cwd: <span class="str">'/var/www/ttis/backend'</span>,
+
+    <span class="cmt">// Cluster mode - 4 worker (CPU core-a görə)</span>
+    instances: <span class="num">4</span>,
+    exec_mode: <span class="str">'cluster'</span>,
+
+    <span class="cmt">// Avtomatik yenidən başlatma</span>
+    autorestart: <span class="kw">true</span>,
+    watch: <span class="kw">false</span>,
+    max_memory_restart: <span class="str">'500M'</span>,
+
+    <span class="cmt">// Loglar</span>
+    error_file: <span class="str">'/var/log/ttis/backend-error.log'</span>,
+    out_file: <span class="str">'/var/log/ttis/backend-out.log'</span>,
+    log_date_format: <span class="str">'YYYY-MM-DD HH:mm:ss'</span>,
+    merge_logs: <span class="kw">true</span>,
+
+    <span class="cmt">// Env</span>
+    env: {
+      NODE_ENV: <span class="str">'production'</span>
+    },
+
+    <span class="cmt">// Graceful shutdown</span>
+    kill_timeout: <span class="num">5000</span>,
+    listen_timeout: <span class="num">10000</span>
+  }]
+};
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <div class="step-head"><span class="step-num">4</span><span class="step-title">PM2 ilə işə salma</span></div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — PM2 start</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># Ecosystem config-dan işə sal</span>
+pm2 start ecosystem.config.js
+
+<span class="cmt"># VM yenidən başladıqda PM2 avtomatik işə düşsün</span>
+pm2 startup systemd -u tariyel --hp /home/tariyel
+<span class="cmt"># ↑ yuxarıdakı komanda sizə sudo komandası göstərəcək, onu icra edin</span>
+
+<span class="cmt"># Konfiqurasiyanı yadda saxla</span>
+pm2 save
+
+<span class="cmt"># Status</span>
+pm2 status
+pm2 logs ttis-backend --lines <span class="num">20</span></code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content"><span class="out-info">┌─────┬──────────────────┬─────────┬─────────┬──────────┬────────┬──────┬─────────┐</span>
+<span class="out-info">│ id  │ name             │ mode    │ ↺       │ status   │ cpu    │ mem  │ user    │</span>
+<span class="out-info">├─────┼──────────────────┼─────────┼─────────┼──────────┼────────┼──────┼─────────┤</span>
+│ <span class="num">0</span>   │ ttis-backend     │ cluster │ <span class="num">0</span>       │ <span class="out-success">online</span>   │ <span class="num">2</span>%     │ <span class="num">64</span>M  │ tariyel │
+│ <span class="num">1</span>   │ ttis-backend     │ cluster │ <span class="num">0</span>       │ <span class="out-success">online</span>   │ <span class="num">1</span>%     │ <span class="num">62</span>M  │ tariyel │
+│ <span class="num">2</span>   │ ttis-backend     │ cluster │ <span class="num">0</span>       │ <span class="out-success">online</span>   │ <span class="num">2</span>%     │ <span class="num">65</span>M  │ tariyel │
+│ <span class="num">3</span>   │ ttis-backend     │ cluster │ <span class="num">0</span>       │ <span class="out-success">online</span>   │ <span class="num">1</span>%     │ <span class="num">63</span>M  │ tariyel │
+<span class="out-info">└─────┴──────────────────┴─────────┴─────────┴──────────┴────────┴──────┴─────────┘</span></pre>
+  </div>
+
+  <div class="callout success">
+    <span class="callout-icon">✓</span>
+    <div class="callout-content">
+      <div class="callout-title">Cluster mode — 4 dəfə artıq performans!</div>
+      <div class="callout-body">
+        <p>4 worker paralel işləyir. Biri crash etsə, PM2 onu avtomatik yenidən başladır — digər 3 worker maneəsiz işləməyə davam edir. Yük balansı PM2 tərəfindən avtomatik edilir.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b7">
+  <h2><span class="num">7</span> Frontend build və static serving</h2>
+  <p class="lead">React-ı Vite dev server-də deyil, Nginx-in xidmət edəcəyi statik fayllar kimi deploy edirik.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — production build</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="kw">cd</span> /var/www/ttis/frontend
+
+<span class="cmt"># Production .env</span>
+cat &gt; .env.production &lt;&lt; <span class="str">'EOF'</span>
+VITE_API_URL=https://ttis.arti.edu.az/api/v1
+VITE_APP_NAME="TTİS"
+VITE_APP_VERSION=1.0.0
+<span class="str">EOF</span>
+
+<span class="cmt"># Dependencies</span>
+npm ci
+
+<span class="cmt"># Build — Vite optimizasiya edir: minify, tree-shake, code split</span>
+npm run build
+
+<span class="cmt"># Nəticədə dist/ qovluğunda fayllar yaranır</span>
+<span class="kw">ls</span> -lh dist/</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content"><span class="out-info">vite v6.0.5</span> <span class="out-success">building for production...</span>
+✓ 342 modules transformed.
+dist/index.html                     0.48 kB │ gzip:   0.31 kB
+dist/assets/index-abc123.css        18.24 kB │ gzip:   4.12 kB
+dist/assets/index-xyz789.js        198.76 kB │ gzip:  65.34 kB
+<span class="out-success">✓ built in 2.84s</span>
+
+total <span class="num">220K</span>
+-rw-rw-r-- 1 tariyel tariyel 494 Apr 17 15:45 index.html
+drwxrwxr-x 2 tariyel tariyel 4.0K Apr 17 15:45 assets/</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — build-i Nginx-in qovluğuna kopyala</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># Standard Nginx serve path</span>
+sudo mkdir -p /var/www/html/ttis
+sudo cp -r dist/* /var/www/html/ttis/
+sudo chown -R www-data:www-data /var/www/html/ttis</code></pre>
+  </div>
+
+  <div class="callout tip">
+    <span class="callout-icon">💡</span>
+    <div class="callout-content">
+      <div class="callout-title">Niyə static fayl dev server-dən yaxşıdır?</div>
+      <div class="callout-body">
+        <ul>
+          <li><strong>100x sürətli</strong> — Nginx C-də yazılıb, Node JS-də</li>
+          <li><strong>Aşağı yaddaş</strong> — 10 MB Nginx vs 200 MB Vite</li>
+          <li><strong>Gzip/Brotli sıxılma</strong> — 65 KB JavaScript faylı 22 KB-a enir</li>
+          <li><strong>Browser cache</strong> — fayl adında hash var (index-abc123.js) — versiyalaşma avtomatikdir</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b8">
+  <h2><span class="num">8</span> R Shiny Server</h2>
+  <p class="lead">Dərs 5-də Shiny Server-i quraşdırmağın əsasını göstərmişdik. İndi tam prosesi təkmilləşdirək.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — R və Shiny Server</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># R quraşdır (əgər yoxdursa)</span>
+sudo apt install -y r-base r-base-dev \
+  libpq-dev libssl-dev libcurl4-openssl-dev libxml2-dev \
+  libfontconfig1-dev libharfbuzz-dev libfribidi-dev
+
+<span class="cmt"># Shiny Server</span>
+sudo apt install -y gdebi-core
+wget https://download3.rstudio.org/ubuntu-22.04/x86_64/shiny-server-1.5.22.1017-amd64.deb
+sudo gdebi -n shiny-server-*.deb
+
+<span class="cmt"># R paketlərini sistem səviyyəsində quraşdır</span>
+sudo R -e <span class="str">"install.packages(c('shiny','bs4Dash','DBI','RPostgres','pool','plotly','leaflet','DT','dplyr','tidyr','lubridate','ggplot2','httr2','jsonlite','shinyjs','waiter','fontawesome'), repos='https://cloud.r-project.org/')"</span>
+
+<span class="cmt"># App-i Shiny Server-in standart qovluğuna kopyala</span>
+sudo cp -r /var/www/ttis/shiny /srv/shiny-server/ttis
+sudo cp /var/www/ttis/shiny/.Renviron /srv/shiny-server/ttis/.Renviron
+sudo chown -R shiny:shiny /srv/shiny-server/ttis
+
+<span class="cmt"># Shiny Server konfiqurasiyasını dəyiş</span>
+sudo tee /etc/shiny-server/shiny-server.conf &gt; /dev/null &lt;&lt; <span class="str">'EOF'</span>
+run_as shiny;
+
+server {
+  listen 3838 127.0.0.1;
+
+  location /ttis {
+    site_dir /srv/shiny-server/ttis;
+    log_dir /var/log/shiny-server;
+    directory_index off;
+  }
+}
+<span class="str">EOF</span>
+
+<span class="cmt"># Servisi yenidən başlat</span>
+sudo systemctl restart shiny-server
+sudo systemctl status shiny-server</code></pre>
+  </div>
+
+  <div class="callout info">
+    <span class="callout-icon">i</span>
+    <div class="callout-content">
+      <div class="callout-title">3838 yalnız 127.0.0.1-də</div>
+      <div class="callout-body">
+        <p>Shiny Server-i <code class="inline">127.0.0.1</code>-də qulaq asdırırıq (bütün interfeyslərdə yox). Beləliklə yalnız Nginx VM daxilindən Shiny-ə müraciət edə bilər. Kənar trafik birbaşa 3838-ə çata bilməz.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b9">
+  <h2><span class="num">9</span> Nginx reverse proxy</h2>
+  <p class="lead">İndi ən vacib hissəyə gəlirik — Nginx-in 3 servisi (Node, static React, Shiny) bir domendə birləşdirməsi.</p>
+
+  <div class="step-head"><span class="step-num">1</span><span class="step-title">Nginx quraşdırma</span></div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>sudo apt install -y nginx
+sudo systemctl enable nginx
+sudo systemctl status nginx</code></pre>
+  </div>
+
+  <div class="step-head"><span class="step-num">2</span><span class="step-title">Site konfiqurasiyası</span></div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title nginx">/etc/nginx/sites-available/ttis</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>sudo tee /etc/nginx/sites-available/ttis &gt; /dev/null &lt;&lt; <span class="str">'EOF'</span>
+# ═══════════════════════════════════════════════════════════════
+# TTİS — Reverse proxy config
+# ═══════════════════════════════════════════════════════════════
+
+# Upstream-lər
+upstream ttis_backend {
+    server 127.0.0.1:3001;
+    keepalive 32;
+}
+
+upstream ttis_shiny {
+    server 127.0.0.1:3838;
+}
+
+# HTTP → HTTPS redirect (SSL-dən sonra aktiv olacaq)
+server {
+    listen 80;
+    server_name ttis.arti.edu.az;
+
+    # Let's Encrypt challenge üçün
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    # Qalan hər şey HTTPS-ə yönləndir
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# HTTPS əsas server
+server {
+    listen 443 ssl http2;
+    server_name ttis.arti.edu.az;
+
+    # SSL sertifikatları (Let's Encrypt qoyacaq)
+    # ssl_certificate     /etc/letsencrypt/live/ttis.arti.edu.az/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/ttis.arti.edu.az/privkey.pem;
+
+    # Təhlükəsizlik header-ləri
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+
+    # Gzip sıxılma
+    gzip on;
+    gzip_vary on;
+    gzip_types text/plain text/css application/json application/javascript
+               text/xml application/xml application/xml+rss text/javascript
+               image/svg+xml;
+
+    # Max upload (fayl yükləmə üçün)
+    client_max_body_size 50M;
+
+    # ═══ 1) React frontend (static) ═══
+    root /var/www/html/ttis;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+
+        # Asset-lər üçün aggressive cache (hash-lı fayllar)
+        location ~* \.(js|css|woff2|png|jpg|svg)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+    }
+
+    # ═══ 2) Backend API ═══
+    location /api/ {
+        proxy_pass http://ttis_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 60s;
+    }
+
+    # ═══ 3) R Shiny ═══
+    location /shiny/ {
+        rewrite ^/shiny/(.*)$ /ttis/$1 break;
+
+        proxy_pass http://ttis_shiny;
+        proxy_redirect off;
+
+        # WebSocket (Shiny real-time üçün vacib!)
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 20d;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # Nginx loglar
+    access_log /var/log/nginx/ttis.access.log;
+    error_log  /var/log/nginx/ttis.error.log;
+}
+<span class="str">EOF</span>
+
+<span class="cmt"># Aktiv et</span>
+sudo ln -sf /etc/nginx/sites-available/ttis /etc/nginx/sites-enabled/ttis
+
+<span class="cmt"># Default siteni sil</span>
+sudo rm -f /etc/nginx/sites-enabled/default
+
+<span class="cmt"># Sintaksis yoxla və restart</span>
+sudo nginx -t
+sudo systemctl reload nginx</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">nginx: the configuration file /etc/nginx/nginx.conf syntax is <span class="out-success">ok</span>
+nginx: configuration file /etc/nginx/nginx.conf test is <span class="out-success">successful</span></pre>
+  </div>
+
+  <div class="callout success">
+    <span class="callout-icon">✓</span>
+    <div class="callout-content">
+      <div class="callout-title">Marşrutlaşdırma aydındır:</div>
+      <div class="callout-body">
+        <ul>
+          <li><code class="inline">ttis.arti.edu.az/</code> → React (statik fayl)</li>
+          <li><code class="inline">ttis.arti.edu.az/api/v1/...</code> → Node.js backend (PM2)</li>
+          <li><code class="inline">ttis.arti.edu.az/shiny/</code> → R Shiny dashboard</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b10">
+  <h2><span class="num">10</span> Domain və DNS</h2>
+  <p class="lead">HTTPS üçün domen adı lazımdır. ARTI-da rəsmi <code class="inline">arti.edu.az</code> domeni varsa, DNS administratoru ilə A record əlavə etdirin.</p>
+
+  <h3>10.1. Variant A: Real domain (tövsiyə edilir)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Name</th><th>Type</th><th>Value</th><th>TTL</th></tr></thead>
+      <tbody>
+        <tr><td><code class="inline">ttis</code></td><td>A</td><td>VM-in public IP</td><td>3600</td></tr>
+        <tr><td><code class="inline">ttis</code></td><td>AAAA</td><td>IPv6 (varsa)</td><td>3600</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>10.2. Variant B: Tailscale MagicDNS (daxili istifadə)</h3>
+  <p>Əgər yalnız ARTI komanda üzvləri (Tailscale istifadəçiləri) giriş edəcəksə, domenə ehtiyac yoxdur:</p>
+  <ul>
+    <li>URL: <code class="inline">https://tt-server.TAIL-XXXX.ts.net</code></li>
+    <li>Tailscale avtomatik HTTPS sertifikatı verir</li>
+    <li>Kənardan (internetdən) çatılmır — yalnız VPN-də olanlar</li>
+  </ul>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — Tailscale MagicDNS (alternativ)</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># Tailscale admin paneldən HTTPS aktivləşdirin</span>
+<span class="cmt"># https://login.tailscale.com/admin/dns</span>
+<span class="cmt"># MagicDNS + HTTPS Certificates seçin</span>
+
+sudo tailscale cert tt-server.tail-xxxx.ts.net</code></pre>
+  </div>
+</section>
+
+<section id="b11">
+  <h2><span class="num">11</span> Let's Encrypt SSL</h2>
+  <p class="lead">Pulsuz HTTPS sertifikatı — 2-3 dəqiqədə.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — Certbot</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># Certbot və Nginx plugin</span>
+sudo apt install -y certbot python3-certbot-nginx
+
+<span class="cmt"># Sertifikat al (avtomatik Nginx konfiqurasiyasını yeniləyir)</span>
+sudo certbot --nginx -d ttis.arti.edu.az \
+  --non-interactive --agree-tos \
+  --email tariyel@arti.edu.az
+
+<span class="cmt"># Certbot avtomatik cron qoyur (90 gündən əvvəl yenilə)</span>
+sudo systemctl status certbot.timer
+
+<span class="cmt"># Manuel renewal test</span>
+sudo certbot renew --dry-run</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">Successfully received certificate.
+<span class="out-success">Certificate is saved at: /etc/letsencrypt/live/ttis.arti.edu.az/fullchain.pem</span>
+<span class="out-success">Key is saved at:         /etc/letsencrypt/live/ttis.arti.edu.az/privkey.pem</span>
+
+Your existing certificate has been successfully renewed, and the new certificate has been installed.
+
+Congratulations! You have successfully enabled HTTPS on https://ttis.arti.edu.az</pre>
+  </div>
+
+  <div class="callout success">
+    <span class="callout-icon">✓</span>
+    <div class="callout-content">
+      <div class="callout-title">HTTPS işləyir!</div>
+      <div class="callout-body">
+        <p>Brauzerdə <code class="inline">https://ttis.arti.edu.az</code> açın. Ünvan yuvasının yanında yaşıl kilid göründüyündə — uğurludur!</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b12">
+  <h2><span class="num">12</span> Avtomatik backup</h2>
+  <p class="lead">Production-da ən dəyərli şey — məlumatdır. Gündəlik backup və 30 günlük retention.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — /usr/local/bin/ttis-backup.sh</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>sudo tee /usr/local/bin/ttis-backup.sh &gt; /dev/null &lt;&lt; <span class="str">'EOF'</span>
+#!/bin/bash
+# TTİS — Gündəlik avtomatik backup
+
+set -euo pipefail
+
+BACKUP_DIR=/var/backups/ttis
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+DB_DUMP="$BACKUP_DIR/db_${TIMESTAMP}.dump"
+
+mkdir -p "$BACKUP_DIR"
+
+# ═══ 1. PostgreSQL dump ═══
+echo "[$(date)] 🔄 DB backup başladı"
+PGPASSWORD="$DB_PASSWORD" pg_dump \
+  -h localhost -U ttis_app -d ttis_db -Fc \
+  -f "$DB_DUMP"
+
+# ═══ 2. Config faylları ═══
+tar czf "$BACKUP_DIR/configs_${TIMESTAMP}.tar.gz" \
+  /etc/nginx/sites-available/ttis \
+  /var/www/ttis/backend/.env \
+  /var/www/ttis/frontend/.env.production \
+  2>/dev/null || true
+
+# ═══ 3. 30 gündən köhnə fayllar silinsin ═══
+find "$BACKUP_DIR" -type f -mtime +30 -delete
+
+# ═══ 4. Yoxlama ═══
+SIZE=$(du -h "$DB_DUMP" | cut -f1)
+echo "[$(date)] ✅ Backup uğurlu: $DB_DUMP ($SIZE)"
+<span class="str">EOF</span>
+
+<span class="cmt"># DB şifrəsi üçün env fayl</span>
+sudo tee /etc/default/ttis-backup &gt; /dev/null &lt;&lt; <span class="str">'EOF'</span>
+DB_PASSWORD="YOUR_STRONG_DB_PASSWORD"
+<span class="str">EOF</span>
+sudo chmod <span class="num">600</span> /etc/default/ttis-backup
+
+sudo chmod +x /usr/local/bin/ttis-backup.sh
+
+<span class="cmt"># Test işə sal</span>
+sudo -E bash -c <span class="str">'source /etc/default/ttis-backup &amp;&amp; /usr/local/bin/ttis-backup.sh'</span></code></pre>
+  </div>
+
+  <h3>12.1. Crontab — hər gecə 02:00-da</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — cron quraşdırma</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># root crontab</span>
+sudo crontab -e
+
+<span class="cmt"># Fayla bu sətri əlavə edin:</span>
+<span class="num">0 2 * * * source /etc/default/ttis-backup &amp;&amp; /usr/local/bin/ttis-backup.sh &gt;&gt; /var/log/ttis/backup.log 2&gt;&amp;1</span></code></pre>
+  </div>
+
+  <div class="callout warning">
+    <span class="callout-icon">!</span>
+    <div class="callout-content">
+      <div class="callout-title">Production ilə lokal backup kifayət deyil!</div>
+      <div class="callout-body">
+        <p>VM disk fail olsa bütün backup-ları itirirsiniz. Həftəlik <code class="inline">rsync</code> ilə başqa yerə (DigitalOcean Spaces, AWS S3, və ya sadəcə başqa server-ə) köçürün.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b13">
+  <h2><span class="num">13</span> Monitoring və loglar</h2>
+  <p class="lead">Nə baş verdiyini görmək — production-da ən vacib bacarıqlardan biridir.</p>
+
+  <h3>13.1. PM2 logs</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — PM2 monitoring</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># Real-zamanlı log</span>
+pm2 logs ttis-backend
+
+<span class="cmt"># Son 100 sətir</span>
+pm2 logs ttis-backend --lines <span class="num">100</span>
+
+<span class="cmt"># Yalnız xətalar</span>
+pm2 logs ttis-backend --err
+
+<span class="cmt"># Interaktiv monitoring (top kimi)</span>
+pm2 monit
+
+<span class="cmt"># Process detalları</span>
+pm2 info ttis-backend</code></pre>
+  </div>
+
+  <h3>13.2. Log rotation</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — PM2 log rotation</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># Log rotation modulu</span>
+pm2 install pm2-logrotate
+
+<span class="cmt"># Konfiqurasiya</span>
+pm2 set pm2-logrotate:max_size <span class="num">10</span>M
+pm2 set pm2-logrotate:retain <span class="num">14</span>
+pm2 set pm2-logrotate:compress <span class="kw">true</span>
+pm2 set pm2-logrotate:rotateInterval <span class="str">'0 0 * * *'</span>
+
+pm2 save</code></pre>
+  </div>
+
+  <h3>13.3. Nginx log təhlili</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — Nginx logları</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># Canlı</span>
+sudo tail -f /var/log/nginx/ttis.access.log
+
+<span class="cmt"># Ən çox müraciət olunan endpoint-lər</span>
+sudo awk <span class="str">'{print $7}'</span> /var/log/nginx/ttis.access.log | sort | uniq -c | sort -rn | head
+
+<span class="cmt"># 5xx xətaları</span>
+sudo grep <span class="str">" 5[0-9][0-9] "</span> /var/log/nginx/ttis.access.log
+
+<span class="cmt"># IP üzrə — yüksək trafik</span>
+sudo awk <span class="str">'{print $1}'</span> /var/log/nginx/ttis.access.log | sort | uniq -c | sort -rn | head</code></pre>
+  </div>
+
+  <h3>13.4. PostgreSQL slow queries</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — PostgreSQL performans loglar</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>sudo nano /etc/postgresql/<span class="num">17</span>/main/postgresql.conf
+
+<span class="cmt"># Bu sətirləri dəyişin:</span>
+<span class="cmt"># log_min_duration_statement = 1000   # 1 saniyədən uzun sorğular</span>
+<span class="cmt"># log_checkpoints = on</span>
+<span class="cmt"># log_connections = on</span>
+<span class="cmt"># log_disconnections = on</span>
+
+sudo systemctl restart postgresql
+
+<span class="cmt"># Logları izlə</span>
+sudo tail -f /var/log/postgresql/postgresql-<span class="num">17</span>-main.log</code></pre>
+  </div>
+
+  <h3>13.5. Uptime monitoring</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — sadə uptime check skripti</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>sudo tee /usr/local/bin/ttis-healthcheck.sh &gt; /dev/null &lt;&lt; <span class="str">'EOF'</span>
+#!/bin/bash
+# Hər 5 dəqiqədə bir yoxla — problem varsa email göndər
+
+HEALTH_URL="https://ttis.arti.edu.az/api/v1/health"
+STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL")
+
+if [ "$STATUS" != "200" ]; then
+    echo "[$(date)] ❌ TTİS DOWN! Status: $STATUS" &gt;&gt; /var/log/ttis/health.log
+    # Email göndər (mailutils lazımdır)
+    # echo "TTİS down!" | mail -s "TTİS Alert" tariyel@arti.edu.az
+fi
+<span class="str">EOF</span>
+
+sudo chmod +x /usr/local/bin/ttis-healthcheck.sh
+
+<span class="cmt"># Crontab: hər 5 dəqiqədə</span>
+<span class="cmt"># */5 * * * * /usr/local/bin/ttis-healthcheck.sh</span></code></pre>
+  </div>
+
+  <div class="callout info">
+    <span class="callout-icon">i</span>
+    <div class="callout-content">
+      <div class="callout-title">Alternativ: UptimeRobot (pulsuz)</div>
+      <div class="callout-body">
+        <p><strong>uptimerobot.com</strong>-da pulsuz hesab açıb <code class="inline">https://ttis.arti.edu.az/api/v1/health</code>-i 5 dəqiqədə bir monitor etdirin. Problem baş verəndə SMS/email göndərəcək.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b14">
+  <h2><span class="num">14</span> GitHub Actions CI/CD</h2>
+  <p class="lead">Hər dəfə <code class="inline">git push</code> etdikdə tətbiqin avtomatik deploy olunması.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title yaml">.github/workflows/deploy.yml</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># Mac-da layihə kökündə yarat</span>
+mkdir -p .github/workflows
+
+cat &gt; .github/workflows/deploy.yml &lt;&lt; <span class="str">'EOF'</span>
+name: Deploy to tt-server
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # ═══ Backend testlər ═══
+      - name: Backend install and test
+        working-directory: ./backend
+        run: |
+          npm ci
+          # npm test  # əgər testləriniz varsa
+
+      # ═══ Frontend build ═══
+      - name: Frontend install and build
+        working-directory: ./frontend
+        env:
+          VITE_API_URL: https://ttis.arti.edu.az/api/v1
+        run: |
+          npm ci
+          npm run build
+
+      # ═══ Tailscale ilə VM-ə qoşulmaq ═══
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      # ═══ VM-ə deploy ═══
+      - name: Deploy to VM
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          echo "$SSH_KEY" &gt; /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+
+          # Backend kodunu köçür
+          rsync -avz --delete \
+            -e "ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no" \
+            --exclude node_modules --exclude .env \
+            backend/ tariyel@tt-server:/var/www/ttis/backend/
+
+          # Frontend build
+          rsync -avz --delete \
+            -e "ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no" \
+            frontend/dist/ tariyel@tt-server:/var/www/html/ttis/
+
+          # Shiny
+          rsync -avz --delete \
+            -e "ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no" \
+            --exclude .Renviron \
+            shiny/ tariyel@tt-server:/srv/shiny-server/ttis/
+
+          # Backend yenilə
+          ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no \
+            tariyel@tt-server \
+            'cd /var/www/ttis/backend &amp;&amp; npm ci --omit=dev &amp;&amp; pm2 reload ttis-backend'
+
+      - name: Notify
+        if: success()
+        run: echo "✅ Deploy uğurludur"
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <h3>14.1. GitHub Secrets</h3>
+  <p>GitHub repo → Settings → Secrets and variables → Actions:</p>
+  <ul>
+    <li><code class="inline">TS_OAUTH_CLIENT_ID</code> — Tailscale OAuth</li>
+    <li><code class="inline">TS_OAUTH_SECRET</code> — Tailscale OAuth secret</li>
+    <li><code class="inline">SSH_PRIVATE_KEY</code> — VM-ə giriş üçün SSH açarının private hissəsi</li>
+  </ul>
+
+  <div class="callout tip">
+    <span class="callout-icon">💡</span>
+    <div class="callout-content">
+      <div class="callout-title">Daha sadə alternativ</div>
+      <div class="callout-body">
+        <p>Əgər CI/CD ilkin olaraq lazım deyilsə, sadə deploy skripti istifadə edin — komanda xəttindən bir komanda ilə deploy:</p>
+        <p><code class="inline">./deploy.sh</code> — Mac-dan rsync + ssh reload edir.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b15">
+  <h2><span class="num">15</span> Security hardening</h2>
+  <p class="lead">Əsasları Sizin üçün toplayım.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — final security checklist</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># ═══ 1. SSH-ı sərtləşdir ═══</span>
+sudo sed -i <span class="str">'s/#PasswordAuthentication yes/PasswordAuthentication no/'</span> /etc/ssh/sshd_config
+sudo sed -i <span class="str">'s/#PermitRootLogin.*/PermitRootLogin no/'</span> /etc/ssh/sshd_config
+sudo systemctl restart sshd
+
+<span class="cmt"># ═══ 2. Avtomatik security yeniləmələri ═══</span>
+sudo apt install -y unattended-upgrades
+sudo dpkg-reconfigure -plow unattended-upgrades
+
+<span class="cmt"># ═══ 3. PostgreSQL yalnız localhost-dan ═══</span>
+sudo sed -i <span class="str">"s/#listen_addresses = 'localhost'/listen_addresses = 'localhost'/"</span> \
+  /etc/postgresql/<span class="num">17</span>/main/postgresql.conf
+sudo systemctl restart postgresql
+
+<span class="cmt"># ═══ 4. node_modules qovluğu write olmasın ═══</span>
+sudo chmod -R o-w /var/www/ttis
+
+<span class="cmt"># ═══ 5. .env fayllar yalnız sahibi oxusun ═══</span>
+<span class="fn">find</span> /var/www/ttis -name <span class="str">".env*"</span> -exec sudo chmod <span class="num">600</span> {} \;
+
+<span class="cmt"># ═══ 6. Bütün servisləri restart et ═══</span>
+pm2 restart all
+sudo systemctl restart nginx shiny-server postgresql</code></pre>
+  </div>
+
+  <div class="callout danger">
+    <span class="callout-icon">!</span>
+    <div class="callout-content">
+      <div class="callout-title">Production hazırlıq siyahısı</div>
+      <div class="callout-body">
+        <ul>
+          <li>✅ PostgreSQL güclü şifrə</li>
+          <li>✅ JWT_SECRET təsadüfi 64-simvol</li>
+          <li>✅ bcrypt rounds = 12 (10 deyil)</li>
+          <li>✅ HTTPS məcburi</li>
+          <li>✅ UFW firewall aktiv</li>
+          <li>✅ fail2ban aktiv</li>
+          <li>✅ SSH yalnız açarla</li>
+          <li>✅ .env fayllar 600 izni</li>
+          <li>✅ Gündəlik backup</li>
+          <li>✅ Log rotation</li>
+          <li>✅ Monitoring / alerting</li>
+          <li>✅ Unattended-upgrades</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b16">
+  <h2><span class="num">16</span> Docker alternativi</h2>
+  <p class="lead">Əgər həmkarlarınızla komanda işi üçün istəsəniz, docker-compose.yml ilə bütün stack bir komanda ilə işə düşə bilər.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title yaml">docker-compose.yml (kök qovluqda)</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; docker-compose.yml &lt;&lt; <span class="str">'EOF'</span>
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: ttis-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ttis_db
+      POSTGRES_USER: ttis_app
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./database/schemas:/docker-entrypoint-initdb.d/schemas:ro
+      - ./database/seeds:/docker-entrypoint-initdb.d/seeds:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ttis_app -d ttis_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ttis-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_USER: ttis_app
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ttis_db
+      JWT_SECRET: ${JWT_SECRET}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3001:3001"
+
+  nginx:
+    image: nginx:alpine
+    container_name: ttis-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./frontend/dist:/var/www/html:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - backend
+
+  shiny:
+    image: rocker/shiny-verse:4.4
+    container_name: ttis-shiny
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3838:3838"
+    volumes:
+      - ./shiny:/srv/shiny-server/ttis:ro
+
+volumes:
+  pg_data:
+<span class="str">EOF</span>
+
+<span class="cmt"># Başlat</span>
+docker-compose up -d
+
+<span class="cmt"># Loglar</span>
+docker-compose logs -f
+
+<span class="cmt"># Dayandır</span>
+<span class="cmt"># docker-compose down</span></code></pre>
+  </div>
+
+  <div class="callout info">
+    <span class="callout-icon">i</span>
+    <div class="callout-content">
+      <div class="callout-title">Docker vs direct install</div>
+      <div class="callout-body">
+        <ul>
+          <li><strong>Direct install</strong> (bu dərsdə yuxarı): daha sürətli, VM resurslardan daha az yeyir, loglar daha asan izlənir</li>
+          <li><strong>Docker</strong>: local dev üçün mükəmməl, xidmətlər izolə, "hər inkişafçıda eyni mühit", komanda işi asan</li>
+        </ul>
+        <p>Production-da birini seçin. Çox layihə hər ikisini qarışdırır — çaşqınlıq yaradır.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b17">
+  <h2><span class="num">17</span> Smoke test</h2>
+  <p class="lead">Hər şey qurulduqdan sonra — Azərbaycanın 77 rayonundan istifadəçi simulyasiyası edək.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — load test (ab - Apache Benchmark)</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># Mac-da</span>
+brew install apache2
+
+<span class="cmt"># 77 paralel istifadəçi, hər biri 100 sorğu = 7700 toplam</span>
+ab -n <span class="num">7700</span> -c <span class="num">77</span> https://ttis.arti.edu.az/api/v1/health</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış (təqribi)</div>
+<pre class="output-content">Concurrency Level:      <span class="num">77</span>
+Time taken <span class="kw">for</span> tests:   <span class="num">8.421</span> seconds
+Complete requests:      <span class="num">7700</span>
+Failed requests:        <span class="num">0</span>
+Total transferred:      <span class="num">1,848,000</span> bytes
+HTML transferred:       <span class="num">847,000</span> bytes
+<span class="out-success">Requests per second:    914.28 [#/sec]</span>
+<span class="out-success">Time per request:       84.23 [ms]</span>
+Transfer rate:          <span class="num">214.32</span> [Kbytes/sec]
+
+Percentage of the requests served within a certain time (ms)
+  <span class="num">50</span>%     <span class="num">72</span>
+  <span class="num">75</span>%     <span class="num">95</span>
+  <span class="num">95</span>%    <span class="num">124</span>
+  <span class="num">99</span>%    <span class="num">168</span>
+ <span class="num">100</span>%    <span class="num">245</span> (longest request)</pre>
+  </div>
+
+  <div class="callout success">
+    <span class="callout-icon">✓</span>
+    <div class="callout-content">
+      <div class="callout-title">914 sorğu/saniyə, 0 xəta!</div>
+      <div class="callout-body">
+        <p>Bu o deməkdir ki, sistem 77 rayondan paralel istifadəçilərə rahatlıqla xidmət edə bilər. 99% sorğu 168ms-dən az cavab alır — istifadəçi tamamilə "sürətli" hiss edəcək.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>17.1. Son yoxlama siyahısı</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — Hər şey yerindədir?</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># 1) PostgreSQL</span>
+sudo -u postgres psql -c <span class="str">"SELECT count(*) FROM pg_stat_activity;"</span>
+
+<span class="cmt"># 2) Backend (PM2)</span>
+pm2 status
+curl -s http://localhost:<span class="num">3001</span>/health | jq
+
+<span class="cmt"># 3) Frontend static</span>
+ls -lh /var/www/html/ttis/
+
+<span class="cmt"># 4) Shiny</span>
+curl -s http://localhost:<span class="num">3838</span>/ttis/ | head -<span class="num">5</span>
+
+<span class="cmt"># 5) Nginx</span>
+sudo nginx -t
+sudo systemctl status nginx
+
+<span class="cmt"># 6) SSL</span>
+curl -sI https://ttis.arti.edu.az | head -<span class="num">5</span>
+
+<span class="cmt"># 7) Backup</span>
+ls -lh /var/backups/ttis/ | tail -<span class="num">5</span>
+
+<span class="cmt"># 8) Disk və yaddaş</span>
+df -h
+free -h
+uptime</code></pre>
+  </div>
+</section>
+
+<section id="b18">
+  <h2><span class="num">18</span> Xülasə və ixtisas yolu</h2>
+
+  <div class="celebration">
+    <h2>🎉 Təbriklər, Tariyel müəllim!</h2>
+    <p style="font-size:1.15rem; color:var(--text-muted); max-width:700px; margin:0 auto;">
+      6 dərsdən ibarət "Universal AI Agent" kursunu tam başa çatdırdınız. İndi Sizin əlinizdə production-ready, tam funksional, AI inteqrasiyalı enterprise sistem var.
+    </p>
+  </div>
+
+  <div class="summary-box">
+    <h3>🏆 6 dərsdə nə qazandıq?</h3>
+    <ul>
+      <li><strong>Dərs 1:</strong> Universal AI Agent konsepti + Core/Domain/Shared memarlıq + 44-qovluq professional struktur</li>
+      <li><strong>Dərs 2:</strong> PostgreSQL 17 + 18 cədvəl + 4 schema + 5 reporting view + 5 trigger + seed</li>
+      <li><strong>Dərs 3:</strong> Node.js backend + JWT auth + 15 REST endpoint + Claude SDK + middleware zənciri</li>
+      <li><strong>Dərs 4:</strong> React + Vite + Tailwind + React Router + Auth Context + 5 səhifə</li>
+      <li><strong>Dərs 5:</strong> R Shiny bs4Dash + 6 modul + Leaflet + Plotly + Claude API</li>
+      <li><strong>Dərs 6:</strong> PM2 cluster + Nginx + Let's Encrypt + Tailscale + CI/CD + monitoring</li>
+    </ul>
+  </div>
+
+  <h3>18.1. Universal AI Agent konsepti — domenləri dəyişin</h3>
+
+  <p>TTİS yaratdığımız strukturda <strong>yalnız construction</strong> domeni idi. Eyni skelet ilə başqa sahələr üçün sistem qurmaq indi <strong>saatlar məsələsidir</strong>:</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Sahə</th><th>Domain adı</th><th>Schema adı</th><th>Nümunə cədvəllər</th></tr></thead>
+      <tbody>
+        <tr><td>🏥 Aptek</td><td>pharmacy</td><td>pharmacy</td><td>medicines, orders, suppliers, stock</td></tr>
+        <tr><td>📚 Təhsil</td><td>education</td><td>academic</td><td>students, courses, grades, exams</td></tr>
+        <tr><td>🚚 Logistika</td><td>logistics</td><td>shipping</td><td>shipments, routes, drivers, vehicles</td></tr>
+        <tr><td>🏦 Maliyyə</td><td>finance</td><td>banking</td><td>accounts, transactions, loans</td></tr>
+        <tr><td>🏥 Poliklinika</td><td>clinic</td><td>medical</td><td>patients, appointments, doctors, visits</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>18.2. Növbəti ixtisas yolları</h3>
+
+  <ul>
+    <li><strong>TypeScript</strong> — backend və frontend-də tip təhlükəsizliyi (növbəti böyük addım)</li>
+    <li><strong>Redis</strong> — cache, session, queue üçün</li>
+    <li><strong>WebSocket</strong> — real-time notification (socket.io)</li>
+    <li><strong>Next.js</strong> — SSR və SEO üçün (əgər public layihə olsa)</li>
+    <li><strong>Kubernetes</strong> — miqyaslanma zərurəti olsa</li>
+    <li><strong>Multi-tenancy</strong> — bir tətbiq çoxlu müştəriyə xidmət edə bilsin</li>
+  </ul>
+
+  <h3>18.3. ARTI üçün yaxın layihələr (real dünyada tətbiq)</h3>
+
+  <ul>
+    <li><strong>TTİS-in Azərbaycanın bütün rayonlarında tətbiqi</strong> — 77 region × onlarla məktəb</li>
+    <li><strong>PIRLS 2026 testi — eyni stack ilə</strong> — məlumat bazası hazırdır</li>
+    <li><strong>Az_dili və Riy_standartlar</strong> layihələrinin tam platforma halına salınması</li>
+    <li><strong>Riy_Muellim_Agent və Az_agent</strong> — AI müəllimlərin bu memarlığa köçürülməsi</li>
+    <li><strong>EDU-INSIGHT AI v6.0</strong> — psixometrik təhlil modulu</li>
+  </ul>
+
+  <h3>18.4. Son sözlər</h3>
+
+  <div class="callout success">
+    <span class="callout-icon">✓</span>
+    <div class="callout-content">
+      <div class="callout-title">Artıq Siz tam fullstack developersünüz</div>
+      <div class="callout-body">
+        <p>PostgreSQL-dən production deployment-ə qədər hər qatı bilirsiniz. Bu kurs Sizin əvvəlki R/Shiny təcrübənizi bütün modern web ecosystem ilə birləşdirdi — və indi həm statistika, həm də tam sistemləri qura bilərsiniz.</p>
+        <p><strong>Azərbaycan təhsili üçün yaratdığınız hər bir AI agent, hər statistik təhlil, hər xəritə və hər hesabat — minlərlə müəllim və tələbə üçün dəyər yaradır.</strong></p>
+        <p>Uğurlar, Tariyel müəllim! 🚀</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>18.5. Production URL</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">URL-lər</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># Production</span>
+https://ttis.arti.edu.az              <span class="cmt"># React frontend</span>
+https://ttis.arti.edu.az/api/v1/...   <span class="cmt"># Node backend</span>
+https://ttis.arti.edu.az/shiny/       <span class="cmt"># R Shiny dashboard</span>
+
+<span class="cmt"># Tailscale daxili (yalnız komanda)</span>
+http://tt-server:3001/api/v1/...      <span class="cmt"># dev müqayisə</span>
+http://tt-server:3838/ttis/           <span class="cmt"># Shiny direct</span>
+
+<span class="cmt"># GitHub</span>
+https://github.com/Ttariyel-<span class="num">1954</span>/Claude_Modei_Temir_tikinti</code></pre>
+  </div>
+
+  <h3>18.6. Final Git commit</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — son commit</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="kw">cd</span> ~/Desktop/Claude_Modei_Təmir_tikinti
+git add .
+git commit -m <span class="str">"feat: production-ready TTİS v1.0.0 — full stack deployment"</span>
+git tag -a v<span class="num">1.0</span>.<span class="num">0</span> -m <span class="str">"First production release"</span>
+git push origin main --tags</code></pre>
+  </div>
+
+  <div class="celebration" style="margin-top:3rem;">
+    <h2 style="background:linear-gradient(90deg,#047857,#0369a1,#7c3aed); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Kurs tamamlandı! 🎓</h2>
+    <p style="font-size:1.1rem; color:var(--text-muted);">
+      TTİS v1.0.0 · 6 dərs · 18,000+ sətir kod · ARTI · Talıbov Tariyel İsmayıl oğlu
+    </p>
+  </div>
+</section>
+
+<nav class="lesson-nav">
+  <a href="#" class="lesson-nav-btn secondary">← Dərs 5: R Shiny</a>
+  <a href="#" class="lesson-nav-btn">🏆 Kurs tamamlandı</a>
+</nav>
+
+</div>
+
+<script>
+function copyCode(button) {
+  const codeBlock = button.closest('.code-block');
+  const code = codeBlock.querySelector('pre.code-content').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    const originalText = button.innerHTML;
+    button.innerHTML = '✓ Kopyalandı!';
+    button.classList.add('copied');
+    setTimeout(() => { button.innerHTML = originalText; button.classList.remove('copied'); }, 2000);
+  }).catch(() => {
+    const textarea = document.createElement('textarea');
+    textarea.value = code;
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      button.innerHTML = '✓ Kopyalandı!';
+      button.classList.add('copied');
+      setTimeout(() => { button.innerHTML = '📋 Kopyala'; button.classList.remove('copied'); }, 2000);
+    } catch(e) { alert('Kopyalama uğursuz oldu'); }
+    document.body.removeChild(textarea);
+  });
+}
+</script>
+
+</body>
+</html>

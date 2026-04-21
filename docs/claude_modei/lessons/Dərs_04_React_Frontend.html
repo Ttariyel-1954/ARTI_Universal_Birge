@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dərs 4 — React + Vite Frontend: Dashboard, Auth və API inteqrasiyası</title>
+<style>
+  :root {
+    --primary: #0284c7; --primary-dark: #075985; --primary-light: #e0f2fe;
+    --accent: #bd34fe; --accent-light: #ede9fe;
+    --react: #61dafb; --react-dark: #087ea4;
+    --warning: #d97706; --warning-light: #fef3c7;
+    --success: #059669; --success-light: #d1fae5;
+    --danger: #dc2626; --danger-light: #fee2e2;
+    --text: #0f172a; --text-muted: #475569; --text-subtle: #64748b;
+    --bg: #fafbfc; --surface: #ffffff; --surface-alt: #f8fafc;
+    --border: #e2e8f0; --border-strong: #cbd5e1;
+    --code-bg: #0f172a; --code-text: #e2e8f0;
+    --code-comment: #64748b; --code-keyword: #c4b5fd; --code-string: #86efac;
+    --code-number: #fcd34d; --code-function: #93c5fd;
+    --output-bg: #1e293b; --output-text: #cbd5e1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; font-size: 16px; -webkit-font-smoothing: antialiased; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+  .hero { background: linear-gradient(135deg, #0284c7 0%, #61dafb 50%, #bd34fe 100%); color: white; padding: 3.5rem 2.5rem; border-radius: 20px; margin-bottom: 2.5rem; box-shadow: 0 20px 50px -15px rgba(2, 132, 199, 0.4); position: relative; overflow: hidden; }
+  .hero::before { content: '⚛'; position: absolute; top: -40px; right: -30px; font-size: 320px; opacity: 0.09; pointer-events: none; font-family: Arial, sans-serif; }
+  .hero-label { display: inline-block; background: rgba(255, 255, 255, 0.18); backdrop-filter: blur(10px); padding: 0.5rem 1.25rem; border-radius: 50px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 1.25rem; border: 1px solid rgba(255, 255, 255, 0.25); position: relative; z-index: 1; }
+  .hero h1 { font-size: 2.4rem; font-weight: 800; line-height: 1.2; margin-bottom: 1rem; letter-spacing: -0.02em; position: relative; z-index: 1; }
+  .hero-subtitle { font-size: 1.15rem; opacity: 0.94; max-width: 750px; line-height: 1.65; position: relative; z-index: 1; }
+  .hero-meta { display: flex; gap: 1.5rem; margin-top: 1.75rem; flex-wrap: wrap; position: relative; z-index: 1; }
+  .hero-meta-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; opacity: 0.9; }
+  .hero-meta-item svg { width: 18px; height: 18px; }
+  .objectives { background: var(--primary-light); border-left: 5px solid var(--primary); padding: 1.75rem 2rem; border-radius: 12px; margin-bottom: 2.5rem; }
+  .objectives h3 { color: var(--primary-dark); font-size: 1.05rem; font-weight: 700; margin-bottom: 1rem; }
+  .objectives ul { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 0.75rem 1.5rem; }
+  .objectives li { padding-left: 1.75rem; position: relative; font-size: 0.95rem; }
+  .objectives li::before { content: '✓'; position: absolute; left: 0; color: var(--primary); font-weight: 800; font-size: 1.1rem; }
+  .toc { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 2rem; margin-bottom: 2.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .toc h3 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-subtle); margin-bottom: 1rem; }
+  .toc ol { list-style: none; counter-reset: toc-counter; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.45rem 1rem; }
+  .toc li { counter-increment: toc-counter; }
+  .toc a { color: var(--text); text-decoration: none; padding: 0.5rem 0; display: flex; align-items: flex-start; gap: 0.75rem; font-size: 0.92rem; transition: color 0.15s; }
+  .toc a::before { content: counter(toc-counter, decimal-leading-zero); color: var(--primary); font-weight: 700; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  .toc a:hover { color: var(--primary); }
+  section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2.25rem 2.5rem; margin-bottom: 1.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
+  section h2 { font-size: 1.65rem; font-weight: 750; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 0.75rem; letter-spacing: -0.015em; }
+  section h2 .num { background: var(--primary); color: white; width: 38px; height: 38px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  section h3 { font-size: 1.2rem; font-weight: 700; margin: 1.75rem 0 0.85rem; letter-spacing: -0.01em; }
+  section h4 { font-size: 1rem; font-weight: 650; margin: 1.25rem 0 0.5rem; }
+  section p { margin-bottom: 1rem; }
+  section p.lead { font-size: 1.08rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+  section ul, section ol { margin: 0.75rem 0 1.25rem 1.5rem; }
+  section li { margin-bottom: 0.5rem; }
+  section strong { color: var(--primary-dark); font-weight: 650; }
+  section em { color: var(--accent); font-style: normal; font-weight: 600; }
+  .code-block { background: var(--code-bg); border-radius: 12px; margin: 1.25rem 0 0.5rem; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .code-header { background: #1e293b; padding: 0.6rem 1.15rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .code-title { color: #94a3b8; font-size: 0.78rem; font-weight: 600; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; display: flex; align-items: center; gap: 0.5rem; }
+  .code-title::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: #22c55e; display: inline-block; }
+  .code-title.jsx::before { background: #61dafb; }
+  .code-title.json::before { background: #fb923c; }
+  .code-title.env::before { background: #a78bfa; }
+  .code-title.css::before { background: #06b6d4; }
+  .code-copy { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; padding: 0.35rem 0.85rem; border-radius: 6px; font-size: 0.78rem; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .code-copy:hover { background: rgba(255,255,255,0.15); color: white; }
+  .code-copy.copied { background: var(--success); color: white; border-color: var(--success); }
+  pre.code-content { padding: 1.25rem 1.35rem; overflow-x: auto; color: var(--code-text); font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 0.87rem; line-height: 1.65; }
+  .cmt { color: var(--code-comment); font-style: italic; }
+  .kw { color: var(--code-keyword); font-weight: 600; }
+  .str { color: var(--code-string); }
+  .num { color: var(--code-number); }
+  .fn { color: var(--code-function); }
+  .obj { color: #f9a8d4; }
+  .prop { color: #fde047; }
+  .tag { color: #f87171; }
+  .attr { color: #fde047; }
+  .output-block { background: var(--output-bg); border-radius: 0 0 12px 12px; margin: 0 0 1.5rem 0; border-top: 2px dashed rgba(255,255,255,0.1); }
+  .output-header { background: #0f172a; padding: 0.55rem 1.15rem; display: flex; align-items: center; gap: 0.5rem; color: #86efac; font-size: 0.76rem; font-weight: 600; letter-spacing: 0.5px; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; text-transform: uppercase; }
+  .output-header::before { content: '▶'; color: #22c55e; }
+  pre.output-content { padding: 1rem 1.35rem; overflow-x: auto; color: var(--output-text); font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 0.83rem; line-height: 1.55; background: var(--output-bg); }
+  .out-success { color: #86efac; }
+  .out-warning { color: #fcd34d; }
+  .out-info { color: #93c5fd; }
+  .out-error { color: #fca5a5; }
+  .out-header-line { color: #f9a8d4; font-weight: 600; }
+  .out-separator { color: #475569; }
+  .out-dim { color: #64748b; }
+  code.inline { background: var(--surface-alt); color: var(--primary-dark); padding: 0.15rem 0.45rem; border-radius: 5px; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 0.88em; border: 1px solid var(--border); }
+  .callout { border-radius: 12px; padding: 1.25rem 1.5rem; margin: 1.5rem 0; border-left: 4px solid; display: flex; gap: 1rem; align-items: flex-start; }
+  .callout-icon { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.85rem; }
+  .callout-content { flex: 1; }
+  .callout-title { font-weight: 700; margin-bottom: 0.35rem; font-size: 0.95rem; }
+  .callout-body { font-size: 0.93rem; }
+  .callout-body p:last-child { margin-bottom: 0; }
+  .callout.info { background: #e0e7ff; border-color: #4338ca; }
+  .callout.info .callout-icon { background: #4338ca; }
+  .callout.info .callout-title { color: #3730a3; }
+  .callout.warning { background: var(--warning-light); border-color: var(--warning); }
+  .callout.warning .callout-icon { background: var(--warning); }
+  .callout.warning .callout-title { color: #92400e; }
+  .callout.success { background: var(--success-light); border-color: var(--success); }
+  .callout.success .callout-icon { background: var(--success); }
+  .callout.success .callout-title { color: #065f46; }
+  .callout.tip { background: #cffafe; border-color: #0891b2; }
+  .callout.tip .callout-icon { background: #0891b2; }
+  .callout.tip .callout-title { color: #0e7490; }
+  .callout.danger { background: var(--danger-light); border-color: var(--danger); }
+  .callout.danger .callout-icon { background: var(--danger); }
+  .callout.danger .callout-title { color: #991b1b; }
+  .table-wrap { overflow-x: auto; margin: 1.25rem 0; border-radius: 10px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  table thead { background: var(--surface-alt); }
+  table th { padding: 0.75rem 1rem; text-align: left; font-weight: 650; border-bottom: 2px solid var(--border-strong); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  table tbody tr:last-child td { border-bottom: none; }
+  table tbody tr:hover { background: var(--surface-alt); }
+  .file-tree { background: var(--surface-alt); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; margin: 1.25rem 0; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 0.88rem; line-height: 1.8; color: var(--text); }
+  .file-tree .folder { color: var(--primary-dark); font-weight: 600; }
+  .file-tree .file { color: var(--text-muted); }
+  .file-tree .comment { color: var(--text-subtle); font-style: italic; }
+  .browser-mockup { background: #f1f5f9; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin: 1.5rem 0; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .browser-bar { background: #e2e8f0; padding: 0.5rem 0.75rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid #cbd5e1; }
+  .browser-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .browser-dot.red { background: #ef4444; }
+  .browser-dot.yellow { background: #f59e0b; }
+  .browser-dot.green { background: #10b981; }
+  .browser-url { flex: 1; background: white; padding: 0.35rem 0.75rem; border-radius: 5px; font-size: 0.82rem; color: var(--text-muted); font-family: ui-monospace, monospace; margin-left: 0.5rem; }
+  .browser-content { padding: 1.5rem; min-height: 150px; background: white; }
+  .summary-box { background: linear-gradient(135deg, #e0f2fe 0%, #ede9fe 100%); border: 1px solid var(--primary-light); border-radius: 14px; padding: 1.75rem 2rem; margin: 1.5rem 0; }
+  .summary-box h3 { color: var(--primary-dark) !important; margin-top: 0 !important; font-size: 1.15rem !important; }
+  .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+  .comparison-card { padding: 1.25rem; border-radius: 10px; border: 1px solid var(--border); }
+  .comparison-card.bad { background: #fef2f2; border-color: #fca5a5; }
+  .comparison-card.good { background: #f0fdf4; border-color: #86efac; }
+  .comparison-card h4 { margin-top: 0 !important; }
+  .comparison-card.bad h4 { color: #991b1b; }
+  .comparison-card.good h4 { color: #166534; }
+  .step-head { display: flex; align-items: center; gap: 0.75rem; margin: 2rem 0 1rem; }
+  .step-num { width: 34px; height: 34px; border-radius: 50%; background: var(--primary); color: white; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem; flex-shrink: 0; }
+  .step-title { font-size: 1.15rem; font-weight: 700; color: var(--text); }
+  .lesson-nav { display: flex; justify-content: space-between; gap: 1rem; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--border); }
+  .lesson-nav-btn { background: var(--primary); color: white; padding: 1rem 1.5rem; border-radius: 10px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem; transition: background 0.15s; }
+  .lesson-nav-btn:hover { background: var(--primary-dark); }
+  .lesson-nav-btn.secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  @media (max-width: 720px) { .container { padding: 1rem; } .hero { padding: 2rem 1.5rem; } .hero h1 { font-size: 1.75rem; } section { padding: 1.5rem 1.25rem; } section h2 { font-size: 1.35rem; } pre.code-content, pre.output-content { font-size: 0.78rem; padding: 1rem; } .comparison { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="hero">
+  <span class="hero-label">⚛ DƏRS 04 / 06 — UNİVERSAL AI AGENT KURSU</span>
+  <h1>React + Vite Frontend — Dashboard, Auth və API inteqrasiyası</h1>
+  <p class="hero-subtitle">Bu dərsdə TTİS üçün modern, sürətli və gözəl frontend qurduq: Vite ilə sıfırdan layihə, Tailwind CSS, React Router, Auth Context, axios API client, React Hook Form və Dashboard/Projects səhifələri. Hər şey Dərs 3-də yaratdığımız backend-ə real zamanlı qoşulur.</p>
+  <div class="hero-meta">
+    <span class="hero-meta-item">⏱ Təxminən 150–210 dəqiqə</span>
+    <span class="hero-meta-item">📦 22+ komponent, 5 səhifə</span>
+    <span class="hero-meta-item">🎨 Tailwind + Lucide ikonları</span>
+  </div>
+</div>
+
+<div class="objectives">
+  <h3>🎯 Bu Dərsin Sonunda Siz Nəyi Bacaracaqsınız?</h3>
+  <ul>
+    <li>Vite ilə sürətli React layihəsi yaratmaq</li>
+    <li>Tailwind CSS-i konfiqurasiya və istifadə etmək</li>
+    <li>JSX və React Hook-larını rahat yazmaq</li>
+    <li>axios ilə API çağırışları etmək</li>
+    <li>JWT token-i localStorage və axios interceptor ilə idarə etmək</li>
+    <li>Auth Context + useAuth hook yazmaq</li>
+    <li>React Router ilə səhifə naviqasiyası</li>
+    <li>Protected route-lar qurmaq</li>
+    <li>Layout komponent sistemi (Sidebar, Header)</li>
+    <li>React Hook Form ilə forma validasiyası</li>
+    <li>Dashboard və Projects CRUD səhifələri</li>
+    <li>Claude AI analysis düyməsi</li>
+    <li>Backend ilə end-to-end test</li>
+  </ul>
+</div>
+
+<nav class="toc">
+  <h3>Dərsin Bölmələri</h3>
+  <ol>
+    <li><a href="#b1">React və Vite — niyə seçirik?</a></li>
+    <li><a href="#b2">Vite layihəsinin yaradılması</a></li>
+    <li><a href="#b3">İlk "Hello" — dev server</a></li>
+    <li><a href="#b4">Paketlərin quraşdırılması</a></li>
+    <li><a href="#b5">Tailwind CSS konfiqurasiyası</a></li>
+    <li><a href="#b6">Layihə strukturu</a></li>
+    <li><a href="#b7">Environment dəyişənləri</a></li>
+    <li><a href="#b8">axios API müştərisi</a></li>
+    <li><a href="#b9">Auth Context və useAuth</a></li>
+    <li><a href="#b10">React Router qurulması</a></li>
+    <li><a href="#b11">Protected route</a></li>
+    <li><a href="#b12">UI komponentləri</a></li>
+    <li><a href="#b13">Layout: Sidebar və Header</a></li>
+    <li><a href="#b14">Login səhifəsi</a></li>
+    <li><a href="#b15">Dashboard səhifəsi</a></li>
+    <li><a href="#b16">Projects list səhifəsi</a></li>
+    <li><a href="#b17">Project detail və AI analysis</a></li>
+    <li><a href="#b18">End-to-end test</a></li>
+    <li><a href="#b19">Xülasə və növbəti dərs</a></li>
+  </ol>
+</nav>
+
+<section id="b1">
+  <h2><span class="num">1</span> React və Vite — niyə seçirik?</h2>
+  <p class="lead">Frontend — istifadəçinin gördüyü, toxunduğu, hiss etdiyi tərəfdir. Siz R Shiny-da çoxlu dashboard qurmusunuz, amma müasir web tətbiqlərin standartı indi — React.</p>
+
+  <h3>1.1. React nədir?</h3>
+  <p><strong>React</strong> — Facebook tərəfindən yaradılan və açıq qaynaq edilmiş JavaScript kitabxanasıdır (2013). O, interfeysləri kiçik, yenidən istifadə edilə bilən "komponentlər"ə bölməyə imkan verir. "Button", "Card", "Sidebar" — hər biri müstəqil komponent kimi yaşayır, lazım olanda birləşdirilir.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Xüsusiyyət</th><th>React</th><th>R Shiny</th><th>Vanilla JS</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Komponent</strong></td><td>✅ Əsas konsept</td><td>⚠️ Module</td><td>❌ Yoxdur</td></tr>
+        <tr><td><strong>Mobile-ready UI</strong></td><td>✅ React Native</td><td>❌ Yoxdur</td><td>❌ Çətin</td></tr>
+        <tr><td><strong>State idarəsi</strong></td><td>✅ Hook-lar, Context</td><td>⚠️ Reactive values</td><td>❌ Əl ilə</td></tr>
+        <tr><td><strong>Data science</strong></td><td>❌ Məhdud</td><td>✅ Mükəmməl</td><td>❌ Çətin</td></tr>
+        <tr><td><strong>Ekosistem</strong></td><td>✅ Nəhəng</td><td>⚠️ R ekosistemi</td><td>⚠️ Məhdud</td></tr>
+        <tr><td><strong>Enterprise</strong></td><td>✅ Facebook, Netflix</td><td>⚠️ Analitika</td><td>❌ Çətin</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout info">
+    <span class="callout-icon">i</span>
+    <div class="callout-content">
+      <div class="callout-title">Sizin R Shiny təcrübənizə görə</div>
+      <div class="callout-body"><p>Siz Riy_Muellim_Agent, Az_agent, EDU-INSIGHT AI v5.0 layihələrində R Shiny istifadə etmisiniz. React-ə keçid <strong>konseptual olaraq yaxın</strong> — hər ikisi reactive state əsaslıdır. Fərq: Shiny server-side işləyir, React brauzerdə. Mobile app, real-time dashboard, çoxdilli interfeys lazımdırsa — React qat-qat üstündür.</p></div>
+    </div>
+  </div>
+
+  <h3>1.2. Vite nədir?</h3>
+  <p><strong>Vite</strong> (Fransızca "sürətli") — Vue.js yaradıcısı Evan You tərəfindən 2020-ci ildə yaradılan modern build tool-dur. 2024-2025-ci illərdə Create React App (CRA)-ı tamamilə əvəz edib. Rəsmi React komandası artıq CRA-nı tövsiyə etmir.</p>
+
+  <div class="comparison">
+    <div class="comparison-card bad">
+      <h4>❌ Create React App (köhnə)</h4>
+      <ul style="margin-top:0.5rem;">
+        <li>Başlatma: 8-15 saniyə</li>
+        <li>HMR: 1-3 saniyə</li>
+        <li>Webpack əsaslı</li>
+        <li>Rəsmi dəstək dayandırılıb</li>
+      </ul>
+    </div>
+    <div class="comparison-card good">
+      <h4>✅ Vite (modern)</h4>
+      <ul style="margin-top:0.5rem;">
+        <li>Başlatma: 1-2 saniyə</li>
+        <li>HMR: 50-200 millisaniyə</li>
+        <li>ESM + Rollup əsaslı</li>
+        <li>Aktiv inkişaf edir</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="b2">
+  <h2><span class="num">2</span> Vite layihəsinin yaradılması</h2>
+  <p class="lead">Dərs 1-də layihə kökündə <code class="inline">frontend/</code> qovluğu boş qalmışdı. İndi Vite ilə onu dolduracağıq.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — layihə köküne keçmək</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># Layihə köküne keçirik (backend-ə deyil)</span>
+<span class="kw">cd</span> ~/Desktop/Claude_Modei_Təmir_tikinti
+
+<span class="cmt"># Boş frontend qovluğunu silirik ki, Vite yenidən yarada bilsin</span>
+<span class="kw">rm</span> -rf frontend
+
+<span class="cmt"># Vite ilə React layihəsini yaradırıq</span>
+npm create vite@latest frontend -- --template react</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content"><span class="out-info">&gt;</span> npx
+<span class="out-info">&gt;</span> create-vite frontend --template react
+
+<span class="out-success">Scaffolding project in /Users/royatalibova/Desktop/Claude_Modei_Təmir_tikinti/frontend...</span>
+
+Done. Now run:
+  cd frontend
+  npm install
+  npm run dev</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — paketləri quraşdırırıq</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="kw">cd</span> frontend
+npm install</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">added 152 packages, and audited 153 packages in 12s
+<span class="out-success">found 0 vulnerabilities</span></pre>
+  </div>
+</section>
+
+<section id="b3">
+  <h2><span class="num">3</span> İlk "Hello" — dev server</h2>
+  <p class="lead">Vite-in sürətini özünüz görmək üçün dev serveri işə salaq.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — dev serveri başlat</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>npm run dev</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">  <span class="out-info">VITE v6.0.5</span>  ready in <span class="out-success">287 ms</span>
+
+  ➜  <span class="out-info">Local:</span>   <span class="out-success">http://localhost:5173/</span>
+  ➜  <span class="out-info">Network:</span> use --host to expose</pre>
+  </div>
+
+  <div class="callout success">
+    <span class="callout-icon">✓</span>
+    <div class="callout-content">
+      <div class="callout-title">287 millisaniyə! Bax budur Vite-in sürəti</div>
+      <div class="callout-body"><p>Webpack əsaslı CRA-da eyni layihə 8-15 saniyə çəkərdi. Vite ESM istifadə etdiyi üçün hər şeyi bundle etməyə ehtiyac duymur.</p></div>
+    </div>
+  </div>
+
+  <div class="browser-mockup">
+    <div class="browser-bar">
+      <span class="browser-dot red"></span><span class="browser-dot yellow"></span><span class="browser-dot green"></span>
+      <div class="browser-url">http://localhost:5173/</div>
+    </div>
+    <div class="browser-content" style="text-align:center; padding:3rem 1rem;">
+      <div style="font-size:4rem; margin-bottom:1rem;">⚛️ + ⚡</div>
+      <h2 style="color:#646cff; margin-bottom:0.5rem;">Vite + React</h2>
+      <button style="background:#1a1a1a; color:white; border:none; padding:0.6rem 1.2rem; border-radius:8px; margin:1rem;">count is 0</button>
+      <p style="color:#64748b; font-size:0.9rem;">Edit <code>src/App.jsx</code> and save to test HMR</p>
+    </div>
+  </div>
+</section>
+
+<section id="b4">
+  <h2><span class="num">4</span> Paketlərin quraşdırılması</h2>
+  <p class="lead">Vite bizə minimum layihə verdi. TTİS-in tam frontend-i üçün bizə bir neçə əlavə paket lazımdır.</p>
+
+  <div class="callout warning">
+    <span class="callout-icon">!</span>
+    <div class="callout-content">
+      <div class="callout-title">Terminal-ı dayandırmayın!</div>
+      <div class="callout-body"><p>Dev server işləyir. Paketləri <strong>başqa Terminal tabında</strong> quraşdıracağıq (Cmd+T).</p></div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Paket</th><th>Təyinat</th></tr></thead>
+      <tbody>
+        <tr><td><code class="inline">react-router-dom</code></td><td>Səhifələr arası naviqasiya</td></tr>
+        <tr><td><code class="inline">axios</code></td><td>HTTP client</td></tr>
+        <tr><td><code class="inline">react-hook-form</code></td><td>Formalar üçün hook</td></tr>
+        <tr><td><code class="inline">lucide-react</code></td><td>İkon kitabxanası (1400+ ikon)</td></tr>
+        <tr><td><code class="inline">react-hot-toast</code></td><td>Toast bildirişləri</td></tr>
+        <tr><td><code class="inline">clsx</code></td><td>Şərti CSS klasları</td></tr>
+        <tr><td><code class="inline">tailwindcss</code> (dev)</td><td>Utility-first CSS</td></tr>
+        <tr><td><code class="inline">postcss</code>, <code class="inline">autoprefixer</code></td><td>CSS emalı</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — bütün paketlər</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="cmt"># Production paketləri</span>
+npm install react-router-dom axios react-hook-form lucide-react react-hot-toast clsx
+
+<span class="cmt"># Development paketləri</span>
+npm install -D tailwindcss@<span class="num">3</span> postcss autoprefixer</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">added 57 packages, and audited 210 packages in 6s
+<span class="out-success">found 0 vulnerabilities</span>
+
+added 77 packages, and audited 287 packages in 4s
+<span class="out-success">found 0 vulnerabilities</span></pre>
+  </div>
+</section>
+
+<section id="b5">
+  <h2><span class="num">5</span> Tailwind CSS konfiqurasiyası</h2>
+  <p class="lead">Tailwind CSS — "utility-first" yanaşmasına əsaslanan CSS çərçivəsidir. Hazır kiçik klasları HTML-də birləşdirərək dizayn edirsiniz. Başlanğıcda qəribə görünür, amma çox sürətli.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — init</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>npx tailwindcss init -p</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content"><span class="out-success">Created Tailwind CSS config file: tailwind.config.js</span>
+<span class="out-success">Created PostCSS config file: postcss.config.js</span></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — tailwind.config.js</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; tailwind.config.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="cmt">/** @type {import('tailwindcss').Config} */</span>
+export <span class="kw">default</span> {
+  content: [<span class="str">"./index.html"</span>, <span class="str">"./src/**/*.{js,jsx}"</span>],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          <span class="num">50</span>:  <span class="str">'#f0f9ff'</span>,
+          <span class="num">100</span>: <span class="str">'#e0f2fe'</span>,
+          <span class="num">500</span>: <span class="str">'#0ea5e9'</span>,
+          <span class="num">600</span>: <span class="str">'#0284c7'</span>,
+          <span class="num">700</span>: <span class="str">'#0369a1'</span>,
+          <span class="num">900</span>: <span class="str">'#0c4a6e'</span>,
+        },
+      },
+    },
+  },
+  plugins: [],
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title css">src/index.css</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/index.css &lt;&lt; <span class="str">'EOF'</span>
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html { font-family: 'Inter', -apple-system, sans-serif; }
+body { background-color: #f8fafc; color: #0f172a; min-height: 100vh; margin: 0; }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/App.jsx (test üçün)</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/App.jsx &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">function</span> <span class="fn">App</span>() {
+  <span class="kw">return</span> (
+    &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center"</span>&gt;
+      &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"bg-white p-8 rounded-xl shadow-lg max-w-md text-center"</span>&gt;
+        &lt;<span class="tag">h1</span> <span class="attr">className</span>=<span class="str">"text-3xl font-bold text-primary-700 mb-2"</span>&gt;⚛️ TTİS Frontend&lt;/<span class="tag">h1</span>&gt;
+        &lt;<span class="tag">p</span> <span class="attr">className</span>=<span class="str">"text-slate-600"</span>&gt;Tailwind CSS uğurla qoşuldu!&lt;/<span class="tag">p</span>&gt;
+      &lt;/<span class="tag">div</span>&gt;
+    &lt;/<span class="tag">div</span>&gt;
+  );
+}
+<span class="kw">export default</span> App;
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <div class="browser-mockup">
+    <div class="browser-bar">
+      <span class="browser-dot red"></span><span class="browser-dot yellow"></span><span class="browser-dot green"></span>
+      <div class="browser-url">http://localhost:5173/</div>
+    </div>
+    <div class="browser-content" style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe); text-align:center; padding:3rem 1rem;">
+      <div style="background:white; padding:2rem; border-radius:12px; max-width:380px; margin:0 auto; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+        <h1 style="color:#0369a1; font-size:1.8rem; font-weight:800; margin-bottom:0.5rem;">⚛️ TTİS Frontend</h1>
+        <p style="color:#64748b;">Tailwind CSS uğurla qoşuldu!</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b6">
+  <h2><span class="num">6</span> Layihə strukturu</h2>
+  <p class="lead">Lazımi qovluqları yaradıb kodumuzu təşkil edəcəyik.</p>
+
+  <div class="file-tree">
+<span class="folder">frontend/</span>
+├── <span class="file">.env</span>
+└── <span class="folder">src/</span>
+    ├── <span class="file">main.jsx</span>               <span class="comment"># entry point</span>
+    ├── <span class="file">App.jsx</span>                <span class="comment"># router</span>
+    ├── <span class="file">index.css</span>
+    ├── <span class="folder">api/</span>                  <span class="comment"># backend ilə ünsiyyət</span>
+    │   ├── <span class="file">client.js</span>           <span class="comment"># axios instance</span>
+    │   ├── <span class="file">auth.api.js</span>
+    │   └── <span class="file">projects.api.js</span>
+    ├── <span class="folder">contexts/</span>
+    │   └── <span class="file">AuthContext.jsx</span>
+    ├── <span class="folder">hooks/</span>
+    │   └── <span class="file">useAuth.js</span>
+    ├── <span class="folder">components/</span>
+    │   ├── <span class="folder">layout/</span> (Layout, Sidebar, Header)
+    │   ├── <span class="folder">ui/</span> (Button, Input, Card, StatusBadge)
+    │   └── <span class="file">ProtectedRoute.jsx</span>
+    └── <span class="folder">pages/</span>
+        ├── <span class="file">Login.jsx</span>
+        ├── <span class="file">Dashboard.jsx</span>
+        ├── <span class="file">Projects.jsx</span>
+        ├── <span class="file">ProjectDetail.jsx</span>
+        └── <span class="file">NotFound.jsx</span>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — qovluqları yaradırıq</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="kw">mkdir</span> -p src/{api,contexts,hooks,components/{layout,ui},pages,utils}
+<span class="kw">rm</span> -rf src/App.css src/assets
+<span class="kw">find</span> src -type d | sort</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">src
+src/api
+src/components
+src/components/layout
+src/components/ui
+src/contexts
+src/hooks
+src/pages
+src/utils</pre>
+  </div>
+</section>
+
+<section id="b7">
+  <h2><span class="num">7</span> Environment dəyişənləri</h2>
+  <p class="lead">Vite client-side dəyişənlər <strong>VITE_</strong> ilə başlamalıdır (təhlükəsizlik).</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title env">frontend/.env</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; .env &lt;&lt; <span class="str">'EOF'</span>
+VITE_API_URL=http://localhost:3001/api/v1
+VITE_APP_NAME="TTİS"
+VITE_APP_VERSION=0.1.0
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <div class="callout danger">
+    <span class="callout-icon">!</span>
+    <div class="callout-content">
+      <div class="callout-title">Frontend .env ilə Backend .env fərqi</div>
+      <div class="callout-body">
+        <p>VITE_-lə başlayan hər dəyişən <strong>brauzerə göndərilir</strong>. Heç vaxt frontend-də saxlamayın: Claude API açarı, DB password, JWT secret. Yalnız public API URL-lər olmalıdır.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="b8">
+  <h2><span class="num">8</span> axios API müştərisi</h2>
+  <p class="lead">axios — Promise-əsaslı HTTP client. İnterceptor-lar vasitəsilə JWT tokenı avtomatik əlavə edəcəyik.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/api/client.js</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/api/client.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">import</span> axios <span class="kw">from</span> <span class="str">'axios'</span>;
+
+<span class="kw">const</span> API_URL = <span class="obj">import</span>.meta.env.VITE_API_URL || <span class="str">'http://localhost:3001/api/v1'</span>;
+
+<span class="kw">const</span> client = axios.<span class="fn">create</span>({
+  baseURL: API_URL,
+  timeout: <span class="num">30000</span>,
+  headers: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
+});
+
+<span class="cmt">// Request interceptor: JWT tokenı əlavə et</span>
+client.interceptors.request.<span class="fn">use</span>((config) =&gt; {
+  <span class="kw">const</span> token = localStorage.<span class="fn">getItem</span>(<span class="str">'ttis_token'</span>);
+  <span class="kw">if</span> (token) config.headers.Authorization = <span class="str">`Bearer ${token}`</span>;
+  <span class="kw">return</span> config;
+});
+
+<span class="cmt">// Response interceptor: 401-də avtomatik logout</span>
+client.interceptors.response.<span class="fn">use</span>(
+  (response) =&gt; response,
+  (error) =&gt; {
+    <span class="kw">if</span> (error.response?.status === <span class="num">401</span>) {
+      localStorage.<span class="fn">removeItem</span>(<span class="str">'ttis_token'</span>);
+      localStorage.<span class="fn">removeItem</span>(<span class="str">'ttis_user'</span>);
+      <span class="kw">if</span> (!window.location.pathname.<span class="fn">includes</span>(<span class="str">'/login'</span>)) {
+        window.location.href = <span class="str">'/login'</span>;
+      }
+    }
+    <span class="kw">return</span> Promise.<span class="fn">reject</span>(error);
+  }
+);
+
+<span class="kw">export default</span> client;
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/api/auth.api.js</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/api/auth.api.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">import</span> client <span class="kw">from</span> <span class="str">'./client'</span>;
+
+<span class="kw">export const</span> authApi = {
+  login: (credentials) =&gt; client.<span class="fn">post</span>(<span class="str">'/auth/login'</span>, credentials),
+  register: (data) =&gt; client.<span class="fn">post</span>(<span class="str">'/auth/register'</span>, data),
+  me: () =&gt; client.<span class="fn">get</span>(<span class="str">'/auth/me'</span>),
+};
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/api/projects.api.js</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/api/projects.api.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">import</span> client <span class="kw">from</span> <span class="str">'./client'</span>;
+
+<span class="kw">export const</span> projectsApi = {
+  list: (params = {}) =&gt; client.<span class="fn">get</span>(<span class="str">'/construction/projects'</span>, { params }),
+  get: (id) =&gt; client.<span class="fn">get</span>(<span class="str">`/construction/projects/${id}`</span>),
+  create: (data) =&gt; client.<span class="fn">post</span>(<span class="str">'/construction/projects'</span>, data),
+  update: (id, data) =&gt; client.<span class="fn">put</span>(<span class="str">`/construction/projects/${id}`</span>, data),
+  remove: (id) =&gt; client.<span class="fn">delete</span>(<span class="str">`/construction/projects/${id}`</span>),
+  analyze: (id) =&gt; client.<span class="fn">post</span>(<span class="str">`/construction/projects/${id}/analyze`</span>),
+};
+<span class="str">EOF</span></code></pre>
+  </div>
+</section>
+
+<section id="b9">
+  <h2><span class="num">9</span> Auth Context və useAuth hook</h2>
+  <p class="lead">Context — React-də "qlobal state" yaratmağın ən təmiz yoludur. Login olmuş istifadəçini bütün komponentlərdə əl çatan edəcəyik.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/contexts/AuthContext.jsx</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/contexts/AuthContext.jsx &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">import</span> { createContext, useState, useEffect } <span class="kw">from</span> <span class="str">'react'</span>;
+<span class="kw">import</span> { authApi } <span class="kw">from</span> <span class="str">'../api/auth.api'</span>;
+
+<span class="kw">export const</span> AuthContext = <span class="fn">createContext</span>(<span class="kw">null</span>);
+
+<span class="kw">export function</span> <span class="fn">AuthProvider</span>({ children }) {
+  <span class="kw">const</span> [user, setUser] = <span class="fn">useState</span>(<span class="kw">null</span>);
+  <span class="kw">const</span> [loading, setLoading] = <span class="fn">useState</span>(<span class="kw">true</span>);
+
+  <span class="cmt">// Səhifə yüklənəndə tokeni yoxla</span>
+  <span class="fn">useEffect</span>(() =&gt; {
+    <span class="kw">const</span> token = localStorage.<span class="fn">getItem</span>(<span class="str">'ttis_token'</span>);
+    <span class="kw">if</span> (!token) { <span class="fn">setLoading</span>(<span class="kw">false</span>); <span class="kw">return</span>; }
+
+    authApi.<span class="fn">me</span>()
+      .<span class="fn">then</span>(res =&gt; <span class="fn">setUser</span>(res.data.user))
+      .<span class="fn">catch</span>(() =&gt; {
+        localStorage.<span class="fn">removeItem</span>(<span class="str">'ttis_token'</span>);
+        localStorage.<span class="fn">removeItem</span>(<span class="str">'ttis_user'</span>);
+      })
+      .<span class="fn">finally</span>(() =&gt; <span class="fn">setLoading</span>(<span class="kw">false</span>));
+  }, []);
+
+  <span class="kw">const</span> login = <span class="kw">async</span> (email, password) =&gt; {
+    <span class="kw">const</span> res = <span class="kw">await</span> authApi.<span class="fn">login</span>({ email, password });
+    <span class="kw">const</span> { user, token } = res.data;
+    localStorage.<span class="fn">setItem</span>(<span class="str">'ttis_token'</span>, token);
+    localStorage.<span class="fn">setItem</span>(<span class="str">'ttis_user'</span>, JSON.<span class="fn">stringify</span>(user));
+    <span class="fn">setUser</span>(user);
+    <span class="kw">return</span> user;
+  };
+
+  <span class="kw">const</span> logout = () =&gt; {
+    localStorage.<span class="fn">removeItem</span>(<span class="str">'ttis_token'</span>);
+    localStorage.<span class="fn">removeItem</span>(<span class="str">'ttis_user'</span>);
+    <span class="fn">setUser</span>(<span class="kw">null</span>);
+  };
+
+  <span class="kw">return</span> (
+    &lt;<span class="tag">AuthContext.Provider</span> <span class="attr">value</span>={{ user, loading, isAuthenticated: !!user, login, logout }}&gt;
+      {children}
+    &lt;/<span class="tag">AuthContext.Provider</span>&gt;
+  );
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/hooks/useAuth.js</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/hooks/useAuth.js &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">import</span> { useContext } <span class="kw">from</span> <span class="str">'react'</span>;
+<span class="kw">import</span> { AuthContext } <span class="kw">from</span> <span class="str">'../contexts/AuthContext'</span>;
+
+<span class="kw">export function</span> <span class="fn">useAuth</span>() {
+  <span class="kw">const</span> ctx = <span class="fn">useContext</span>(AuthContext);
+  <span class="kw">if</span> (!ctx) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">'useAuth yalnız AuthProvider içində istifadə edilə bilər'</span>);
+  <span class="kw">return</span> ctx;
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+</section>
+
+<section id="b10">
+  <h2><span class="num">10</span> React Router qurulması</h2>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/main.jsx</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/main.jsx &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">import</span> { StrictMode } <span class="kw">from</span> <span class="str">'react'</span>;
+<span class="kw">import</span> { createRoot } <span class="kw">from</span> <span class="str">'react-dom/client'</span>;
+<span class="kw">import</span> { BrowserRouter } <span class="kw">from</span> <span class="str">'react-router-dom'</span>;
+<span class="kw">import</span> { Toaster } <span class="kw">from</span> <span class="str">'react-hot-toast'</span>;
+<span class="kw">import</span> { AuthProvider } <span class="kw">from</span> <span class="str">'./contexts/AuthContext.jsx'</span>;
+<span class="kw">import</span> App <span class="kw">from</span> <span class="str">'./App.jsx'</span>;
+<span class="kw">import</span> <span class="str">'./index.css'</span>;
+
+<span class="fn">createRoot</span>(document.<span class="fn">getElementById</span>(<span class="str">'root'</span>)).<span class="fn">render</span>(
+  &lt;<span class="tag">StrictMode</span>&gt;
+    &lt;<span class="tag">BrowserRouter</span>&gt;
+      &lt;<span class="tag">AuthProvider</span>&gt;
+        &lt;<span class="tag">App</span> /&gt;
+        &lt;<span class="tag">Toaster</span> <span class="attr">position</span>=<span class="str">"top-right"</span> /&gt;
+      &lt;/<span class="tag">AuthProvider</span>&gt;
+    &lt;/<span class="tag">BrowserRouter</span>&gt;
+  &lt;/<span class="tag">StrictMode</span>&gt;
+);
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/App.jsx</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/App.jsx &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">import</span> { Routes, Route, Navigate } <span class="kw">from</span> <span class="str">'react-router-dom'</span>;
+<span class="kw">import</span> { ProtectedRoute } <span class="kw">from</span> <span class="str">'./components/ProtectedRoute'</span>;
+<span class="kw">import</span> { Layout } <span class="kw">from</span> <span class="str">'./components/layout/Layout'</span>;
+<span class="kw">import</span> Login <span class="kw">from</span> <span class="str">'./pages/Login'</span>;
+<span class="kw">import</span> Dashboard <span class="kw">from</span> <span class="str">'./pages/Dashboard'</span>;
+<span class="kw">import</span> Projects <span class="kw">from</span> <span class="str">'./pages/Projects'</span>;
+<span class="kw">import</span> ProjectDetail <span class="kw">from</span> <span class="str">'./pages/ProjectDetail'</span>;
+<span class="kw">import</span> NotFound <span class="kw">from</span> <span class="str">'./pages/NotFound'</span>;
+
+<span class="kw">function</span> <span class="fn">App</span>() {
+  <span class="kw">return</span> (
+    &lt;<span class="tag">Routes</span>&gt;
+      &lt;<span class="tag">Route</span> <span class="attr">path</span>=<span class="str">"/login"</span> <span class="attr">element</span>={&lt;<span class="tag">Login</span> /&gt;} /&gt;
+      &lt;<span class="tag">Route</span> <span class="attr">element</span>={&lt;<span class="tag">ProtectedRoute</span>&gt;&lt;<span class="tag">Layout</span> /&gt;&lt;/<span class="tag">ProtectedRoute</span>&gt;}&gt;
+        &lt;<span class="tag">Route</span> <span class="attr">path</span>=<span class="str">"/"</span> <span class="attr">element</span>={&lt;<span class="tag">Navigate</span> <span class="attr">to</span>=<span class="str">"/dashboard"</span> /&gt;} /&gt;
+        &lt;<span class="tag">Route</span> <span class="attr">path</span>=<span class="str">"/dashboard"</span> <span class="attr">element</span>={&lt;<span class="tag">Dashboard</span> /&gt;} /&gt;
+        &lt;<span class="tag">Route</span> <span class="attr">path</span>=<span class="str">"/projects"</span> <span class="attr">element</span>={&lt;<span class="tag">Projects</span> /&gt;} /&gt;
+        &lt;<span class="tag">Route</span> <span class="attr">path</span>=<span class="str">"/projects/:id"</span> <span class="attr">element</span>={&lt;<span class="tag">ProjectDetail</span> /&gt;} /&gt;
+      &lt;/<span class="tag">Route</span>&gt;
+      &lt;<span class="tag">Route</span> <span class="attr">path</span>=<span class="str">"*"</span> <span class="attr">element</span>={&lt;<span class="tag">NotFound</span> /&gt;} /&gt;
+    &lt;/<span class="tag">Routes</span>&gt;
+  );
+}
+<span class="kw">export default</span> App;
+<span class="str">EOF</span></code></pre>
+  </div>
+</section>
+
+<section id="b11">
+  <h2><span class="num">11</span> Protected route</h2>
+  <p class="lead">İstifadəçi login olmayıbsa dashboard kimi səhifələrə daxil ola bilməməlidir.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/components/ProtectedRoute.jsx</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/components/ProtectedRoute.jsx &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">import</span> { Navigate, useLocation } <span class="kw">from</span> <span class="str">'react-router-dom'</span>;
+<span class="kw">import</span> { useAuth } <span class="kw">from</span> <span class="str">'../hooks/useAuth'</span>;
+
+<span class="kw">export function</span> <span class="fn">ProtectedRoute</span>({ children }) {
+  <span class="kw">const</span> { isAuthenticated, loading } = <span class="fn">useAuth</span>();
+  <span class="kw">const</span> location = <span class="fn">useLocation</span>();
+
+  <span class="kw">if</span> (loading) {
+    <span class="kw">return</span> (
+      &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"min-h-screen flex items-center justify-center"</span>&gt;
+        &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"text-primary-600 text-lg"</span>&gt;Yüklənir...&lt;/<span class="tag">div</span>&gt;
+      &lt;/<span class="tag">div</span>&gt;
+    );
+  }
+
+  <span class="kw">if</span> (!isAuthenticated) {
+    <span class="kw">return</span> &lt;<span class="tag">Navigate</span> <span class="attr">to</span>=<span class="str">"/login"</span> <span class="attr">state</span>={{ from: location }} <span class="attr">replace</span> /&gt;;
+  }
+
+  <span class="kw">return</span> children;
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+</section>
+
+<section id="b12">
+  <h2><span class="num">12</span> UI komponentləri</h2>
+  <p class="lead">Təkrar-təkrar istifadə edəcəyimiz kiçik komponentlər: Button, Input, Card, StatusBadge.</p>
+
+  <h3>12.1. Button</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/components/ui/Button.jsx</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/components/ui/Button.jsx &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">import</span> clsx <span class="kw">from</span> <span class="str">'clsx'</span>;
+
+<span class="kw">export function</span> <span class="fn">Button</span>({ children, variant = <span class="str">'primary'</span>, size = <span class="str">'md'</span>, loading = <span class="kw">false</span>, disabled, className, ...props }) {
+  <span class="kw">const</span> base = <span class="str">'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'</span>;
+
+  <span class="kw">const</span> variants = {
+    primary: <span class="str">'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500'</span>,
+    secondary: <span class="str">'bg-slate-200 text-slate-800 hover:bg-slate-300 focus:ring-slate-500'</span>,
+    danger: <span class="str">'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500'</span>,
+    ghost: <span class="str">'bg-transparent text-slate-700 hover:bg-slate-100 focus:ring-slate-500'</span>,
+  };
+
+  <span class="kw">const</span> sizes = {
+    sm: <span class="str">'px-3 py-1.5 text-sm'</span>,
+    md: <span class="str">'px-4 py-2 text-base'</span>,
+    lg: <span class="str">'px-6 py-3 text-lg'</span>,
+  };
+
+  <span class="kw">return</span> (
+    &lt;<span class="tag">button</span>
+      <span class="attr">className</span>={<span class="fn">clsx</span>(base, variants[variant], sizes[size], className)}
+      <span class="attr">disabled</span>={disabled || loading}
+      {...props}
+    &gt;
+      {loading ? <span class="str">'Yüklənir...'</span> : children}
+    &lt;/<span class="tag">button</span>&gt;
+  );
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <h3>12.2. Input</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/components/ui/Input.jsx</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/components/ui/Input.jsx &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">import</span> { forwardRef } <span class="kw">from</span> <span class="str">'react'</span>;
+<span class="kw">import</span> clsx <span class="kw">from</span> <span class="str">'clsx'</span>;
+
+<span class="kw">export const</span> Input = <span class="fn">forwardRef</span>(({ label, error, className, ...props }, ref) =&gt; (
+  &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"space-y-1"</span>&gt;
+    {label &amp;&amp; &lt;<span class="tag">label</span> <span class="attr">className</span>=<span class="str">"block text-sm font-medium text-slate-700"</span>&gt;{label}&lt;/<span class="tag">label</span>&gt;}
+    &lt;<span class="tag">input</span>
+      <span class="attr">ref</span>={ref}
+      <span class="attr">className</span>={<span class="fn">clsx</span>(
+        <span class="str">'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent'</span>,
+        error ? <span class="str">'border-red-400'</span> : <span class="str">'border-slate-300'</span>,
+        className
+      )}
+      {...props}
+    /&gt;
+    {error &amp;&amp; &lt;<span class="tag">p</span> <span class="attr">className</span>=<span class="str">"text-sm text-red-600"</span>&gt;{error}&lt;/<span class="tag">p</span>&gt;}
+  &lt;/<span class="tag">div</span>&gt;
+));
+Input.displayName = <span class="str">'Input'</span>;
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <h3>12.3. Card</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/components/ui/Card.jsx</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/components/ui/Card.jsx &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">import</span> clsx <span class="kw">from</span> <span class="str">'clsx'</span>;
+
+<span class="kw">export function</span> <span class="fn">Card</span>({ children, className, ...props }) {
+  <span class="kw">return</span> (
+    &lt;<span class="tag">div</span> <span class="attr">className</span>={<span class="fn">clsx</span>(<span class="str">'bg-white border border-slate-200 rounded-xl shadow-sm p-6'</span>, className)} {...props}&gt;
+      {children}
+    &lt;/<span class="tag">div</span>&gt;
+  );
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <h3>12.4. StatusBadge</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/components/ui/StatusBadge.jsx</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/components/ui/StatusBadge.jsx &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">import</span> clsx <span class="kw">from</span> <span class="str">'clsx'</span>;
+
+<span class="kw">const</span> config = {
+  planned:     { label: <span class="str">'Planlaşdırılıb'</span>, cls: <span class="str">'bg-slate-100 text-slate-700'</span> },
+  approved:    { label: <span class="str">'Təsdiqlənib'</span>,   cls: <span class="str">'bg-blue-100 text-blue-700'</span> },
+  in_progress: { label: <span class="str">'İcrada'</span>,        cls: <span class="str">'bg-amber-100 text-amber-700'</span> },
+  suspended:   { label: <span class="str">'Dayandırılıb'</span>,  cls: <span class="str">'bg-orange-100 text-orange-700'</span> },
+  completed:   { label: <span class="str">'Tamamlanıb'</span>,    cls: <span class="str">'bg-green-100 text-green-700'</span> },
+  cancelled:   { label: <span class="str">'Ləğv'</span>,          cls: <span class="str">'bg-red-100 text-red-700'</span> },
+};
+
+<span class="kw">export function</span> <span class="fn">StatusBadge</span>({ status }) {
+  <span class="kw">const</span> c = config[status] || config.planned;
+  <span class="kw">return</span> (
+    &lt;<span class="tag">span</span> <span class="attr">className</span>={<span class="fn">clsx</span>(<span class="str">'inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium'</span>, c.cls)}&gt;
+      {c.label}
+    &lt;/<span class="tag">span</span>&gt;
+  );
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+</section>
+
+<section id="b13">
+  <h2><span class="num">13</span> Layout: Sidebar və Header</h2>
+
+  <h3>13.1. Sidebar</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/components/layout/Sidebar.jsx</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/components/layout/Sidebar.jsx &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">import</span> { NavLink } <span class="kw">from</span> <span class="str">'react-router-dom'</span>;
+<span class="kw">import</span> { LayoutDashboard, FolderKanban, Building2, Users, Settings } <span class="kw">from</span> <span class="str">'lucide-react'</span>;
+<span class="kw">import</span> clsx <span class="kw">from</span> <span class="str">'clsx'</span>;
+
+<span class="kw">const</span> navItems = [
+  { to: <span class="str">'/dashboard'</span>, label: <span class="str">'Dashboard'</span>, icon: LayoutDashboard },
+  { to: <span class="str">'/projects'</span>,  label: <span class="str">'Layihələr'</span>, icon: FolderKanban },
+  { to: <span class="str">'/objects'</span>,   label: <span class="str">'Obyektlər'</span>, icon: Building2 },
+  { to: <span class="str">'/teams'</span>,     label: <span class="str">'Briqadalar'</span>, icon: Users },
+  { to: <span class="str">'/settings'</span>,  label: <span class="str">'Parametrlər'</span>, icon: Settings },
+];
+
+<span class="kw">export function</span> <span class="fn">Sidebar</span>() {
+  <span class="kw">return</span> (
+    &lt;<span class="tag">aside</span> <span class="attr">className</span>=<span class="str">"w-64 bg-slate-900 text-white flex flex-col"</span>&gt;
+      &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"p-6 border-b border-slate-800"</span>&gt;
+        &lt;<span class="tag">h1</span> <span class="attr">className</span>=<span class="str">"text-2xl font-bold"</span>&gt;🏗️ &lt;<span class="tag">span</span> <span class="attr">className</span>=<span class="str">"text-primary-400"</span>&gt;TTİS&lt;/<span class="tag">span</span>&gt;&lt;/<span class="tag">h1</span>&gt;
+        &lt;<span class="tag">p</span> <span class="attr">className</span>=<span class="str">"text-xs text-slate-400 mt-1"</span>&gt;Təmir-Tikinti İdarəsi&lt;/<span class="tag">p</span>&gt;
+      &lt;/<span class="tag">div</span>&gt;
+      &lt;<span class="tag">nav</span> <span class="attr">className</span>=<span class="str">"flex-1 p-4 space-y-1"</span>&gt;
+        {navItems.<span class="fn">map</span>((item) =&gt; {
+          <span class="kw">const</span> Icon = item.icon;
+          <span class="kw">return</span> (
+            &lt;<span class="tag">NavLink</span>
+              <span class="attr">key</span>={item.to}
+              <span class="attr">to</span>={item.to}
+              <span class="attr">className</span>={({ isActive }) =&gt; <span class="fn">clsx</span>(
+                <span class="str">'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors'</span>,
+                isActive ? <span class="str">'bg-primary-600 text-white'</span> : <span class="str">'text-slate-300 hover:bg-slate-800 hover:text-white'</span>
+              )}
+            &gt;
+              &lt;<span class="tag">Icon</span> <span class="attr">size</span>={<span class="num">18</span>} /&gt; {item.label}
+            &lt;/<span class="tag">NavLink</span>&gt;
+          );
+        })}
+      &lt;/<span class="tag">nav</span>&gt;
+      &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"p-4 border-t border-slate-800 text-xs text-slate-500"</span>&gt;v0.1.0 — ARTI&lt;/<span class="tag">div</span>&gt;
+    &lt;/<span class="tag">aside</span>&gt;
+  );
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <h3>13.2. Header</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/components/layout/Header.jsx</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/components/layout/Header.jsx &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">import</span> { useAuth } <span class="kw">from</span> <span class="str">'../../hooks/useAuth'</span>;
+<span class="kw">import</span> { LogOut, Bell, User } <span class="kw">from</span> <span class="str">'lucide-react'</span>;
+
+<span class="kw">export function</span> <span class="fn">Header</span>() {
+  <span class="kw">const</span> { user, logout } = <span class="fn">useAuth</span>();
+  <span class="kw">return</span> (
+    &lt;<span class="tag">header</span> <span class="attr">className</span>=<span class="str">"bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between"</span>&gt;
+      &lt;<span class="tag">h2</span> <span class="attr">className</span>=<span class="str">"text-lg font-semibold text-slate-800"</span>&gt;Xoş gördük, {user?.full_name} 👋&lt;/<span class="tag">h2</span>&gt;
+      &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"flex items-center gap-4"</span>&gt;
+        &lt;<span class="tag">button</span> <span class="attr">className</span>=<span class="str">"text-slate-500 hover:text-slate-800"</span>&gt;&lt;<span class="tag">Bell</span> <span class="attr">size</span>={<span class="num">20</span>} /&gt;&lt;/<span class="tag">button</span>&gt;
+        &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg"</span>&gt;
+          &lt;<span class="tag">User</span> <span class="attr">size</span>={<span class="num">16</span>} <span class="attr">className</span>=<span class="str">"text-slate-500"</span> /&gt;
+          &lt;<span class="tag">span</span> <span class="attr">className</span>=<span class="str">"text-sm text-slate-700"</span>&gt;{user?.role_code}&lt;/<span class="tag">span</span>&gt;
+        &lt;/<span class="tag">div</span>&gt;
+        &lt;<span class="tag">button</span> <span class="attr">onClick</span>={logout} <span class="attr">className</span>=<span class="str">"flex items-center gap-2 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition"</span>&gt;
+          &lt;<span class="tag">LogOut</span> <span class="attr">size</span>={<span class="num">16</span>} /&gt; Çıxış
+        &lt;/<span class="tag">button</span>&gt;
+      &lt;/<span class="tag">div</span>&gt;
+    &lt;/<span class="tag">header</span>&gt;
+  );
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <h3>13.3. Layout</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/components/layout/Layout.jsx</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/components/layout/Layout.jsx &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">import</span> { Outlet } <span class="kw">from</span> <span class="str">'react-router-dom'</span>;
+<span class="kw">import</span> { Sidebar } <span class="kw">from</span> <span class="str">'./Sidebar'</span>;
+<span class="kw">import</span> { Header } <span class="kw">from</span> <span class="str">'./Header'</span>;
+
+<span class="kw">export function</span> <span class="fn">Layout</span>() {
+  <span class="kw">return</span> (
+    &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"min-h-screen flex bg-slate-50"</span>&gt;
+      &lt;<span class="tag">Sidebar</span> /&gt;
+      &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"flex-1 flex flex-col"</span>&gt;
+        &lt;<span class="tag">Header</span> /&gt;
+        &lt;<span class="tag">main</span> <span class="attr">className</span>=<span class="str">"flex-1 p-6 overflow-auto"</span>&gt;
+          &lt;<span class="tag">Outlet</span> /&gt;
+        &lt;/<span class="tag">main</span>&gt;
+      &lt;/<span class="tag">div</span>&gt;
+    &lt;/<span class="tag">div</span>&gt;
+  );
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+</section>
+
+<section id="b14">
+  <h2><span class="num">14</span> Login səhifəsi</h2>
+  <p class="lead">React Hook Form ilə gözəl, validasiyalı login forması.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/pages/Login.jsx</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/pages/Login.jsx &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">import</span> { useState } <span class="kw">from</span> <span class="str">'react'</span>;
+<span class="kw">import</span> { useNavigate, Navigate } <span class="kw">from</span> <span class="str">'react-router-dom'</span>;
+<span class="kw">import</span> { useForm } <span class="kw">from</span> <span class="str">'react-hook-form'</span>;
+<span class="kw">import</span> toast <span class="kw">from</span> <span class="str">'react-hot-toast'</span>;
+<span class="kw">import</span> { Mail, Lock, LogIn } <span class="kw">from</span> <span class="str">'lucide-react'</span>;
+<span class="kw">import</span> { useAuth } <span class="kw">from</span> <span class="str">'../hooks/useAuth'</span>;
+<span class="kw">import</span> { Button } <span class="kw">from</span> <span class="str">'../components/ui/Button'</span>;
+<span class="kw">import</span> { Input } <span class="kw">from</span> <span class="str">'../components/ui/Input'</span>;
+
+<span class="kw">export default function</span> <span class="fn">Login</span>() {
+  <span class="kw">const</span> navigate = <span class="fn">useNavigate</span>();
+  <span class="kw">const</span> { login, isAuthenticated } = <span class="fn">useAuth</span>();
+  <span class="kw">const</span> [loading, setLoading] = <span class="fn">useState</span>(<span class="kw">false</span>);
+  <span class="kw">const</span> { register, handleSubmit, formState: { errors } } = <span class="fn">useForm</span>();
+
+  <span class="kw">if</span> (isAuthenticated) <span class="kw">return</span> &lt;<span class="tag">Navigate</span> <span class="attr">to</span>=<span class="str">"/dashboard"</span> /&gt;;
+
+  <span class="kw">const</span> onSubmit = <span class="kw">async</span> (data) =&gt; {
+    <span class="fn">setLoading</span>(<span class="kw">true</span>);
+    <span class="kw">try</span> {
+      <span class="kw">await</span> <span class="fn">login</span>(data.email, data.password);
+      toast.<span class="fn">success</span>(<span class="str">'Xoş gəldiniz!'</span>);
+      <span class="fn">navigate</span>(<span class="str">'/dashboard'</span>);
+    } <span class="kw">catch</span> (err) {
+      toast.<span class="fn">error</span>(err.response?.data?.message || <span class="str">'Giriş uğursuz'</span>);
+    } <span class="kw">finally</span> { <span class="fn">setLoading</span>(<span class="kw">false</span>); }
+  };
+
+  <span class="kw">return</span> (
+    &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"min-h-screen bg-gradient-to-br from-primary-50 via-slate-50 to-primary-100 flex items-center justify-center p-4"</span>&gt;
+      &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"bg-white rounded-2xl shadow-xl w-full max-w-md p-8"</span>&gt;
+        &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"text-center mb-6"</span>&gt;
+          &lt;<span class="tag">h1</span> <span class="attr">className</span>=<span class="str">"text-3xl font-bold text-primary-700"</span>&gt;🏗️ TTİS&lt;/<span class="tag">h1</span>&gt;
+          &lt;<span class="tag">p</span> <span class="attr">className</span>=<span class="str">"text-slate-600 mt-2"</span>&gt;Daxil olun&lt;/<span class="tag">p</span>&gt;
+        &lt;/<span class="tag">div</span>&gt;
+        &lt;<span class="tag">form</span> <span class="attr">onSubmit</span>={<span class="fn">handleSubmit</span>(onSubmit)} <span class="attr">className</span>=<span class="str">"space-y-4"</span>&gt;
+          &lt;<span class="tag">Input</span>
+            <span class="attr">label</span>=<span class="str">"Email"</span>
+            <span class="attr">type</span>=<span class="str">"email"</span>
+            <span class="attr">placeholder</span>=<span class="str">"siz@arti.edu.az"</span>
+            <span class="attr">error</span>={errors.email?.message}
+            {...<span class="fn">register</span>(<span class="str">'email'</span>, { required: <span class="str">'Email tələb olunur'</span> })}
+          /&gt;
+          &lt;<span class="tag">Input</span>
+            <span class="attr">label</span>=<span class="str">"Şifrə"</span>
+            <span class="attr">type</span>=<span class="str">"password"</span>
+            <span class="attr">placeholder</span>=<span class="str">"••••••••"</span>
+            <span class="attr">error</span>={errors.password?.message}
+            {...<span class="fn">register</span>(<span class="str">'password'</span>, { required: <span class="str">'Şifrə tələb olunur'</span>, minLength: { value: <span class="num">6</span>, message: <span class="str">'Minimum 6 simvol'</span> } })}
+          /&gt;
+          &lt;<span class="tag">Button</span> <span class="attr">type</span>=<span class="str">"submit"</span> <span class="attr">className</span>=<span class="str">"w-full"</span> <span class="attr">loading</span>={loading}&gt;
+            &lt;<span class="tag">LogIn</span> <span class="attr">size</span>={<span class="num">18</span>} <span class="attr">className</span>=<span class="str">"mr-2"</span> /&gt; Daxil ol
+          &lt;/<span class="tag">Button</span>&gt;
+        &lt;/<span class="tag">form</span>&gt;
+      &lt;/<span class="tag">div</span>&gt;
+    &lt;/<span class="tag">div</span>&gt;
+  );
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+</section>
+
+<section id="b15">
+  <h2><span class="num">15</span> Dashboard səhifəsi</h2>
+  <p class="lead">Dashboard — TTİS-in "ürəyidir". Stat kartları, aktiv layihələr, son fəaliyyətlər.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/pages/Dashboard.jsx</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/pages/Dashboard.jsx &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">import</span> { useEffect, useState } <span class="kw">from</span> <span class="str">'react'</span>;
+<span class="kw">import</span> { FolderKanban, TrendingUp, DollarSign, AlertTriangle } <span class="kw">from</span> <span class="str">'lucide-react'</span>;
+<span class="kw">import</span> { projectsApi } <span class="kw">from</span> <span class="str">'../api/projects.api'</span>;
+<span class="kw">import</span> { Card } <span class="kw">from</span> <span class="str">'../components/ui/Card'</span>;
+<span class="kw">import</span> { StatusBadge } <span class="kw">from</span> <span class="str">'../components/ui/StatusBadge'</span>;
+
+<span class="kw">function</span> <span class="fn">StatCard</span>({ icon: Icon, title, value, color = <span class="str">'primary'</span> }) {
+  <span class="kw">const</span> colors = {
+    primary: <span class="str">'bg-primary-50 text-primary-700'</span>,
+    green:   <span class="str">'bg-green-50 text-green-700'</span>,
+    amber:   <span class="str">'bg-amber-50 text-amber-700'</span>,
+    red:     <span class="str">'bg-red-50 text-red-700'</span>,
+  };
+  <span class="kw">return</span> (
+    &lt;<span class="tag">Card</span> <span class="attr">className</span>=<span class="str">"flex items-center gap-4"</span>&gt;
+      &lt;<span class="tag">div</span> <span class="attr">className</span>={`<span class="str">w-12 h-12 rounded-lg flex items-center justify-center ${colors[color]}</span>`}&gt;
+        &lt;<span class="tag">Icon</span> <span class="attr">size</span>={<span class="num">24</span>} /&gt;
+      &lt;/<span class="tag">div</span>&gt;
+      &lt;<span class="tag">div</span>&gt;
+        &lt;<span class="tag">p</span> <span class="attr">className</span>=<span class="str">"text-sm text-slate-500"</span>&gt;{title}&lt;/<span class="tag">p</span>&gt;
+        &lt;<span class="tag">p</span> <span class="attr">className</span>=<span class="str">"text-2xl font-bold text-slate-800"</span>&gt;{value}&lt;/<span class="tag">p</span>&gt;
+      &lt;/<span class="tag">div</span>&gt;
+    &lt;/<span class="tag">Card</span>&gt;
+  );
+}
+
+<span class="kw">export default function</span> <span class="fn">Dashboard</span>() {
+  <span class="kw">const</span> [projects, setProjects] = <span class="fn">useState</span>([]);
+  <span class="kw">const</span> [loading, setLoading] = <span class="fn">useState</span>(<span class="kw">true</span>);
+
+  <span class="fn">useEffect</span>(() =&gt; {
+    projectsApi.<span class="fn">list</span>()
+      .<span class="fn">then</span>(res =&gt; <span class="fn">setProjects</span>(res.data.data || []))
+      .<span class="fn">finally</span>(() =&gt; <span class="fn">setLoading</span>(<span class="kw">false</span>));
+  }, []);
+
+  <span class="kw">const</span> stats = {
+    total:   projects.length,
+    active:  projects.<span class="fn">filter</span>(p =&gt; p.status === <span class="str">'in_progress'</span>).length,
+    budget:  projects.<span class="fn">reduce</span>((s, p) =&gt; s + <span class="fn">parseFloat</span>(p.total_budget_planned || <span class="num">0</span>), <span class="num">0</span>),
+    overdue: projects.<span class="fn">filter</span>(p =&gt; p.deadline_status === <span class="str">'overdue'</span>).length,
+  };
+
+  <span class="kw">if</span> (loading) <span class="kw">return</span> &lt;<span class="tag">p</span>&gt;Yüklənir...&lt;/<span class="tag">p</span>&gt;;
+
+  <span class="kw">return</span> (
+    &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"space-y-6"</span>&gt;
+      &lt;<span class="tag">h1</span> <span class="attr">className</span>=<span class="str">"text-2xl font-bold text-slate-800"</span>&gt;Ümumi baxış&lt;/<span class="tag">h1</span>&gt;
+
+      &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"</span>&gt;
+        &lt;<span class="tag">StatCard</span> <span class="attr">icon</span>={FolderKanban} <span class="attr">title</span>=<span class="str">"Ümumi layihə"</span> <span class="attr">value</span>={stats.total} /&gt;
+        &lt;<span class="tag">StatCard</span> <span class="attr">icon</span>={TrendingUp} <span class="attr">title</span>=<span class="str">"Aktiv"</span> <span class="attr">value</span>={stats.active} <span class="attr">color</span>=<span class="str">"green"</span> /&gt;
+        &lt;<span class="tag">StatCard</span> <span class="attr">icon</span>={DollarSign} <span class="attr">title</span>=<span class="str">"Büdcə (AZN)"</span> <span class="attr">value</span>={stats.budget.<span class="fn">toLocaleString</span>()} <span class="attr">color</span>=<span class="str">"amber"</span> /&gt;
+        &lt;<span class="tag">StatCard</span> <span class="attr">icon</span>={AlertTriangle} <span class="attr">title</span>=<span class="str">"Gecikir"</span> <span class="attr">value</span>={stats.overdue} <span class="attr">color</span>=<span class="str">"red"</span> /&gt;
+      &lt;/<span class="tag">div</span>&gt;
+
+      &lt;<span class="tag">Card</span>&gt;
+        &lt;<span class="tag">h2</span> <span class="attr">className</span>=<span class="str">"text-lg font-semibold mb-4"</span>&gt;Son layihələr&lt;/<span class="tag">h2</span>&gt;
+        {projects.length === <span class="num">0</span> ? (
+          &lt;<span class="tag">p</span> <span class="attr">className</span>=<span class="str">"text-slate-500"</span>&gt;Hələ layihə yoxdur&lt;/<span class="tag">p</span>&gt;
+        ) : (
+          &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"space-y-3"</span>&gt;
+            {projects.<span class="fn">slice</span>(<span class="num">0</span>, <span class="num">5</span>).<span class="fn">map</span>((p) =&gt; (
+              &lt;<span class="tag">div</span> <span class="attr">key</span>={p.id} <span class="attr">className</span>=<span class="str">"flex items-center justify-between p-3 bg-slate-50 rounded-lg"</span>&gt;
+                &lt;<span class="tag">div</span>&gt;
+                  &lt;<span class="tag">p</span> <span class="attr">className</span>=<span class="str">"font-medium"</span>&gt;{p.project_name}&lt;/<span class="tag">p</span>&gt;
+                  &lt;<span class="tag">p</span> <span class="attr">className</span>=<span class="str">"text-sm text-slate-500"</span>&gt;{p.region} · {p.project_code}&lt;/<span class="tag">p</span>&gt;
+                &lt;/<span class="tag">div</span>&gt;
+                &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"flex items-center gap-4"</span>&gt;
+                  &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"text-right"</span>&gt;
+                    &lt;<span class="tag">p</span> <span class="attr">className</span>=<span class="str">"text-sm font-medium"</span>&gt;{p.progress_percent}%&lt;/<span class="tag">p</span>&gt;
+                    &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"w-24 bg-slate-200 rounded-full h-1.5 mt-1"</span>&gt;
+                      &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"bg-primary-600 h-1.5 rounded-full"</span> <span class="attr">style</span>={{ width: `${p.progress_percent}%` }} /&gt;
+                    &lt;/<span class="tag">div</span>&gt;
+                  &lt;/<span class="tag">div</span>&gt;
+                  &lt;<span class="tag">StatusBadge</span> <span class="attr">status</span>={p.status} /&gt;
+                &lt;/<span class="tag">div</span>&gt;
+              &lt;/<span class="tag">div</span>&gt;
+            ))}
+          &lt;/<span class="tag">div</span>&gt;
+        )}
+      &lt;/<span class="tag">Card</span>&gt;
+    &lt;/<span class="tag">div</span>&gt;
+  );
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+</section>
+
+<section id="b16">
+  <h2><span class="num">16</span> Projects list səhifəsi</h2>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/pages/Projects.jsx</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/pages/Projects.jsx &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">import</span> { useEffect, useState } <span class="kw">from</span> <span class="str">'react'</span>;
+<span class="kw">import</span> { Link } <span class="kw">from</span> <span class="str">'react-router-dom'</span>;
+<span class="kw">import</span> { Plus, Search, Eye } <span class="kw">from</span> <span class="str">'lucide-react'</span>;
+<span class="kw">import</span> { projectsApi } <span class="kw">from</span> <span class="str">'../api/projects.api'</span>;
+<span class="kw">import</span> { Card } <span class="kw">from</span> <span class="str">'../components/ui/Card'</span>;
+<span class="kw">import</span> { Button } <span class="kw">from</span> <span class="str">'../components/ui/Button'</span>;
+<span class="kw">import</span> { Input } <span class="kw">from</span> <span class="str">'../components/ui/Input'</span>;
+<span class="kw">import</span> { StatusBadge } <span class="kw">from</span> <span class="str">'../components/ui/StatusBadge'</span>;
+
+<span class="kw">export default function</span> <span class="fn">Projects</span>() {
+  <span class="kw">const</span> [projects, setProjects] = <span class="fn">useState</span>([]);
+  <span class="kw">const</span> [loading, setLoading] = <span class="fn">useState</span>(<span class="kw">true</span>);
+  <span class="kw">const</span> [search, setSearch] = <span class="fn">useState</span>(<span class="str">''</span>);
+
+  <span class="fn">useEffect</span>(() =&gt; {
+    projectsApi.<span class="fn">list</span>()
+      .<span class="fn">then</span>(res =&gt; <span class="fn">setProjects</span>(res.data.data || []))
+      .<span class="fn">finally</span>(() =&gt; <span class="fn">setLoading</span>(<span class="kw">false</span>));
+  }, []);
+
+  <span class="kw">const</span> filtered = projects.<span class="fn">filter</span>(p =&gt;
+    p.project_name?.<span class="fn">toLowerCase</span>().<span class="fn">includes</span>(search.<span class="fn">toLowerCase</span>()) ||
+    p.project_code?.<span class="fn">toLowerCase</span>().<span class="fn">includes</span>(search.<span class="fn">toLowerCase</span>())
+  );
+
+  <span class="kw">return</span> (
+    &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"space-y-6"</span>&gt;
+      &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"flex justify-between items-center"</span>&gt;
+        &lt;<span class="tag">h1</span> <span class="attr">className</span>=<span class="str">"text-2xl font-bold"</span>&gt;Layihələr&lt;/<span class="tag">h1</span>&gt;
+        &lt;<span class="tag">Button</span>&gt;&lt;<span class="tag">Plus</span> <span class="attr">size</span>={<span class="num">18</span>} <span class="attr">className</span>=<span class="str">"mr-1"</span> /&gt; Yeni layihə&lt;/<span class="tag">Button</span>&gt;
+      &lt;/<span class="tag">div</span>&gt;
+
+      &lt;<span class="tag">Card</span>&gt;
+        &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"flex items-center gap-3 mb-4"</span>&gt;
+          &lt;<span class="tag">Search</span> <span class="attr">size</span>={<span class="num">18</span>} <span class="attr">className</span>=<span class="str">"text-slate-400"</span> /&gt;
+          &lt;<span class="tag">Input</span>
+            <span class="attr">placeholder</span>=<span class="str">"Layihə adı və ya kodu ilə axtar..."</span>
+            <span class="attr">value</span>={search}
+            <span class="attr">onChange</span>={e =&gt; <span class="fn">setSearch</span>(e.target.value)}
+            <span class="attr">className</span>=<span class="str">"flex-1"</span>
+          /&gt;
+        &lt;/<span class="tag">div</span>&gt;
+        {loading ? (
+          &lt;<span class="tag">p</span>&gt;Yüklənir...&lt;/<span class="tag">p</span>&gt;
+        ) : (
+          &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"overflow-x-auto"</span>&gt;
+            &lt;<span class="tag">table</span> <span class="attr">className</span>=<span class="str">"w-full"</span>&gt;
+              &lt;<span class="tag">thead</span>&gt;
+                &lt;<span class="tag">tr</span> <span class="attr">className</span>=<span class="str">"text-left text-xs text-slate-500 uppercase border-b"</span>&gt;
+                  &lt;<span class="tag">th</span> <span class="attr">className</span>=<span class="str">"py-2 pr-4"</span>&gt;Kod&lt;/<span class="tag">th</span>&gt;
+                  &lt;<span class="tag">th</span>&gt;Layihə&lt;/<span class="tag">th</span>&gt;
+                  &lt;<span class="tag">th</span>&gt;Region&lt;/<span class="tag">th</span>&gt;
+                  &lt;<span class="tag">th</span>&gt;Status&lt;/<span class="tag">th</span>&gt;
+                  &lt;<span class="tag">th</span>&gt;Tərəqqi&lt;/<span class="tag">th</span>&gt;
+                  &lt;<span class="tag">th</span>&gt;&lt;/<span class="tag">th</span>&gt;
+                &lt;/<span class="tag">tr</span>&gt;
+              &lt;/<span class="tag">thead</span>&gt;
+              &lt;<span class="tag">tbody</span>&gt;
+                {filtered.<span class="fn">map</span>((p) =&gt; (
+                  &lt;<span class="tag">tr</span> <span class="attr">key</span>={p.id} <span class="attr">className</span>=<span class="str">"border-b hover:bg-slate-50"</span>&gt;
+                    &lt;<span class="tag">td</span> <span class="attr">className</span>=<span class="str">"py-3 pr-4 font-mono text-sm text-primary-700"</span>&gt;{p.project_code}&lt;/<span class="tag">td</span>&gt;
+                    &lt;<span class="tag">td</span> <span class="attr">className</span>=<span class="str">"py-3 pr-4"</span>&gt;
+                      &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"font-medium"</span>&gt;{p.project_name}&lt;/<span class="tag">div</span>&gt;
+                      &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"text-xs text-slate-500"</span>&gt;{p.object_name}&lt;/<span class="tag">div</span>&gt;
+                    &lt;/<span class="tag">td</span>&gt;
+                    &lt;<span class="tag">td</span> <span class="attr">className</span>=<span class="str">"text-sm"</span>&gt;{p.region}&lt;/<span class="tag">td</span>&gt;
+                    &lt;<span class="tag">td</span>&gt;&lt;<span class="tag">StatusBadge</span> <span class="attr">status</span>={p.status} /&gt;&lt;/<span class="tag">td</span>&gt;
+                    &lt;<span class="tag">td</span>&gt;
+                      &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"flex items-center gap-2"</span>&gt;
+                        &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"w-24 bg-slate-200 rounded-full h-2"</span>&gt;
+                          &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"bg-primary-600 h-2 rounded-full"</span> <span class="attr">style</span>={{ width: `${p.progress_percent}%` }} /&gt;
+                        &lt;/<span class="tag">div</span>&gt;
+                        &lt;<span class="tag">span</span> <span class="attr">className</span>=<span class="str">"text-xs"</span>&gt;{p.progress_percent}%&lt;/<span class="tag">span</span>&gt;
+                      &lt;/<span class="tag">div</span>&gt;
+                    &lt;/<span class="tag">td</span>&gt;
+                    &lt;<span class="tag">td</span>&gt;
+                      &lt;<span class="tag">Link</span> <span class="attr">to</span>={`/projects/${p.id}`} <span class="attr">className</span>=<span class="str">"text-primary-600 hover:text-primary-800"</span>&gt;
+                        &lt;<span class="tag">Eye</span> <span class="attr">size</span>={<span class="num">18</span>} /&gt;
+                      &lt;/<span class="tag">Link</span>&gt;
+                    &lt;/<span class="tag">td</span>&gt;
+                  &lt;/<span class="tag">tr</span>&gt;
+                ))}
+              &lt;/<span class="tag">tbody</span>&gt;
+            &lt;/<span class="tag">table</span>&gt;
+          &lt;/<span class="tag">div</span>&gt;
+        )}
+      &lt;/<span class="tag">Card</span>&gt;
+    &lt;/<span class="tag">div</span>&gt;
+  );
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+</section>
+
+<section id="b17">
+  <h2><span class="num">17</span> Project detail və AI analysis</h2>
+  <p class="lead">Hər layihə üçün detal səhifəsi + Claude AI təhlil düyməsi.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/pages/ProjectDetail.jsx</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/pages/ProjectDetail.jsx &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">import</span> { useEffect, useState } <span class="kw">from</span> <span class="str">'react'</span>;
+<span class="kw">import</span> { useParams, Link } <span class="kw">from</span> <span class="str">'react-router-dom'</span>;
+<span class="kw">import</span> { ArrowLeft, Sparkles, Calendar, MapPin, User } <span class="kw">from</span> <span class="str">'lucide-react'</span>;
+<span class="kw">import</span> toast <span class="kw">from</span> <span class="str">'react-hot-toast'</span>;
+<span class="kw">import</span> { projectsApi } <span class="kw">from</span> <span class="str">'../api/projects.api'</span>;
+<span class="kw">import</span> { Card } <span class="kw">from</span> <span class="str">'../components/ui/Card'</span>;
+<span class="kw">import</span> { Button } <span class="kw">from</span> <span class="str">'../components/ui/Button'</span>;
+<span class="kw">import</span> { StatusBadge } <span class="kw">from</span> <span class="str">'../components/ui/StatusBadge'</span>;
+
+<span class="kw">export default function</span> <span class="fn">ProjectDetail</span>() {
+  <span class="kw">const</span> { id } = <span class="fn">useParams</span>();
+  <span class="kw">const</span> [project, setProject] = <span class="fn">useState</span>(<span class="kw">null</span>);
+  <span class="kw">const</span> [analysis, setAnalysis] = <span class="fn">useState</span>(<span class="kw">null</span>);
+  <span class="kw">const</span> [analyzing, setAnalyzing] = <span class="fn">useState</span>(<span class="kw">false</span>);
+
+  <span class="fn">useEffect</span>(() =&gt; {
+    projectsApi.<span class="fn">get</span>(id).<span class="fn">then</span>(res =&gt; <span class="fn">setProject</span>(res.data.data));
+  }, [id]);
+
+  <span class="kw">const</span> handleAnalyze = <span class="kw">async</span> () =&gt; {
+    <span class="fn">setAnalyzing</span>(<span class="kw">true</span>);
+    <span class="kw">try</span> {
+      <span class="kw">const</span> res = <span class="kw">await</span> projectsApi.<span class="fn">analyze</span>(id);
+      <span class="fn">setAnalysis</span>(res.data.analysis);
+      toast.<span class="fn">success</span>(<span class="str">'AI təhlil hazırdır!'</span>);
+    } <span class="kw">catch</span> {
+      toast.<span class="fn">error</span>(<span class="str">'AI təhlil alınmadı'</span>);
+    } <span class="kw">finally</span> { <span class="fn">setAnalyzing</span>(<span class="kw">false</span>); }
+  };
+
+  <span class="kw">if</span> (!project) <span class="kw">return</span> &lt;<span class="tag">p</span>&gt;Yüklənir...&lt;/<span class="tag">p</span>&gt;;
+
+  <span class="kw">return</span> (
+    &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"space-y-6"</span>&gt;
+      &lt;<span class="tag">Link</span> <span class="attr">to</span>=<span class="str">"/projects"</span> <span class="attr">className</span>=<span class="str">"inline-flex items-center gap-2 text-slate-600 hover:text-primary-600"</span>&gt;
+        &lt;<span class="tag">ArrowLeft</span> <span class="attr">size</span>={<span class="num">16</span>} /&gt; Layihələrə qayıt
+      &lt;/<span class="tag">Link</span>&gt;
+
+      &lt;<span class="tag">Card</span>&gt;
+        &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"flex items-start justify-between mb-4"</span>&gt;
+          &lt;<span class="tag">div</span>&gt;
+            &lt;<span class="tag">p</span> <span class="attr">className</span>=<span class="str">"font-mono text-sm text-primary-700"</span>&gt;{project.project_code}&lt;/<span class="tag">p</span>&gt;
+            &lt;<span class="tag">h1</span> <span class="attr">className</span>=<span class="str">"text-2xl font-bold mt-1"</span>&gt;{project.project_name}&lt;/<span class="tag">h1</span>&gt;
+          &lt;/<span class="tag">div</span>&gt;
+          &lt;<span class="tag">StatusBadge</span> <span class="attr">status</span>={project.status} /&gt;
+        &lt;/<span class="tag">div</span>&gt;
+
+        &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t"</span>&gt;
+          &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"flex items-center gap-2"</span>&gt;
+            &lt;<span class="tag">MapPin</span> <span class="attr">size</span>={<span class="num">16</span>} /&gt;&lt;<span class="tag">span</span>&gt;{project.region} · {project.object_name}&lt;/<span class="tag">span</span>&gt;
+          &lt;/<span class="tag">div</span>&gt;
+          &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"flex items-center gap-2"</span>&gt;
+            &lt;<span class="tag">Calendar</span> <span class="attr">size</span>={<span class="num">16</span>} /&gt;&lt;<span class="tag">span</span>&gt;{project.start_date_planned} — {project.end_date_planned}&lt;/<span class="tag">span</span>&gt;
+          &lt;/<span class="tag">div</span>&gt;
+          &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"flex items-center gap-2"</span>&gt;
+            &lt;<span class="tag">User</span> <span class="attr">size</span>={<span class="num">16</span>} /&gt;&lt;<span class="tag">span</span>&gt;{project.manager || <span class="str">'Təyin olunmayıb'</span>}&lt;/<span class="tag">span</span>&gt;
+          &lt;/<span class="tag">div</span>&gt;
+        &lt;/<span class="tag">div</span>&gt;
+      &lt;/<span class="tag">Card</span>&gt;
+
+      &lt;<span class="tag">Card</span>&gt;
+        &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"flex items-center justify-between mb-4"</span>&gt;
+          &lt;<span class="tag">h2</span> <span class="attr">className</span>=<span class="str">"text-lg font-semibold flex items-center gap-2"</span>&gt;
+            &lt;<span class="tag">Sparkles</span> <span class="attr">size</span>={<span class="num">20</span>} <span class="attr">className</span>=<span class="str">"text-purple-600"</span> /&gt; Claude AI təhlil
+          &lt;/<span class="tag">h2</span>&gt;
+          &lt;<span class="tag">Button</span> <span class="attr">onClick</span>={handleAnalyze} <span class="attr">loading</span>={analyzing}&gt;
+            {analysis ? <span class="str">'Yenidən təhlil et'</span> : <span class="str">'Təhlil et'</span>}
+          &lt;/<span class="tag">Button</span>&gt;
+        &lt;/<span class="tag">div</span>&gt;
+        {analysis ? (
+          &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"whitespace-pre-wrap text-slate-700"</span>&gt;{analysis}&lt;/<span class="tag">div</span>&gt;
+        ) : (
+          &lt;<span class="tag">p</span> <span class="attr">className</span>=<span class="str">"text-slate-500 text-sm"</span>&gt;"Təhlil et" düyməsini basın — Claude layihənizi analiz edəcək.&lt;/<span class="tag">p</span>&gt;
+        )}
+      &lt;/<span class="tag">Card</span>&gt;
+    &lt;/<span class="tag">div</span>&gt;
+  );
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+
+  <h3>17.1. NotFound səhifəsi</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title jsx">src/pages/NotFound.jsx</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>cat &gt; src/pages/NotFound.jsx &lt;&lt; <span class="str">'EOF'</span>
+<span class="kw">import</span> { Link } <span class="kw">from</span> <span class="str">'react-router-dom'</span>;
+
+<span class="kw">export default function</span> <span class="fn">NotFound</span>() {
+  <span class="kw">return</span> (
+    &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="str">"min-h-screen flex flex-col items-center justify-center text-center p-6"</span>&gt;
+      &lt;<span class="tag">h1</span> <span class="attr">className</span>=<span class="str">"text-6xl font-bold text-primary-600"</span>&gt;404&lt;/<span class="tag">h1</span>&gt;
+      &lt;<span class="tag">p</span> <span class="attr">className</span>=<span class="str">"text-xl text-slate-600 mt-2"</span>&gt;Səhifə tapılmadı&lt;/<span class="tag">p</span>&gt;
+      &lt;<span class="tag">Link</span> <span class="attr">to</span>=<span class="str">"/"</span> <span class="attr">className</span>=<span class="str">"mt-4 text-primary-600 hover:underline"</span>&gt;Ana səhifəyə qayıt&lt;/<span class="tag">Link</span>&gt;
+    &lt;/<span class="tag">div</span>&gt;
+  );
+}
+<span class="str">EOF</span></code></pre>
+  </div>
+</section>
+
+<section id="b18">
+  <h2><span class="num">18</span> End-to-end test</h2>
+  <p class="lead">İndi hər iki server-i işə salıb real testlər edək.</p>
+
+  <div class="step-head"><span class="step-num">1</span><span class="step-title">Backend serverinin işə salınması</span></div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — Terminal 1 (backend)</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="kw">cd</span> ~/Desktop/Claude_Modei_Təmir_tikinti/backend
+npm run dev</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">14:30:05 info: 🚀 TTİS API v0.1.0
+14:30:05 info: 🌐 http://localhost:3001
+14:30:05 info: 🔌 Domain yükləndi: construction</pre>
+  </div>
+
+  <div class="step-head"><span class="step-num">2</span><span class="step-title">Frontend serverinin işə salınması</span></div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — Terminal 2 (frontend, yeni pəncərə)</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="kw">cd</span> ~/Desktop/Claude_Modei_Təmir_tikinti/frontend
+npm run dev</code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">  <span class="out-info">VITE v6.0.5</span>  ready in <span class="out-success">287 ms</span>
+
+  ➜  <span class="out-info">Local:</span>   <span class="out-success">http://localhost:5173/</span></pre>
+  </div>
+
+  <div class="step-head"><span class="step-num">3</span><span class="step-title">Login səhifəsi</span></div>
+  <p>Brauzerdə <code class="inline">http://localhost:5173</code> açın. Avtomatik olaraq login səhifəsinə yönləndirəcəksiniz.</p>
+
+  <div class="browser-mockup">
+    <div class="browser-bar">
+      <span class="browser-dot red"></span><span class="browser-dot yellow"></span><span class="browser-dot green"></span>
+      <div class="browser-url">http://localhost:5173/login</div>
+    </div>
+    <div class="browser-content" style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe); padding:3rem 1rem;">
+      <div style="background:white; padding:2.5rem; border-radius:16px; max-width:420px; margin:0 auto; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <h1 style="color:#0369a1; font-size:2rem; font-weight:800;">🏗️ TTİS</h1>
+          <p style="color:#64748b; margin-top:0.25rem;">Daxil olun</p>
+        </div>
+        <div style="margin-bottom:1rem;">
+          <label style="display:block; font-size:0.85rem; font-weight:600; color:#334155; margin-bottom:0.25rem;">Email</label>
+          <input style="width:100%; padding:0.6rem 0.75rem; border:1px solid #cbd5e1; border-radius:8px; font-size:0.9rem;" value="manager@arti.edu.az" readonly/>
+        </div>
+        <div style="margin-bottom:1.25rem;">
+          <label style="display:block; font-size:0.85rem; font-weight:600; color:#334155; margin-bottom:0.25rem;">Şifrə</label>
+          <input type="password" style="width:100%; padding:0.6rem 0.75rem; border:1px solid #cbd5e1; border-radius:8px; font-size:0.9rem;" value="SecurePass123" readonly/>
+        </div>
+        <button style="width:100%; background:#0284c7; color:white; padding:0.7rem; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Daxil ol →</button>
+      </div>
+    </div>
+  </div>
+
+  <p>Email: <code class="inline">manager@arti.edu.az</code>, şifrə: <code class="inline">SecurePass123</code> (Dərs 3-də yaratdıq).</p>
+
+  <div class="step-head"><span class="step-num">4</span><span class="step-title">Dashboard-a yönləndirmə</span></div>
+  <p>Uğurlu login-dən sonra avtomatik dashboard-a yönləndirilirsiniz:</p>
+
+  <div class="browser-mockup">
+    <div class="browser-bar">
+      <span class="browser-dot red"></span><span class="browser-dot yellow"></span><span class="browser-dot green"></span>
+      <div class="browser-url">http://localhost:5173/dashboard</div>
+    </div>
+    <div class="browser-content" style="padding:0; display:flex; min-height:320px;">
+      <div style="width:180px; background:#0f172a; color:white; padding:1rem;">
+        <div style="font-weight:700; font-size:1.1rem; margin-bottom:1rem;">🏗️ <span style="color:#38bdf8;">TTİS</span></div>
+        <div style="padding:0.5rem 0.75rem; background:#0284c7; border-radius:6px; margin-bottom:0.25rem; font-size:0.85rem;">📊 Dashboard</div>
+        <div style="padding:0.5rem 0.75rem; color:#94a3b8; font-size:0.85rem;">📋 Layihələr</div>
+        <div style="padding:0.5rem 0.75rem; color:#94a3b8; font-size:0.85rem;">🏢 Obyektlər</div>
+      </div>
+      <div style="flex:1; background:#f8fafc; padding:1.5rem;">
+        <div style="background:white; padding:0.75rem 1rem; border-radius:8px; margin-bottom:1rem; font-size:0.9rem;">Xoş gördük, Test Manager 👋</div>
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0.75rem; margin-bottom:1rem;">
+          <div style="background:white; padding:1rem; border-radius:8px; text-align:center;"><div style="color:#0284c7; font-size:0.7rem;">ÜMUMİ</div><div style="font-size:1.5rem; font-weight:700;">1</div></div>
+          <div style="background:white; padding:1rem; border-radius:8px; text-align:center;"><div style="color:#16a34a; font-size:0.7rem;">AKTİV</div><div style="font-size:1.5rem; font-weight:700;">1</div></div>
+          <div style="background:white; padding:1rem; border-radius:8px; text-align:center;"><div style="color:#d97706; font-size:0.7rem;">BÜDCƏ</div><div style="font-size:1.3rem; font-weight:700;">485K</div></div>
+          <div style="background:white; padding:1rem; border-radius:8px; text-align:center;"><div style="color:#dc2626; font-size:0.7rem;">GECIKIR</div><div style="font-size:1.5rem; font-weight:700;">0</div></div>
+        </div>
+        <div style="background:white; padding:1rem; border-radius:8px; font-size:0.85rem;">
+          <div style="font-weight:600; margin-bottom:0.5rem;">Son layihələr</div>
+          <div style="padding:0.5rem; background:#f1f5f9; border-radius:6px; display:flex; justify-content:space-between;">
+            <div>Bakı 45 saylı məktəbin əsaslı təmiri<div style="font-size:0.75rem; color:#64748b;">Bakı · PRJ-2026-001</div></div>
+            <div style="color:#f59e0b; background:#fef3c7; padding:0.2rem 0.5rem; border-radius:10px; font-size:0.7rem;">İcrada</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout success">
+    <span class="callout-icon">✓</span>
+    <div class="callout-content">
+      <div class="callout-title">Tam işlək sistem!</div>
+      <div class="callout-body"><p>Frontend → Backend → PostgreSQL. Hər şey real-zamanlı sinxrondur. Bu sistem artıq istifadəçi təqdimatına aparıla bilər.</p></div>
+    </div>
+  </div>
+
+  <h3>18.1. Network tab-da sorğular</h3>
+  <p>Chrome DevTools (<strong>Cmd+Opt+I</strong>) → <strong>Network</strong> tab. Səhifəni yeniləyin:</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">DevTools Network (təqribi)</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code>Method   URL                                              Status   Time
+POST     /api/v1/auth/login                               200      89ms
+GET      /api/v1/auth/me                                  200      34ms
+GET      /api/v1/construction/projects                    200      12ms
+POST     /api/v1/construction/projects/1/analyze          200      2.4s  ← Claude AI</code></pre>
+  </div>
+</section>
+
+<section id="b19">
+  <h2><span class="num">19</span> Xülasə və növbəti dərs</h2>
+
+  <div class="summary-box">
+    <h3>📝 Bu Dərsdə Öyrəndiklərimiz</h3>
+    <ul>
+      <li>✅ React və Vite-in əsas konseptləri</li>
+      <li>✅ Vite ilə layihənin yaradılması və sürətli dev server</li>
+      <li>✅ npm paket idarəsi — react-router, axios, tailwind və s.</li>
+      <li>✅ Tailwind CSS-in konfiqurasiyası və istifadəsi</li>
+      <li>✅ Əməli qovluq strukturu — api/contexts/hooks/components/pages</li>
+      <li>✅ Vite environment dəyişənləri (VITE_ prefix)</li>
+      <li>✅ axios instance + interceptor-lar (JWT, 401 handling)</li>
+      <li>✅ React Context API — qlobal state</li>
+      <li>✅ Custom hook-lar (useAuth)</li>
+      <li>✅ React Router 6 — Routes, Route, Navigate, Outlet</li>
+      <li>✅ Protected routes — auth yoxlaması</li>
+      <li>✅ Yenidən istifadə olunan UI komponentləri (Button, Input, Card)</li>
+      <li>✅ Layout sistemi — Sidebar, Header, Outlet</li>
+      <li>✅ Lucide React ikonları</li>
+      <li>✅ React Hook Form ilə formalar və validasiya</li>
+      <li>✅ react-hot-toast ilə bildirişlər</li>
+      <li>✅ Dashboard statistika kartları</li>
+      <li>✅ Projects CRUD və axtarış</li>
+      <li>✅ Claude AI təhlil düyməsi</li>
+      <li>✅ Backend ilə end-to-end test</li>
+    </ul>
+  </div>
+
+  <h3>19.1. Yaradılan fayllar</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — bütün fayllar</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="kw">find</span> src -name <span class="str">"*.jsx"</span> -o -name <span class="str">"*.js"</span> | <span class="kw">grep</span> -v node_modules | <span class="kw">sort</span></code></pre>
+  </div>
+  <div class="output-block">
+    <div class="output-header">Gözlənən çıxış</div>
+<pre class="output-content">src/App.jsx
+src/api/auth.api.js
+src/api/client.js
+src/api/projects.api.js
+src/components/ProtectedRoute.jsx
+src/components/layout/Header.jsx
+src/components/layout/Layout.jsx
+src/components/layout/Sidebar.jsx
+src/components/ui/Button.jsx
+src/components/ui/Card.jsx
+src/components/ui/Input.jsx
+src/components/ui/StatusBadge.jsx
+src/contexts/AuthContext.jsx
+src/hooks/useAuth.js
+src/main.jsx
+src/pages/Dashboard.jsx
+src/pages/Login.jsx
+src/pages/NotFound.jsx
+src/pages/ProjectDetail.jsx
+src/pages/Projects.jsx</pre>
+  </div>
+
+  <h3>19.2. Git commit</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-title">bash — commit</span><button class="code-copy" onclick="copyCode(this)">📋 Kopyala</button></div>
+<pre class="code-content"><code><span class="kw">cd</span> ~/Desktop/Claude_Modei_Təmir_tikinti
+
+<span class="cmt"># Yalnız frontend kodunu əlavə edirik (node_modules və .env git-də olmamalıdır)</span>
+<span class="kw">git</span> add frontend/src frontend/package.json frontend/package-lock.json frontend/tailwind.config.js frontend/postcss.config.js frontend/index.html frontend/vite.config.js
+
+<span class="kw">git</span> commit -m <span class="str">"feat(frontend): initial React+Vite+Tailwind frontend with auth, routing, and API integration"</span>
+
+<span class="kw">git</span> log --oneline</code></pre>
+  </div>
+
+  <h3>19.3. Növbəti dərs</h3>
+  <div class="callout info">
+    <span class="callout-icon">→</span>
+    <div class="callout-content">
+      <div class="callout-title">Dərs 5: R Shiny Dashboard — Analitika və Statistika</div>
+      <div class="callout-body">
+        <p>Növbəti dərsdə:</p>
+        <ul>
+          <li>R Shiny-in TTİS sistemi üçün analitika dashboard-u</li>
+          <li>PostgreSQL-ə birbaşa bağlantı (DBI, RPostgres)</li>
+          <li>shinydashboard və ya bs4Dash ilə modul-əsaslı UI</li>
+          <li>reporting schema view-larından interaktiv qrafiklər</li>
+          <li>Plotly, ggplot2 əsaslı charts</li>
+          <li>Reactive expression və event handling</li>
+          <li>shinydashboard vs React fərqi</li>
+          <li>ShinyApps.io və ya Multipass VM-ə deployment</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<nav class="lesson-nav">
+  <a href="#" class="lesson-nav-btn secondary">← Dərs 3: Node Backend</a>
+  <a href="#" class="lesson-nav-btn">Dərs 5: R Shiny →</a>
+</nav>
+
+</div>
+
+<script>
+function copyCode(button) {
+  const codeBlock = button.closest('.code-block');
+  const code = codeBlock.querySelector('pre.code-content').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    const originalText = button.innerHTML;
+    button.innerHTML = '✓ Kopyalandı!';
+    button.classList.add('copied');
+    setTimeout(() => { button.innerHTML = originalText; button.classList.remove('copied'); }, 2000);
+  }).catch(() => {
+    const textarea = document.createElement('textarea');
+    textarea.value = code;
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      button.innerHTML = '✓ Kopyalandı!';
+      button.classList.add('copied');
+      setTimeout(() => { button.innerHTML = '📋 Kopyala'; button.classList.remove('copied'); }, 2000);
+    } catch(e) { alert('Kopyalama uğursuz oldu'); }
+    document.body.removeChild(textarea);
+  });
+}
+</script>
+
+</body>
+</html>
