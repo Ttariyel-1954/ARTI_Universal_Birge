@@ -775,9 +775,14 @@ ui <- bs4DashPage(
             )
           )
         ),
-        
+
+        # Claude AI cavab paneli
+        fluidRow(
+          bs4Card(title = "🤖 Claude AI Cavabı", width = 12,
+                  uiOutput("ai_output"))
+        )
       ),
-      
+
       # ═══ AUDIT TAB ═══
       bs4TabItem(tabName = "audit",
         h2("Audit Log — Real-time Monitoring", class = "page-title"),
