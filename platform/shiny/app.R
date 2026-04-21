@@ -130,6 +130,20 @@ with_spinner <- function(ui_element, type = 8, color = "#0369a1") {
   withSpinner(ui_element, type = type, color = color, size = 0.8)
 }
 
+# ═══ Helper: Boş plotly qrafik ═══
+plotly_empty <- function(msg = "M\u0259lumat yoxdur") {
+  plot_ly() |>
+    layout(
+      xaxis = list(visible = FALSE),
+      yaxis = list(visible = FALSE),
+      annotations = list(
+        list(text = msg, xref = "paper", yref = "paper",
+             x = 0.5, y = 0.5, showarrow = FALSE,
+             font = list(size = 16, color = "#94a3b8"))
+      )
+    )
+}
+
 # ═══ HTML ARXIV — Sorğu nəticəsini gözəl HTML-ə yaz ═══
 save_to_archive <- function(topic, section_name, questions_list, response_text, 
                              metadata, user_name = CURRENT_USER_FULL) {
