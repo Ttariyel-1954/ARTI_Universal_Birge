@@ -43,3 +43,7 @@ uploads/thumbnails/*
 # OS
 Thumbs.db
 .DS_Store
+
+# Runtime PID files
+*.pid
+*.pid.lock
